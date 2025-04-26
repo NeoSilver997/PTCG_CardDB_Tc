@@ -166,7 +166,7 @@ try:
                         exp_img = expansion_symbol.find('img')
                         if exp_img and 'src' in exp_img.attrs:
                             src = exp_img['src']
-                            exp_match = re.search(r'twhk_exp_/(\\w+)\\.png', src)
+                            exp_match = re.search(r'twhk_exp_(\w+)\.png', src)
                             if exp_match:
                                 card_data['Expansion'] = exp_match.group(1)
                     
