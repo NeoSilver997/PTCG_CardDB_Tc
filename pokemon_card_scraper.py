@@ -9,7 +9,7 @@ import datetime
 import re
 
 # Base URL for the card list
-base_url = "https://asia.pokemon-card.com/hk/card-search/list/?expansionCodes=SV10"
+base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes="
 
 try:
     # Create log folder if it doesn't exist
@@ -56,7 +56,7 @@ try:
     last_page_html = None
     
     # Add page limit option for testing (default to total_pages if not specified)
-    max_pages = min(total_pages, 10)  # Default test limit of 10 pages
+    max_pages = min(total_pages, 1)  # Default test limit of 10 pages
     
     # Iterate through each page
     for page in range(1, max_pages + 1):
@@ -451,7 +451,7 @@ try:
     if all_cards:
         with open('pokemon_cards_detailed.csv', 'w', newline='', encoding='utf-8') as csvfile:
             # Reorder fields to move URLs to last columns
-            fieldnames = ['Type', 'Name', 'Expansion', 'Number', 'HP', 'Attribute', 
+            fieldnames = ['Web Card ID','Type', 'Name', 'Expansion', 'Number', 'HP', 'Attribute', 
                          'Attacks', 'Attack_Damage', 'Weakness', 'Resistance', 
                          'Retreat_Cost', 'Evolution', 'Pokemon_Info', 'Artist',
                          'Evolve_Marker', 'Expansion_Symbol',
