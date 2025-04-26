@@ -199,7 +199,10 @@ try:
                             type_match = re.search(r'energy/(\w+)\.png', src)
                             if type_match:
                                 card_data['Attribute'] = type_match.group(1)
-                    
+                    # Extract collector number from collectorNumber class
+                    collector_number = detail_soup.find('span', class_='collectorNumber')
+                    if collector_number:
+                        card_data['Number'] = collector_number.text.strip()
                     # Extract Skills and Abilities from skillInformation section
                     skill_info = detail_soup.find('div', class_='skillInformation')
                     if skill_info:
@@ -391,10 +394,7 @@ try:
                             card_data['Evolve_Marker'] = evolve_marker.text.strip()
                         card_data['Name'] = name_text
                         
-                    # Extract collector number from collectorNumber class
-                    collector_number = detail_soup.find('span', class_='collectorNumber')
-                    if collector_number:
-                        card_data['Number'] = collector_number.text.strip()
+                    
                     
                     # Extract expansion symbol from expansionColumn
                     expansion_column = detail_soup.find('section', class_='expansionColumn')
