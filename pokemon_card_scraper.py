@@ -7,14 +7,19 @@ import time
 import os
 import datetime
 import re
+import shutil
 
 # Base URL for the card list
 base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes="
 
 try:
-    # Create log folder if it doesn't exist
+    # Create folders if they don't exist
     log_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
     os.makedirs(log_folder, exist_ok=True)
+    
+    # Create images folder for storing downloaded card images
+    images_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images")
+    os.makedirs(images_folder, exist_ok=True)
     
     # Get the total number of pages
     response = requests.get(base_url)
@@ -56,7 +61,7 @@ try:
     last_page_html = None
     
     # Add page limit option for testing (default to total_pages if not specified)
-    max_pages = min(total_pages, 1)  # Default test limit of 10 pages
+    max_pages = min(total_pages, 300)  # Default test limit of 10 pages
     
     # Iterate through each page
     for page in range(1, max_pages + 1):
@@ -521,6 +526,28 @@ try:
                 writer.writerow(card)
         
         print(f"Successfully scraped {len(all_cards)} cards with details and saved to pokemon_cards_detailed.csv")
+        
+        # Download card images
+        print("Downloading card images...")
+        for card in all_cards:
+            try:
+                if card['Image URL'] and card['Name'] and card['Expansion'] and card['Number']:
+                    # Create filename from card details
+                    cno = card['Number'].split('/')[0]
+                    filename = f"{card['Expansion']}/{cno}.png"
+                    image_path = os.path.join(images_folder, filename)
+                    # Ensure the directory exists before saving the image
+                    os.makedirs(os.path.dirname(image_path), exist_ok=True)
+                    # Download image
+                    response = requests.get(card['Image URL'], stream=True)
+                    if response.status_code == 200:
+                        with open(image_path, 'wb') as out_file:
+                            shutil.copyfileobj(response.raw, out_file)
+                        print(f"Saved image: {filename}")
+                    else:
+                        print(f"Failed to download image for {card['Name']}")
+            except Exception as e:
+                print(f"Error downloading image for {card['Name']}: {str(e)}")
     else:
         print("No cards were found to save.")
         
