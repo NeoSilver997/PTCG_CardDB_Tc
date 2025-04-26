@@ -10,7 +10,7 @@ import re
 import shutil
 
 # Base URL for the card list
-base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=SVOD"
+base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes="
 
 try:
     # Create folders if they don't exist
@@ -61,7 +61,7 @@ try:
     last_page_html = None
     
     # Add page limit option for testing (default to total_pages if not specified)
-    max_pages = min(total_pages, 3)  # Default test limit of 10 pages
+    max_pages = min(total_pages, 15)  # Default test limit of 10 pages
     
     # Iterate through each page
     for page in range(1, max_pages + 1):
@@ -176,6 +176,21 @@ try:
                         if exp_img and 'src' in exp_img.attrs:
                             src = exp_img['src']
                             exp_match = re.search(r'twhk_exp_(\w+)\.png', src)
+                            if exp_match:
+                                card_data['Expansion'] = exp_match.group(1)
+                            else:
+                                # Extract expansion code from URL if available
+                                url_exp_match = re.search(r'expansionCodes=(\w+)', base_url)
+                                if url_exp_match:
+                                    card_data['Expansion'] = url_exp_match.group(1)
+                    
+                    # Extract expansion from link in expansionLinkColumn
+                    expansion_link_section = detail_soup.find('section', class_='expansionLinkColumn')
+                    if expansion_link_section:
+                        expansion_link = expansion_link_section.find('a', href=True)
+                        if expansion_link:
+                            href = expansion_link['href']
+                            exp_match = re.search(r'expansionCodes=(\w+)', href)
                             if exp_match:
                                 card_data['Expansion'] = exp_match.group(1)
                     
