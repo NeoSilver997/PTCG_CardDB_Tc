@@ -152,10 +152,13 @@ try:
                             log_file.write(detail_response.text)
                         print(f"First card detail page saved to {detail_log_path}")
                     
-                    # Extract card name from page header
+                    # Extract card name from page header with improved logic
                     name_header = detail_soup.find('h1', class_='pageHeader')
                     if name_header:
-                        card_data['Name'] = name_header.text.strip()
+                        # Clean up name by removing extra whitespace and special characters
+                        name = name_header.text.strip()
+                        name = name.split("\n")[2] # Normalize whitespace
+                        card_data['Name'] = name.strip()
                     
                     # Extract expansion from symbol image
                     expansion_symbol = detail_soup.find('span', class_='expansionSymbol')
@@ -163,7 +166,7 @@ try:
                         exp_img = expansion_symbol.find('img')
                         if exp_img and 'src' in exp_img.attrs:
                             src = exp_img['src']
-                            exp_match = re.search(r'expansion/(\\w+)\\.png', src)
+                            exp_match = re.search(r'twhk_exp_/(\\w+)\\.png', src)
                             if exp_match:
                                 card_data['Expansion'] = exp_match.group(1)
                     
