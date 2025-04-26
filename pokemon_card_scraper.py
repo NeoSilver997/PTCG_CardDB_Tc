@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import math
 import csv
+from urllib.parse import urljoin
 
 # Base URL for the card list
 base_url = "https://asia.pokemon-card.com/hk/card-search/list/"
@@ -31,16 +32,22 @@ for page in range(1, total_pages + 1):
         name = card.find('p', class_='name').text.strip()
         expansion = card.find('p', class_='expansion').text.strip()
         number = card.find('p', class_='number').text.strip()
+        img_tag = card.find('img')
+        if img_tag:
+            image_url = urljoin(base_url, img_tag['src'])
+        else:
+            image_url = ''
         all_cards.append({
             'Type': card_type,
             'Name': name,
             'Expansion': expansion,
-            'Number': number
+            'Number': number,
+            'Image URL': image_url
         })
 
 # Save the data to a CSV file
 with open('pokemon_cards.csv', 'w', newline='', encoding='utf-8') as csvfile:
-    fieldnames = ['Type', 'Name', 'Expansion', 'Number']
+    fieldnames = ['Type', 'Name', 'Expansion', 'Number', 'Image URL']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
     for card in all_cards:
