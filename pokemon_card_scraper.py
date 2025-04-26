@@ -152,6 +152,21 @@ try:
                             log_file.write(detail_response.text)
                         print(f"First card detail page saved to {detail_log_path}")
                     
+                    # Extract card name from page header
+                    name_header = detail_soup.find('h1', class_='pageHeader')
+                    if name_header:
+                        card_data['Name'] = name_header.text.strip()
+                    
+                    # Extract expansion from symbol image
+                    expansion_symbol = detail_soup.find('span', class_='expansionSymbol')
+                    if expansion_symbol:
+                        exp_img = expansion_symbol.find('img')
+                        if exp_img and 'src' in exp_img.attrs:
+                            src = exp_img['src']
+                            exp_match = re.search(r'expansion/(\\w+)\\.png', src)
+                            if exp_match:
+                                card_data['Expansion'] = exp_match.group(1)
+                    
                     # Print debug info for first card
                     if page == 1 and cards.index(card) == 0:
                         print("\n=== FIRST CARD DETAILS ===")
@@ -182,29 +197,58 @@ try:
                             if type_match:
                                 card_data['Attribute'] = type_match.group(1)
                     
-                    # Extract Attacks from skillInformation section
+                    # Extract Skills and Abilities from skillInformation section
                     skill_info = detail_soup.find('div', class_='skillInformation')
                     if skill_info:
-                        attack_names = []
-                        attack_damages = []
+                        # Initialize skill fields
+                        card_data['[特性]'] = ''
+                        card_data['Skill1_Name'] = 'N/A'
+                        card_data['Skill1_Cost'] = 'N/A'
+                        card_data['Skill1_Damage'] = 'N/A'
+                        card_data['Skill1_Effect'] = 'N/A'
+                        card_data['Skill2_Name'] = 'N/A'
+                        card_data['Skill2_Cost'] = 'N/A'
+                        card_data['Skill2_Damage'] = 'N/A'
+                        card_data['Skill2_Effect'] = 'N/A'
+                        
+                        # Check for ability (特性)
+                        ability_div = skill_info.find('div', class_='ability')
+                        if ability_div:
+                            ability_text = ability_div.get_text(strip=True)
+                            if ability_text:
+                                card_data['[特性]'] = ability_text
                         
                         # Find all skill divs
                         skills = skill_info.find_all('div', class_='skill')
-                        for skill in skills:
-                            # Extract attack name
+                        for i, skill in enumerate(skills[:2]):  # Only process first 2 skills
+                            skill_prefix = f'Skill{i+1}_'
+                            
+                            # Extract skill name
                             name_elem = skill.find('span', class_='skillName')
                             if name_elem:
-                                attack_names.append(name_elem.text.strip())
+                                card_data[skill_prefix + 'Name'] = name_elem.text.strip()
                             
-                            # Extract attack damage
+                            # Extract skill cost (energy requirements)
+                            cost_imgs = skill.find_all('img', class_='energy')
+                            if cost_imgs:
+                                costs = []
+                                for img in cost_imgs:
+                                    if 'src' in img.attrs:
+                                        cost_type = re.search(r'energy/(\w+)\.png', img['src'])
+                                        if cost_type:
+                                            costs.append(cost_type.group(1))
+                                if costs:
+                                    card_data[skill_prefix + 'Cost'] = ', '.join(costs)
+                            
+                            # Extract skill damage
                             damage_elem = skill.find('span', class_='skillDamage')
                             if damage_elem:
-                                attack_damages.append(damage_elem.text.strip())
-                        
-                        if attack_names:
-                            card_data['Attacks'] = ', '.join(attack_names)
-                        if attack_damages:
-                            card_data['Attack_Damage'] = ', '.join(attack_damages)
+                                card_data[skill_prefix + 'Damage'] = damage_elem.text.strip()
+                            
+                            # Extract skill effect
+                            effect_elem = skill.find('p', class_='skillEffect')
+                            if effect_elem:
+                                card_data[skill_prefix + 'Effect'] = effect_elem.text.strip()
                         
                         # Extract Weakness, Resistance and Retreat Cost from subInformation section
                         sub_info = detail_soup.find('div', class_='subInformation')
@@ -448,14 +492,16 @@ try:
     
     # Save the data to a CSV file
     if all_cards:
-        with open('pokemon_cards_detailed.csv', 'w', newline='', encoding='utf-8') as csvfile:
-            # Reorder fields to move URLs to last columns
-            fieldnames = ['Web Card ID','Type', 'Name', 'Expansion', 'Number', 'HP', 'Attribute', 
-                         'Attacks', 'Attack_Damage', 'Weakness', 'Resistance', 
-                         'Retreat_Cost', 'Evolution', 'Pokemon_Info', 'Artist',
-                         'Evolve_Marker', 'Expansion_Symbol',
-                         'Card URL', 'Image URL']
-            
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"pokemon_cards_detailed_{timestamp}.csv")
+        
+        with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['Web Card ID', 'Type', 'Name', 'Expansion', 'Number', 
+                        'HP', 'Attribute', 'Attacks', 'Attack_Damage', '[特性]', 'Skill1_Name', 'Skill1_Cost', 
+                        'Skill1_Damage', 'Skill1_Effect', 'Skill2_Name', 'Skill2_Cost', 
+                        'Skill2_Damage', 'Skill2_Effect', 'Weakness', 'Resistance', 
+                        'Retreat_Cost', 'Evolution', 'Pokemon_Info', 'Artist', 
+                        'Evolve_Marker', 'Expansion_Symbol', 'Card URL', 'Image URL']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             
