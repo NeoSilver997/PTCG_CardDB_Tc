@@ -10,7 +10,7 @@ import re
 import shutil
 
 # Base URL for the card list
-base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes="
+base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=SVOD"
 
 try:
     # Create folders if they don't exist
@@ -61,7 +61,7 @@ try:
     last_page_html = None
     
     # Add page limit option for testing (default to total_pages if not specified)
-    max_pages = min(total_pages, 300)  # Default test limit of 10 pages
+    max_pages = min(total_pages, 3)  # Default test limit of 10 pages
     
     # Iterate through each page
     for page in range(1, max_pages + 1):
@@ -161,9 +161,13 @@ try:
                     name_header = detail_soup.find('h1', class_='pageHeader')
                     if name_header:
                         # Clean up name by removing extra whitespace and special characters
-                        name = name_header.text.strip()
-                        name = name.split("\n")[2] # Normalize whitespace
-                        card_data['Name'] = name.strip()
+                        try:
+                            name = name_header.text.strip()
+                            name = name.split("\n")[2] # Normalize whitespace
+                            card_data['Name'] = name.strip()
+                        except:
+                            name = name_header.text.strip()
+                        
                     
                     # Extract expansion from symbol image
                     expansion_symbol = detail_soup.find('span', class_='expansionSymbol')
