@@ -217,22 +217,28 @@ try:
                         card_data['Skill2_Damage'] = 'N/A'
                         card_data['Skill2_Effect'] = 'N/A'
                         
-                        # Check for ability (特性)
-                        ability_div = skill_info.find('div', class_='ability')
-                        if ability_div:
-                            ability_text = ability_div.get_text(strip=True)
-                            if ability_text:
-                                card_data['[特性]'] = ability_text
+                        
                         
                         # Find all skill divs
                         skills = skill_info.find_all('div', class_='skill')
-                        for i, skill in enumerate(skills[:2]):  # Only process first 2 skills
-                            skill_prefix = f'Skill{i+1}_'
+                        skillno = 0
+                        for i, skill in enumerate(skills[:3]):  # Only process first 2 skills
+                            
                             
                             # Extract skill name
                             name_elem = skill.find('span', class_='skillName')
                             if name_elem:
-                                card_data[skill_prefix + 'Name'] = name_elem.text.strip()
+                                skill_name = name_elem.text.strip()
+                                if '特性' in skill_name:
+                                    card_data['[特性]'] = skill_name
+                                    effect_elem = skill.find('p', class_='skillEffect')
+                                    if effect_elem:
+                                        card_data['[特性]'] = card_data['[特性]'] + '-'+  effect_elem.text.strip()
+                                        continue
+                                else:
+                                    skillno = skillno +1
+                                    skill_prefix = f'Skill{skillno}_'
+                                    card_data[skill_prefix + 'Name'] = skill_name
                             
                             # Extract skill cost (energy requirements)
                             cost_imgs = skill.find_all('img', class_='energy')
