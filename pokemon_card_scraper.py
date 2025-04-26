@@ -92,14 +92,12 @@ try:
                 card_link = card.find('a')
                 card_url = urljoin(base_url, card_link['href']) if card_link and 'href' in card_link.attrs else ''
                 
-                # Find image in the imageContainer div
+                # Find image in the imageContainer div (list page)
                 img_container = card.find('div', class_='imageContainer')
                 img_tag = img_container.find('img') if img_container else card.find('img')
-                image_url = urljoin(base_url, img_tag['src']) if img_tag and 'src' in img_tag.attrs else ''
                 
-                # For lazy-loaded images, try data-src attribute if src is empty or a placeholder
-                if img_tag and 'data-src' in img_tag.attrs and (not image_url or 'placeholder' in image_url):
-                    image_url = urljoin(base_url, img_tag['data-src'])
+                # Prioritize data-src for lazy-loaded images
+                
                 name = ''
                 # Basic card info from the list page
                 # Extract web card ID from URL (last path segment)
@@ -108,7 +106,8 @@ try:
                     url_parts = card_url.rstrip('/').split('/')
                     if url_parts:
                         web_card_id = url_parts[-1]
-                
+                if web_card_id:
+                    image_url = f'https://asia.pokemon-card.com/hk/card-img/hk000{web_card_id}.png'
                 # Basic card info from the list page
                 card_data = {
                     'Web Card ID': web_card_id,
