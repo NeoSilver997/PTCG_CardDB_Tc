@@ -1,6 +1,9 @@
 import cv2
 import os
 import numpy as np
+import time
+import multiprocessing
+from multiprocessing import Pool, cpu_count
 
 def load_reference_images(ref_dir):
     """Load all reference images from the specified directory."""
@@ -36,7 +39,8 @@ def match_features(des1, des2, matcher):
 def recognize_pokemon_card(test_image_path, ref_dir):
     """Recognize a Pokémon card by comparing it to reference images."""
     # Initialize ORB detector
-    orb = cv2.ORB_create()
+    # Updated ORB parameters for faster processing
+    orb = cv2.ORB_create(nfeatures=500, edgeThreshold=15, fastThreshold=15)
     matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
 
     # Load test image
@@ -52,23 +56,54 @@ def recognize_pokemon_card(test_image_path, ref_dir):
     if not ref_images:
         return "Error: No reference images found."
 
+    # Precompute reference features cache
+    REF_FEATURES_CACHE = {}
+    
+    def load_reference_features(ref_dir, orb):
+        global REF_FEATURES_CACHE
+        if not REF_FEATURES_CACHE:
+            for root, _, files in os.walk(ref_dir):
+                for filename in files:
+                    if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+                        filepath = os.path.join(root, filename)
+                        rel_path = os.path.relpath(filepath, ref_dir)
+                        img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+                        if img is not None:
+                            _, des = detect_and_compute_features(img, orb)
+                            REF_FEATURES_CACHE[rel_path] = des
+        return REF_FEATURES_CACHE
+
     # Compare test image to each reference image
-    best_match = None
-    max_matches = 0
+    matches = []
     for filename, ref_img in ref_images.items():
         ref_kp, ref_des = detect_and_compute_features(ref_img, orb)
         num_matches = match_features(test_des, ref_des, matcher)
-        if num_matches > max_matches:
-            max_matches = num_matches
-            best_match = filename
+        matches.append((filename, num_matches))
+    
+    # Sort matches by score and keep top 5 with at least 10 matches
+    sorted_matches = sorted(matches, key=lambda x: x[1], reverse=True)
+    top_matches = [m for m in sorted_matches if m[1] >= 10][:5]
 
     # Threshold for minimum matches to consider a valid recognition
-    if max_matches < 10:
+    if not top_matches:
         return "No clear match found."
 
-    # Extract card name from filename (remove extension)
-    card_name = os.path.splitext(best_match)[0]
-    return f"Recognized Pokémon card: {card_name} ({max_matches} matches) - Reference Path: {os.path.join(ref_dir, best_match)}"
+    # Format multiple results
+    results = []
+    for i, (filename, score) in enumerate(top_matches, 1):
+        card_name = os.path.splitext(filename)[0]
+        results.append(f"{i}. {card_name} ({score} matches) - {os.path.join(ref_dir, filename)}")
+    
+    return "Possible matches:\n" + "\n".join(results)
+
+def process_image(test_image_path, ref_dir):
+    try:
+        start_time = time.time()
+        result = recognize_pokemon_card(test_image_path, ref_dir)
+        elapsed = (time.time() - start_time) * 1000
+        return f"{os.path.basename(test_image_path)}:\nProcessing time: {elapsed:.2f}ms\n{result}"
+    except Exception as e:
+        return f"Error processing {os.path.basename(test_image_path)}: {str(e)}"
 
 import argparse
 
@@ -98,20 +133,37 @@ def main():
         return
 
     # Process all valid images in test directory
+    total_start = time.time()
     processed = 0
     for filename in os.listdir(args.test_dir):
         if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
             test_image_path = os.path.join(args.test_dir, filename)
             print(f"\nProcessing {filename}:")
             try:
+                start_time = time.time()
                 result = recognize_pokemon_card(test_image_path, args.ref_dir)
+                elapsed = (time.time() - start_time) * 1000
+                print(f"Processing time: {elapsed:.2f}ms")
                 print(result)
                 processed += 1
             except Exception as e:
                 print(f"Error processing {filename}: {str(e)}")
     
+    total_elapsed = (time.time() - total_start) * 1000
+    print(f"\nTotal processing time: {total_elapsed:.2f}ms")
     if processed == 0:
         print("\nNo images processed successfully. Check file formats and image validity")
 
+    # Modified main processing loop using multiprocessing
+    # Process images in parallel
+    from multiprocessing import Pool, cpu_count
+
+    with Pool(processes=cpu_count()) as pool:
+        results = pool.starmap(process_image, [...])
+        for result in results:
+            print(f"\n{result}")
+
 if __name__ == "__main__":
     main()
+
+flann = cv2.FlannBasedMatcher(dict(algorithm=6, table_number=6, key_size=12, multi_probe_level=1), {})
