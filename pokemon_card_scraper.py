@@ -10,7 +10,7 @@ import re
 import shutil
 
 # Base URL for the card list
-base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=SV8a"
+base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes="
 
 try:
     # Create folders if they don't exist
@@ -20,6 +20,10 @@ try:
     # Create images folder for storing downloaded card images
     images_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images")
     os.makedirs(images_folder, exist_ok=True)
+    
+    # Create html_pages folder for storing detail page HTML files
+    html_pages_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "html_pages")
+    os.makedirs(html_pages_folder, exist_ok=True)
     
     # Get the total number of pages
     response = requests.get(base_url)
@@ -61,7 +65,7 @@ try:
     last_page_html = None
     
     # Add page limit option for testing (default to total_pages if not specified)
-    max_pages = min(total_pages, 5)  # Default test limit of 10 pages
+    max_pages = min(total_pages, 300)  # Default test limit of 10 pages
     
     # Iterate through each page
     for page in range(1, max_pages + 1):
@@ -133,7 +137,8 @@ try:
                     'Pokemon_Info': '',
                     'Artist': '',
                     'Evolve_Marker': '',
-                    'Expansion_Symbol': ''
+                    'Expansion_Symbol': '',
+                    'Subtypes': ''
                 }
                 
                 # Visit the detail page to get more information
@@ -167,6 +172,7 @@ try:
                             card_data['Name'] = name.strip()
                         except:
                             name = name_header.text.strip()
+                            card_data['Name'] = name.strip()
                         
                     
                     # Extract expansion from symbol image
@@ -227,8 +233,35 @@ try:
                     collector_number = detail_soup.find('span', class_='collectorNumber')
                     if collector_number:
                         card_data['Number'] = collector_number.text.strip()
+                        
+                    # Save detail page HTML organized by expansion, number and name
+                    # Do this after extracting basic card info but before adding to all_cards
+                    if card_data['Expansion'] and card_data['Number'] and card_data['Name']:
+                        # Create safe filename by removing invalid characters
+                        safe_name = re.sub(r'[\\/*?:"<>|]', '', card_data['Name'])
+                        # Get card number without the slash part if present
+                        card_number = card_data['Number'].split('/')[0] if '/' in card_data['Number'] else card_data['Number']
+                        
+                        # Create folder structure: html_pages/[Expansion]/
+                        expansion_folder = os.path.join(html_pages_folder, card_data['Expansion'])
+                        os.makedirs(expansion_folder, exist_ok=True)
+                        
+                        # Create filename: [Number]_[Name].html
+                        html_filename = f"{card_number}_{safe_name}.html"
+                        html_file_path = os.path.join(expansion_folder, html_filename)
+                        
+                        # Save the HTML content
+                        with open(html_file_path, 'w', encoding='utf-8') as html_file:
+                            html_file.write(detail_response.text)
+                        print(f"Saved detail page HTML to {html_file_path}")
+                    else:
+                        print(f"Skipping HTML save - missing required info: Expansion={card_data['Expansion']}, Number={card_data['Number']}, Name={card_data['Name']}")
+
                     # Extract Skills and Abilities from skillInformation section
                     skill_info = detail_soup.find('div', class_='skillInformation')
+                    subtypes = []
+                    if 'ex' in card_data['Name'].lower():
+                                subtypes.append('ex')
                     if skill_info:
                         # Initialize skill fields
                         card_data['[特性]'] = ''
@@ -257,11 +290,21 @@ try:
                                     if effect_elem:
                                         card_data['[特性]'] = card_data['[特性]'] + '-'+  effect_elem.text.strip()
                                         continue
+                                if '太晶' in skill_name:
+                                    subtypes.append('太晶')
+                                    continue
                                 else:
                                     skillno = skillno +1
                                     skill_prefix = f'Skill{skillno}_'
                                     card_data[skill_prefix + 'Name'] = skill_name
                             
+
+                            # 識別特殊技能類型
+                            
+                            skill_text = skill_name + ' ' + (effect_elem.text.strip() if effect_elem else '')
+                            if '太晶' in skill_text:
+                                subtypes.append('太晶')
+
                             # Extract skill cost (energy requirements)
                             cost_imgs = skill.find('span',class_='skillCost').find_all('img')
                             if cost_imgs:
@@ -283,6 +326,8 @@ try:
                             effect_elem = skill.find('span', class_='skillEffect')
                             if effect_elem:
                                 card_data[skill_prefix + 'Effect'] = effect_elem.text.strip()
+                                
+                            
                         
                         
                         
@@ -506,6 +551,9 @@ try:
                     
                 except Exception as e:
                     print(f"Error fetching details for {name}: {e}")
+
+                if subtypes:
+                    card_data['Subtypes'] = ', '.join(subtypes)    
                 print(f"Card Type: {card_data}")
                 all_cards.append(card_data)
                 
@@ -535,7 +583,7 @@ try:
                         'Skill1_Damage', 'Skill1_Effect', 'Skill2_Name', 'Skill2_Cost', 
                         'Skill2_Damage', 'Skill2_Effect', 'Weakness', 'Resistance', 
                         'Retreat_Cost', 'Evolution', 'Pokemon_Info', 'Artist', 
-                        'Evolve_Marker', 'Expansion_Symbol', 'Card URL', 'Image URL']
+                        'Evolve_Marker', 'Expansion_Symbol','Subtypes', 'Card URL', 'Image URL']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             
