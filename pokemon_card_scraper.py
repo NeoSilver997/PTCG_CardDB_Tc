@@ -10,7 +10,7 @@ import re
 import shutil
 
 # Base URL for the card list
-base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes="
+base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=SV8a"
 
 try:
     # Create folders if they don't exist
@@ -61,7 +61,7 @@ try:
     last_page_html = None
     
     # Add page limit option for testing (default to total_pages if not specified)
-    max_pages = min(total_pages, 15)  # Default test limit of 10 pages
+    max_pages = min(total_pages, 5)  # Default test limit of 10 pages
     
     # Iterate through each page
     for page in range(1, max_pages + 1):
@@ -241,13 +241,11 @@ try:
                         card_data['Skill2_Damage'] = 'N/A'
                         card_data['Skill2_Effect'] = 'N/A'
                         
-                        
-                        
                         # Find all skill divs
-                        skills = skill_info.find_all('div', class_='skill')
                         skillno = 0
-                        for i, skill in enumerate(skills[:3]):  # Only process first 2 skills
-                            
+                        skills = skill_info.find_all('div', class_='skill')
+                        for i, skill in enumerate(skills[:2]):  # Only process first 2 skills
+                            skill_prefix = f'Skill{i+1}_'
                             
                             # Extract skill name
                             name_elem = skill.find('span', class_='skillName')
@@ -265,7 +263,7 @@ try:
                                     card_data[skill_prefix + 'Name'] = skill_name
                             
                             # Extract skill cost (energy requirements)
-                            cost_imgs = skill.find_all('img', class_='energy')
+                            cost_imgs = skill.find('span',class_='skillCost').find_all('img')
                             if cost_imgs:
                                 costs = []
                                 for img in cost_imgs:
@@ -282,9 +280,11 @@ try:
                                 card_data[skill_prefix + 'Damage'] = damage_elem.text.strip()
                             
                             # Extract skill effect
-                            effect_elem = skill.find('p', class_='skillEffect')
+                            effect_elem = skill.find('span', class_='skillEffect')
                             if effect_elem:
                                 card_data[skill_prefix + 'Effect'] = effect_elem.text.strip()
+                        
+                        
                         
                         # Extract Weakness, Resistance and Retreat Cost from subInformation section
                         sub_info = detail_soup.find('div', class_='subInformation')
@@ -422,7 +422,8 @@ try:
                         if evolve_marker:
                             name_text = name_text.replace(evolve_marker.text.strip(), '').strip()
                             card_data['Evolve_Marker'] = evolve_marker.text.strip()
-                        card_data['Name'] = name_text
+                        if name_text =='':
+                            card_data['Name'] = name_text
                         
                     
                     
