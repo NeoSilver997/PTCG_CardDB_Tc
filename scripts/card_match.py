@@ -2,6 +2,7 @@ import cv2
 import os
 import numpy as np
 import time
+import re
 
 def load_reference_images(ref_dir):
     """Load all reference images from the specified directory."""
@@ -9,7 +10,8 @@ def load_reference_images(ref_dir):
     valid_count = 0
     for root, dirs, files in os.walk(ref_dir):
         for filename in files:
-            if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+            filename = os.fsdecode(filename)
+            if is_valid_filename(filename):
                 filepath = os.path.join(root, filename)
                 rel_path = os.path.relpath(filepath, ref_dir)
                 img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
@@ -78,12 +80,15 @@ def recognize_pokemon_card(test_image_path, ref_dir):
 
 import argparse
 
+def is_valid_filename(filename):
+    return re.match(r'^[^\\/?%*:|\"<>]+\.(jpg|jpeg|png)$', filename, re.IGNORECASE) is not None
+
 def main():
     # Set up command-line arguments
     parser = argparse.ArgumentParser(description='Pokémon Card Recognition')
     parser.add_argument('--test_dir', type=str, required=True,
                       help='Path to directory containing test images')
-    parser.add_argument('--ref_dir', type=str, required=False, default='images',
+    parser.add_argument('--ref_dir', type=str, required=False, default=r'.\scripts\card_small_images',
                       help='Path to directory containing reference card images (default: "images")')
     args = parser.parse_args()
 
@@ -92,13 +97,15 @@ def main():
         print(f"Error: Test directory {args.test_dir} not found")
         return
     
+    args.ref_dir = os.path.abspath(os.path.expanduser(args.ref_dir))
+    print(f"Using reference directory: {args.ref_dir}")
     if not os.path.isdir(args.ref_dir):
         print(f"Error: Reference directory {args.ref_dir} not found")
         return
 
     # Check for valid test images
-    test_files = [f for f in os.listdir(args.test_dir) 
-                if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    test_files = [f for f in os.listdir(args.test_dir) if is_valid_filename(f)]
+    print(f"Found {len(test_files)} valid test images")
     if not test_files:
         print(f"Error: No valid images found in test directory {args.test_dir}")
         return
@@ -107,7 +114,8 @@ def main():
     total_start = time.time()
     processed = 0
     for filename in os.listdir(args.test_dir):
-        if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+        filename = os.fsdecode(filename)
+        if is_valid_filename(filename):
             test_image_path = os.path.join(args.test_dir, filename)
             print(f"\nProcessing {filename}:")
             try:
