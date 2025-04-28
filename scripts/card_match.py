@@ -4,22 +4,40 @@ import numpy as np
 import time
 import re
 
+def is_valid_filename(filename):
+    # Allow any characters except Windows forbidden ones: \ / ? % * : | " < >
+    return re.match(r'^[^\\/?%*:|"<>]+\.(jpg|jpeg|png)$', filename, re.IGNORECASE) is not None
+
 def load_reference_images(ref_dir):
     """Load all reference images from the specified directory."""
     ref_images = {}
     valid_count = 0
+    print(f"\n🔍 Scanning reference directory: {ref_dir}")
+    
     for root, dirs, files in os.walk(ref_dir):
+        print(f"📁 {os.path.relpath(root, ref_dir) or 'Main directory'}: {len(files)} files")
         for filename in files:
             filename = os.fsdecode(filename)
             if is_valid_filename(filename):
                 filepath = os.path.join(root, filename)
                 rel_path = os.path.relpath(filepath, ref_dir)
-                img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+                with open(filepath, 'rb') as f:
+                    img_bytes = f.read()
+                img = cv2.imdecode(np.frombuffer(img_bytes, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
                 if img is not None:
                     ref_images[rel_path] = img
                     valid_count += 1
+                    print(f"✅ Valid: {rel_path}")
+            else:
+                print(f"❌ Invalid: {filename}")
+
+    print(f"\nTotal valid reference images: {valid_count}")
     if valid_count == 0:
-        raise ValueError(f"No valid images found in {ref_dir} or its subdirectories")
+        raise ValueError(
+            f"No valid images found in {ref_dir}\n"
+            "Supported formats: JPG/JPEG/PNG\n"
+            "Example valid name: 'Pikachu_皮卡丘123.jpg'"
+        )
     return ref_images
 
 def detect_and_compute_features(img, orb):
@@ -43,7 +61,9 @@ def recognize_pokemon_card(test_image_path, ref_dir):
     matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
 
     # Load test image
-    test_img = cv2.imread(test_image_path, cv2.IMREAD_GRAYSCALE)
+    with open(test_image_path, 'rb') as f:
+        test_bytes = f.read()
+    test_img = cv2.imdecode(np.frombuffer(test_bytes, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
     if test_img is None:
         return "Error: Could not load test image."
 
@@ -81,6 +101,7 @@ def recognize_pokemon_card(test_image_path, ref_dir):
 import argparse
 
 def is_valid_filename(filename):
+    # Allow any characters except Windows forbidden ones: \ / ? % * : | " < >
     return re.match(r'^[^\\/?%*:|\"<>]+\.(jpg|jpeg|png)$', filename, re.IGNORECASE) is not None
 
 def main():
