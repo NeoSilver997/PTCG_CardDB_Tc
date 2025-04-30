@@ -3,6 +3,7 @@ import os
 import numpy as np
 import time
 import re
+import json
 
 def is_valid_filename(filename):
     # Allow any characters except Windows forbidden ones: \ / ? % * : | " < >
@@ -54,7 +55,7 @@ def match_features(des1, des2, matcher):
     good_matches = [m for m, n in matches if m.distance < 0.75 * n.distance]
     return len(good_matches)
 
-def recognize_pokemon_card(test_image_path, ref_dir):
+def recognize_pokemon_card(test_image_path, ref_dir, output_dir):
     """Recognize a Pokémon card by comparing it to reference images."""
     # Initialize ORB detector
     orb = cv2.ORB_create()
@@ -96,6 +97,37 @@ def recognize_pokemon_card(test_image_path, ref_dir):
         card_name = os.path.splitext(filename)[0]
         results.append(f"{i}. {card_name} ({score} matches) - {os.path.join(ref_dir, filename)}")
     
+    
+    # Create output directory if needed
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Generate base filename
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    base_name = f"{os.path.splitext(os.path.basename(test_image_path))[0]}_{timestamp}"
+    
+    # Save annotated image
+    output_img_path = os.path.join(output_dir, f"{base_name}_annotated.jpg")
+    cv2.imwrite(output_img_path, test_img)
+    
+    # Prepare metadata
+    metadata = {
+        "source_image": os.path.basename(test_image_path),
+        "processing_time": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "matches": [
+            {
+                "card_name": os.path.splitext(filename)[0],
+                "reference_path": os.path.join(ref_dir, filename),
+                "match_score": score
+            } for filename, score in top_matches
+        ],
+        "output_image": output_img_path
+    }
+    
+    # Save JSON metadata
+    output_json_path = os.path.join(output_dir, f"{base_name}_metadata.json")
+    with open(output_json_path, 'w') as f:
+        json.dump(metadata, f, indent=2)
+    
     return "Possible matches:\n" + "\n".join(results)
 
 import argparse
@@ -109,6 +141,8 @@ def main():
     parser = argparse.ArgumentParser(description='Pokémon Card Recognition')
     parser.add_argument('--test_dir', type=str, required=True,
                       help='Path to directory containing test images')
+    parser.add_argument('--output_dir', type=str, required=True,
+                      help='Path to directory for output files')
     parser.add_argument('--ref_dir', type=str, required=False, default=r'.\scripts\card_small_images',
                       help='Path to directory containing reference card images (default: "images")')
     args = parser.parse_args()
@@ -141,7 +175,7 @@ def main():
             print(f"\nProcessing {filename}:")
             try:
                 start_time = time.time()
-                result = recognize_pokemon_card(test_image_path, args.ref_dir)
+                result = recognize_pokemon_card(test_image_path, args.ref_dir, args.output_dir)
                 elapsed = (time.time() - start_time) * 1000
                 print(f"Processing time: {elapsed:.2f}ms")
                 print(result)
