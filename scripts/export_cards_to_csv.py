@@ -36,7 +36,6 @@ def extract_card_fields(html):
         if img and img.has_attr('src'):
             img_url = img['src']
             
-        # Extract web card ID from image URL
         web_card_id = ''
         if img_url:
             match = re.search(r'hk(\d+)\.png$', img_url)
@@ -51,7 +50,6 @@ def extract_card_fields(html):
             if h3:
                 card_type = h3.get_text(strip=True)
             
-        # HP (for Pokemon cards)
         hp = ''
         main_info = soup.find('p', class_='mainInfomation')
         if main_info:
@@ -59,14 +57,17 @@ def extract_card_fields(html):
             if hp_span:
                 hp = hp_span.get_text(strip=True)
 
-        # Attribute/Type
         attribute = ''
         if main_info:
             type_img = main_info.find('img')
             if type_img and 'src' in type_img.attrs:
                 attribute = type_img['src']
 
-        # Skills/Attacks - Split into 2 sets
+        # Initialize ability fields
+        ability_name = ''
+        ability_desc = ''
+        
+        # Skills/Attacks handling with ability separation
         skill1_name = ''
         skill1_damage = ''
         skill1_effect = ''
@@ -77,26 +78,35 @@ def extract_card_fields(html):
         skill_info = soup.find('div', class_='skillInformation')
         if skill_info:
             skills = skill_info.find_all('div', class_='skill')
-            for i, skill in enumerate(skills):
-                if i == 0:  # First skill
-                    name_elem = skill.find('span', class_='skillName')
-                    damage_elem = skill.find('span', class_='skillDamage')
-                    effect_elem = skill.find('p', class_='skillEffect')
-                    
-                    skill1_name = name_elem.get_text(strip=True) if name_elem else ''
-                    skill1_damage = damage_elem.get_text(strip=True) if damage_elem else ''
-                    skill1_effect = effect_elem.get_text(strip=True) if effect_elem else ''
-                    
-                elif i == 1:  # Second skill
-                    name_elem = skill.find('span', class_='skillName')
-                    damage_elem = skill.find('span', class_='skillDamage')
-                    effect_elem = skill.find('p', class_='skillEffect')
-                    
-                    skill2_name = name_elem.get_text(strip=True) if name_elem else ''
-                    skill2_damage = damage_elem.get_text(strip=True) if damage_elem else ''
-                    skill2_effect = effect_elem.get_text(strip=True) if effect_elem else ''
+            current_skill = 0  # Counter for regular skills
             
-        # Weakness, Resistance, Retreat Cost
+            for skill in skills:
+                name_elem = skill.find('span', class_='skillName')
+                if name_elem:
+                    skill_name = name_elem.get_text(strip=True)
+                    effect_elem = skill.find('p', class_='skillEffect')
+                    effect_text = effect_elem.get_text(strip=True) if effect_elem else ''
+                    
+                    # Check if this is an ability
+                    if '[特性]' in skill_name:
+                        ability_name = skill_name.replace('[特性]', '').strip()
+                        ability_desc = effect_text
+                    else:
+                        # This is a regular skill
+                        damage_elem = skill.find('span', class_='skillDamage')
+                        damage = damage_elem.get_text(strip=True) if damage_elem else ''
+                        
+                        if current_skill == 0:
+                            skill1_name = skill_name
+                            skill1_damage = damage
+                            skill1_effect = effect_text
+                        elif current_skill == 1:
+                            skill2_name = skill_name
+                            skill2_damage = damage
+                            skill2_effect = effect_text
+                        current_skill += 1
+
+        # Other fields remain the same
         weakness = ''
         resistance = ''
         retreat_cost = ''
@@ -113,7 +123,6 @@ def extract_card_fields(html):
             if retreat_td:
                 retreat_cost = retreat_td.get_text(strip=True)
 
-        # Other fields remain the same
         collector = ''
         collector_span = soup.select_one('.collectorNumber')
         if collector_span:
@@ -134,13 +143,16 @@ def extract_card_fields(html):
         if info_section:
             pokemon_info = info_section.get_text(strip=True)
 
-        # Subtypes handling
+        # Enhanced subtypes handling
         subtypes = []
         if 'ex' in name.lower():
             subtypes.append('ex')
+        if '太晶' in name or (skill1_name and '太晶' in skill1_name) or (skill2_name and '太晶' in skill2_name):
+            subtypes.append('太晶')
 
         return [
             name, evolution_stage, web_card_id, img_url, card_type, hp, attribute,
+            ability_name, ability_desc,  # New ability fields
             skill1_name, skill1_damage, skill1_effect,
             skill2_name, skill2_damage, skill2_effect,
             weakness, resistance, retreat_cost,
@@ -149,7 +161,7 @@ def extract_card_fields(html):
         ]
     except Exception as e:
         print(f"Error processing HTML: {str(e)}", file=sys.stderr)
-        return [''] * 21  # Return empty strings for all fields
+        return [''] * 23  # Updated number of fields
 
 def main():
     if not os.path.exists(HTML_DIR):
@@ -177,6 +189,7 @@ def main():
             writer = csv.writer(f)
             writer.writerow([
                 'Name', 'EvolutionStage', 'WebCardID', 'ImageURL', 'CardType', 'HP', 'Attribute',
+                'Ability', 'AbilityDesc',  # New ability columns
                 'Skill1Name', 'Skill1Damage', 'Skill1Effect',
                 'Skill2Name', 'Skill2Damage', 'Skill2Effect',
                 'Weakness', 'Resistance', 'RetreatCost',
