@@ -7,6 +7,16 @@ import re
 HTML_DIR = r'c:\Users\schan15\SCCode\PTCG_CardDB_Tc\html_pages\SV8a'
 OUTPUT_CSV = 'cards_output_sv8a.csv'
 
+def get_energy_type_from_url(url):
+    """Extract energy type name from image URL"""
+    if not url:
+        return ''
+    # Match patterns like 'mark/twhk_type_grass.png' or similar
+    match = re.search(r'(\w+)\.png$', url)
+    if match:
+        return match.group(1)
+    return ''
+
 def extract_card_fields(html):
     try:
         try:
@@ -57,11 +67,12 @@ def extract_card_fields(html):
             if hp_span:
                 hp = hp_span.get_text(strip=True)
 
+        # Attribute/Type
         attribute = ''
         if main_info:
             type_img = main_info.find('img')
             if type_img and 'src' in type_img.attrs:
-                attribute = type_img['src']
+                attribute = get_energy_type_from_url(type_img['src'])
 
         # Initialize ability fields
         ability_name = ''
@@ -106,22 +117,40 @@ def extract_card_fields(html):
                             skill2_effect = effect_text
                         current_skill += 1
 
-        # Other fields remain the same
+        # Weakness, Resistance, Retreat Cost with energy images
         weakness = ''
+        weakness_type = ''
         resistance = ''
+        resistance_type = ''
         retreat_cost = ''
+        
         sub_info = soup.find('div', class_='subInformation')
         if sub_info:
+            # Weakness handling
             weak_td = sub_info.find('td', class_='weakpoint')
-            resist_td = sub_info.find('td', class_='resist')
-            retreat_td = sub_info.find('td', class_='escape')
-            
             if weak_td:
-                weakness = weak_td.get_text(strip=True)
+                weak_img = weak_td.find('img')
+                if weak_img and weak_img.has_attr('src'):
+                    weakness_type = get_energy_type_from_url(weak_img['src'])
+                weak_text = weak_td.find('span', class_='number')
+                if weak_text:
+                    weakness = weak_text.get_text(strip=True)
+
+            # Resistance handling
+            resist_td = sub_info.find('td', class_='resist')
             if resist_td:
-                resistance = resist_td.get_text(strip=True)
+                resist_img = resist_td.find('img')
+                if resist_img and resist_img.has_attr('src'):
+                    resistance_type = get_energy_type_from_url(resist_img['src'])
+                resist_text = resist_td.find('span', class_='number')
+                if resist_text:
+                    resistance = resist_text.get_text(strip=True)
+
+            # Retreat Cost handling
+            retreat_td = sub_info.find('td', class_='escape')
             if retreat_td:
-                retreat_cost = retreat_td.get_text(strip=True)
+                retreat_imgs = retreat_td.find_all('img')
+                retreat_cost = str(len(retreat_imgs)) if retreat_imgs else '0'
 
         collector = ''
         collector_span = soup.select_one('.collectorNumber')
@@ -152,16 +181,18 @@ def extract_card_fields(html):
 
         return [
             name, evolution_stage, web_card_id, img_url, card_type, hp, attribute,
-            ability_name, ability_desc,  # New ability fields
+            ability_name, ability_desc,
             skill1_name, skill1_damage, skill1_effect,
             skill2_name, skill2_damage, skill2_effect,
-            weakness, resistance, retreat_cost,
+            weakness, weakness_type,  # Now returns just the energy type name
+            resistance, resistance_type,  # Now returns just the energy type name
+            retreat_cost,
             collector, expansion, illustrator, pokemon_info,
             ','.join(subtypes)
         ]
     except Exception as e:
         print(f"Error processing HTML: {str(e)}", file=sys.stderr)
-        return [''] * 23  # Updated number of fields
+        return [''] * 25  # Updated number of fields
 
 def main():
     if not os.path.exists(HTML_DIR):
@@ -189,10 +220,12 @@ def main():
             writer = csv.writer(f)
             writer.writerow([
                 'Name', 'EvolutionStage', 'WebCardID', 'ImageURL', 'CardType', 'HP', 'Attribute',
-                'Ability', 'AbilityDesc',  # New ability columns
+                'Ability', 'AbilityDesc',
                 'Skill1Name', 'Skill1Damage', 'Skill1Effect',
                 'Skill2Name', 'Skill2Damage', 'Skill2Effect',
-                'Weakness', 'Resistance', 'RetreatCost',
+                'Weakness', 'WeaknessType',  # Updated column name
+                'Resistance', 'ResistanceType',  # Updated column name
+                'RetreatCost',
                 'CollectorNumber', 'Expansion', 'Illustrator', 'PokemonInfo',
                 'Subtypes'
             ])
