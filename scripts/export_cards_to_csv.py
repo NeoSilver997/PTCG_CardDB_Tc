@@ -17,6 +17,19 @@ def get_energy_type_from_url(url):
         return match.group(1)
     return ''
 
+def get_skill_energy_cost(skill_elem):
+    """Extract energy types from skill cost"""
+    energy_costs = []
+    cost_container = skill_elem.find('span', class_='skillCost')
+    if cost_container:
+        energy_imgs = cost_container.find_all('img')
+        for img in energy_imgs:
+            if img.has_attr('src'):
+                energy_type = get_energy_type_from_url(img['src'])
+                if energy_type:
+                    energy_costs.append(energy_type)
+    return ','.join(energy_costs) if energy_costs else ''
+
 def extract_card_fields(html):
     try:
         try:
@@ -82,9 +95,11 @@ def extract_card_fields(html):
         skill1_name = ''
         skill1_damage = ''
         skill1_effect = ''
+        skill1_cost = ''  # New field
         skill2_name = ''
         skill2_damage = ''
         skill2_effect = ''
+        skill2_cost = ''  # New field
         
         skill_info = soup.find('div', class_='skillInformation')
         if skill_info:
@@ -106,15 +121,19 @@ def extract_card_fields(html):
                         # This is a regular skill
                         damage_elem = skill.find('span', class_='skillDamage')
                         damage = damage_elem.get_text(strip=True) if damage_elem else ''
+                        # Get energy cost
+                        energy_cost = get_skill_energy_cost(skill)
                         
                         if current_skill == 0:
                             skill1_name = skill_name
                             skill1_damage = damage
                             skill1_effect = effect_text
+                            skill1_cost = energy_cost
                         elif current_skill == 1:
                             skill2_name = skill_name
                             skill2_damage = damage
                             skill2_effect = effect_text
+                            skill2_cost = energy_cost
                         current_skill += 1
 
         # Weakness, Resistance, Retreat Cost with energy images
@@ -182,8 +201,8 @@ def extract_card_fields(html):
         return [
             name, evolution_stage, web_card_id, img_url, card_type, hp, attribute,
             ability_name, ability_desc,
-            skill1_name, skill1_damage, skill1_effect,
-            skill2_name, skill2_damage, skill2_effect,
+            skill1_name, skill1_cost, skill1_damage, skill1_effect,  # Added skill1_cost
+            skill2_name, skill2_cost, skill2_damage, skill2_effect,  # Added skill2_cost
             weakness, weakness_type,  # Now returns just the energy type name
             resistance, resistance_type,  # Now returns just the energy type name
             retreat_cost,
@@ -192,7 +211,7 @@ def extract_card_fields(html):
         ]
     except Exception as e:
         print(f"Error processing HTML: {str(e)}", file=sys.stderr)
-        return [''] * 25  # Updated number of fields
+        return [''] * 27  # Updated number of fields
 
 def main():
     if not os.path.exists(HTML_DIR):
@@ -221,8 +240,8 @@ def main():
             writer.writerow([
                 'Name', 'EvolutionStage', 'WebCardID', 'ImageURL', 'CardType', 'HP', 'Attribute',
                 'Ability', 'AbilityDesc',
-                'Skill1Name', 'Skill1Damage', 'Skill1Effect',
-                'Skill2Name', 'Skill2Damage', 'Skill2Effect',
+                'Skill1Name', 'Skill1Cost', 'Skill1Damage', 'Skill1Effect',  # Added Skill1Cost
+                'Skill2Name', 'Skill2Cost', 'Skill2Damage', 'Skill2Effect',  # Added Skill2Cost
                 'Weakness', 'WeaknessType',  # Updated column name
                 'Resistance', 'ResistanceType',  # Updated column name
                 'RetreatCost',
