@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 import sys
 import re
 
-HTML_DIR = r'c:\Users\schan15\SCCode\PTCG_CardDB_Tc\html_pages\SV8a'
-OUTPUT_CSV = 'cards_output_sv8a.csv'
+HTML_DIR = r'c:\Users\schan15\SCCode\PTCG_CardDB_Tc\html_pages'
+OUTPUT_CSV = 'cards_output_all.csv'  # Changed name to reflect all cards
 
 def get_energy_type_from_url(url):
     """Extract energy type name from image URL"""
@@ -30,7 +30,20 @@ def get_skill_energy_cost(skill_elem):
                     energy_costs.append(energy_type)
     return ','.join(energy_costs) if energy_costs else ''
 
-def extract_card_fields(html):
+def get_expansion_code_from_folder(file_path):
+    """Extract expansion code from folder path"""
+    folder = os.path.basename(os.path.dirname(file_path))
+    return folder
+
+def clean_text_for_csv(text):
+    """Clean and escape text for CSV"""
+    if not text:
+        return ''
+    # Replace newlines with space and remove multiple spaces
+    cleaned = ' '.join(text.replace('\n', '<br/>').replace('\r', '<br/>').split())
+    return cleaned
+
+def extract_card_fields(html, file_path):
     try:
         try:
             soup = BeautifulSoup(html, 'lxml')
@@ -198,54 +211,81 @@ def extract_card_fields(html):
         if '太晶' in name or (skill1_name and '太晶' in skill1_name) or (skill2_name and '太晶' in skill2_name):
             subtypes.append('太晶')
 
+        # Get expansion code from folder
+        expansion_code = get_expansion_code_from_folder(file_path)
+
+        # Clean all text fields for CSV
+        name = clean_text_for_csv(name)
+        evolution_stage = clean_text_for_csv(evolution_stage)
+        card_type = clean_text_for_csv(card_type)
+        ability_name = clean_text_for_csv(ability_name)
+        ability_desc = clean_text_for_csv(ability_desc)
+        skill1_name = clean_text_for_csv(skill1_name)
+        skill1_effect = clean_text_for_csv(skill1_effect)
+        skill2_name = clean_text_for_csv(skill2_name)
+        skill2_effect = clean_text_for_csv(skill2_effect)
+        pokemon_info = clean_text_for_csv(pokemon_info)
+        expansion = clean_text_for_csv(expansion)
+        illustrator = clean_text_for_csv(illustrator)
+
         return [
             name, evolution_stage, web_card_id, img_url, card_type, hp, attribute,
             ability_name, ability_desc,
-            skill1_name, skill1_cost, skill1_damage, skill1_effect,  # Added skill1_cost
-            skill2_name, skill2_cost, skill2_damage, skill2_effect,  # Added skill2_cost
-            weakness, weakness_type,  # Now returns just the energy type name
-            resistance, resistance_type,  # Now returns just the energy type name
+            skill1_name, skill1_cost, skill1_damage, skill1_effect,
+            skill2_name, skill2_cost, skill2_damage, skill2_effect,
+            weakness, weakness_type,
+            resistance, resistance_type,
             retreat_cost,
-            collector, expansion, illustrator, pokemon_info,
+            collector, expansion, expansion_code, illustrator, pokemon_info,  # Added expansion_code
             ','.join(subtypes)
         ]
     except Exception as e:
         print(f"Error processing HTML: {str(e)}", file=sys.stderr)
-        return [''] * 27  # Updated number of fields
+        return [''] * 28  # Updated number of fields
+
+def process_html_directory(directory):
+    """Process all HTML files in a directory and its subdirectories"""
+    rows = []
+    for root, dirs, files in os.walk(directory):
+        for fname in files:
+            if fname.endswith('.html'):
+                file_path = os.path.join(root, fname)
+                try:
+                    with open(file_path, encoding='utf-8') as f:
+                        html = f.read()
+                    fields = extract_card_fields(html, file_path)  # Pass file_path to get expansion code
+                    # Add expansion folder name for reference
+                    expansion_folder = os.path.basename(root)
+                    print(f"Processing: [{expansion_folder}] {fname} - Name: {fields[0]}")
+                    rows.append(fields)
+                except Exception as e:
+                    print(f"Error processing {file_path}: {str(e)}", file=sys.stderr)
+    return rows
 
 def main():
     if not os.path.exists(HTML_DIR):
         print(f"Error: Directory not found: {HTML_DIR}", file=sys.stderr)
         return
 
-    rows = []
     try:
-        for fname in os.listdir(HTML_DIR):
-            if fname.endswith('.html'):
-                file_path = os.path.join(HTML_DIR, fname)
-                try:
-                    with open(file_path, encoding='utf-8') as f:
-                        html = f.read()
-                    fields = extract_card_fields(html)
-                    print(f"Processing: {fname} - Name: {fields[0]}")
-                    rows.append(fields)
-                except Exception as e:
-                    print(f"Error processing {fname}: {str(e)}", file=sys.stderr)
+        # Process all HTML files in HTML_DIR and its subdirectories
+        rows = process_html_directory(HTML_DIR)
 
+        # Create output directory if it doesn't exist
         output_dir = os.path.dirname(os.path.abspath(OUTPUT_CSV))
         os.makedirs(output_dir, exist_ok=True)
 
         with open(OUTPUT_CSV, 'w', newline='', encoding='utf-8-sig') as f:
-            writer = csv.writer(f)
+            writer = csv.writer(f, quoting=csv.QUOTE_ALL)  # Quote all fields to handle special characters
             writer.writerow([
                 'Name', 'EvolutionStage', 'WebCardID', 'ImageURL', 'CardType', 'HP', 'Attribute',
                 'Ability', 'AbilityDesc',
-                'Skill1Name', 'Skill1Cost', 'Skill1Damage', 'Skill1Effect',  # Added Skill1Cost
-                'Skill2Name', 'Skill2Cost', 'Skill2Damage', 'Skill2Effect',  # Added Skill2Cost
-                'Weakness', 'WeaknessType',  # Updated column name
-                'Resistance', 'ResistanceType',  # Updated column name
+                'Skill1Name', 'Skill1Cost', 'Skill1Damage', 'Skill1Effect',
+                'Skill2Name', 'Skill2Cost', 'Skill2Damage', 'Skill2Effect',
+                'Weakness', 'WeaknessType',
+                'Resistance', 'ResistanceType',
                 'RetreatCost',
-                'CollectorNumber', 'Expansion', 'Illustrator', 'PokemonInfo',
+                'CollectorNumber', 'Expansion', 'ExpansionCode', 'Illustrator', 'PokemonInfo',  # Added ExpansionCode
                 'Subtypes'
             ])
             writer.writerows(rows)
