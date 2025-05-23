@@ -175,12 +175,25 @@ def extract_card_data(html_path):
     card_data['Subtypes'] = ', '.join(subtypes)
     # Image URL and Web Card ID from file name
     base = os.path.basename(html_path)
-    match = re.match(r'(\d+)_', base)
+    match = re.match(r'(\\d+)_', base)
     if match:
+        card_data['Web_Card_ID'] = match.group(1)
         card_data['Number'] = match.group(1)
-    card_data['Image_URL'] = ''  # Could be constructed if needed
-    card_data['Web_Card_ID'] = ''  # Could be extracted if needed
-    card_data['Card_URL'] = ''  # Could be constructed if needed
+    # Try to reconstruct Card_URL and Image_URL if possible
+    if card_data['Web_Card_ID']:
+        card_data['Card_URL'] = f"https://asia.pokemon-card.com/hk/card-search/detail/{card_data['Web_Card_ID']}/"
+        card_data['Image_URL'] = f"https://asia.pokemon-card.com/hk/card-img/hk000{card_data['Web_Card_ID']}.png"
+    # [特性] (Ability)
+    ability = ''
+    ability_elem = soup.find('span', class_='ability')
+    if ability_elem:
+        ability = ability_elem.text.strip()
+    else:
+        # Sometimes ability is in skillInformation as a separate block
+        ability_block = soup.find('div', class_='abilityBlock')
+        if ability_block:
+            ability = ability_block.text.strip()
+    card_data['\u3010\u7279\u6027\u3011'] = ability
     return card_data
 
 def insert_card(conn, card_data):

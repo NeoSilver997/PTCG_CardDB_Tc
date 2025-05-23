@@ -523,9 +523,196 @@ def match_features(des1, des2, matcher):
         # Apply Lowe's ratio test
         good_matches = [m for m, n in matches if m.distance < 0.75 * n.distance]
         return len(good_matches)
-    except cv2.error:
-        # Handle case where descriptors don't match properly
+    except Exception as e:
+        # print(f"Error during feature matching: {str(e)}")
         return 0
+
+def match_features_with_location(kp1, des1, kp2, des2, img1_shape, matcher, min_match_count=10):
+    """Match descriptors, calculate homography, and return good matches count and bounding box."""
+    if des1 is None or des2 is None or len(des1) < 2 or len(des2) < 2:
+        return 0, None
+    
+    try:
+        matches = matcher.knnMatch(des1, des2, k=2)
+        # Apply Lowe's ratio test
+        good_matches = []
+        for m, n in matches:
+            if m.distance < 0.75 * n.distance:
+                good_matches.append(m)
+        
+        coords = None
+        if len(good_matches) >= min_match_count:
+            # Extract location of good matches
+            src_pts = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+            dst_pts = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+            
+            # Find homography
+            M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+            
+            if M is not None:
+                # Get corners of the reference image
+                h, w = img1_shape[:2]
+                pts = np.float32([[0, 0], [0, h-1], [w-1, h-1], [w-1, 0]]).reshape(-1, 1, 2)
+                
+                # Transform corners to scene image
+                dst = cv2.perspectiveTransform(pts, M)
+                
+                # Get bounding box coordinates
+                x_coords = [pt[0][0] for pt in dst]
+                y_coords = [pt[0][1] for pt in dst]
+                x1, y1 = int(min(x_coords)), int(min(y_coords))
+                x2, y2 = int(max(x_coords)), int(max(y_coords))
+                coords = (x1, y1, x2, y2)
+        
+        return len(good_matches), coords
+    except Exception as e:
+        # print(f"Error during feature matching: {str(e)}")
+        return len(good_matches) if 'good_matches' in locals() else 0, None
+
+def find_best_match(target_kp, target_des, target_img_shape, ref_images, matcher, verbose=False):
+    """Find the best matching reference image for the target image."""
+    best_match = None
+    max_matches = 0
+    best_coords = None
+    
+    # Use ThreadPoolExecutor for parallel matching
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # Prepare futures for matching against each reference image
+        future_to_ref = {
+            executor.submit(
+                match_features_with_location, 
+                ref_data['keypoints'], 
+                ref_data['descriptors'], 
+                target_kp, 
+                target_des, 
+                ref_data['image'].shape, 
+                matcher
+            ): ref_path
+            for ref_path, ref_data in ref_images.items()
+            if ref_data.get('descriptors') is not None
+        }
+        
+        match_results = []
+        for future in concurrent.futures.as_completed(future_to_ref):
+            ref_path = future_to_ref[future]
+            try:
+                num_matches, coords = future.result()
+                if num_matches > 0:
+                    match_results.append({'path': ref_path, 'matches': num_matches, 'coords': coords})
+            except Exception as e:
+                if verbose:
+                    print(f"⚠️ Error matching {ref_path}: {str(e)}")
+    
+    # Sort results by number of matches in descending order
+    match_results.sort(key=lambda x: x['matches'], reverse=True)
+    
+    if match_results:
+        best_match_info = match_results[0]
+        best_match = best_match_info['path']
+        max_matches = best_match_info['matches']
+        best_coords = best_match_info['coords']
+        
+        if verbose:
+            print(f"  Top 5 matches:")
+            for i, result in enumerate(match_results[:5]):
+                coords_str = f" [x:{result['coords'][0]}-{result['coords'][2]} y:{result['coords'][1]}-{result['coords'][3]}]" if result['coords'] else ""
+                print(f"    {i+1}. {result['path']} ({result['matches']} matches){coords_str}")
+    
+    return best_match, max_matches, best_coords
+
+def process_target_image(target_path, ref_images, orb, matcher, output_dir=None, verbose=False, min_matches=10):
+    """Process a single target image to find the best match."""
+    start_time = time.time()
+    target_filename = os.path.basename(target_path)
+    print(f"\nProcessing target image: {target_filename}")
+    
+    try:
+        # Read target image as binary first
+        with open(target_path, 'rb') as f:
+            img_bytes = f.read()
+        target_img_color = cv2.imdecode(np.frombuffer(img_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
+        if target_img_color is None:
+            print(f"⚠️ Could not decode target image: {target_filename}")
+            return None
+            
+        target_img_gray = cv2.cvtColor(target_img_color, cv2.COLOR_BGR2GRAY)
+        target_kp, target_des = detect_and_compute_features(target_img_gray, orb)
+        
+        if target_des is None or len(target_kp) < 2:
+            print(f"⚠️ Not enough features found in target image: {target_filename}")
+            return None
+            
+        # Find the best match
+        best_match_path, num_matches, coords = find_best_match(
+            target_kp, target_des, target_img_gray.shape, ref_images, matcher, verbose
+        )
+        
+        end_time = time.time()
+        processing_time = end_time - start_time
+        
+        result_data = {
+            'target_image': target_filename,
+            'processing_time': round(processing_time, 2),
+            'best_match': None,
+            'match_count': 0,
+            'location': None,
+            'metadata': None
+        }
+        
+        print(f"\nResults for {target_filename}:")
+        print(f"  Processing time: {processing_time:.2f} seconds")
+        
+        if best_match_path and num_matches >= min_matches:
+            ref_data = ref_images[best_match_path]
+            metadata = ref_data.get('metadata')
+            card_name = metadata.get('name', 'Unknown Card') if metadata else os.path.splitext(os.path.basename(best_match_path))[0]
+            expansion = metadata.get('expansion', 'N/A') if metadata else 'N/A'
+            number = metadata.get('number', 'N/A') if metadata else 'N/A'
+            
+            coords_str = f" [x:{coords[0]}-{coords[2]} y:{coords[1]}-{coords[3]}]" if coords else ""
+            print(f"  ✅ Best Match: {card_name} ({expansion}/{number}) ({num_matches} matches){coords_str}")
+            print(f"     Reference: {best_match_path}")
+            
+            result_data['best_match'] = best_match_path
+            result_data['match_count'] = num_matches
+            result_data['metadata'] = metadata
+            if coords:
+                result_data['location'] = {
+                    'x1': coords[0], 
+                    'y1': coords[1], 
+                    'x2': coords[2], 
+                    'y2': coords[3]
+                }
+            
+            # Draw bounding box if coordinates are found and output directory is specified
+            if coords and output_dir:
+                output_path = os.path.join(output_dir, f"match_{target_filename}")
+                # Draw the bounding box on the color image
+                x1, y1, x2, y2 = coords
+                cv2.rectangle(target_img_color, (x1, y1), (x2, y2), (0, 255, 0), 3)
+                # Add text label
+                label = f"{card_name} ({num_matches} matches)"
+                cv2.putText(target_img_color, label, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                
+                try:
+                    # Use imencode to handle potential path issues
+                    is_success, buffer = cv2.imencode(os.path.splitext(output_path)[1], target_img_color)
+                    if is_success:
+                        with open(output_path, 'wb') as f:
+                            f.write(buffer)
+                        print(f"  💾 Saved annotated image to: {output_path}")
+                    else:
+                        print(f"⚠️ Could not encode annotated image for saving: {output_path}")
+                except Exception as e:
+                    print(f"⚠️ Error saving annotated image {output_path}: {str(e)}")
+        else:
+            print(f"  ❌ No confident match found (best had {num_matches} matches, required {min_matches})")
+            
+        return result_data
+        
+    except Exception as e:
+        print(f"❌ Error processing target image {target_filename}: {str(e)}")
+        return None
 
 def process_single_card(card_img, ref_images, orb, matcher):
     """Process a single card image through the matching pipeline."""
@@ -544,7 +731,7 @@ def process_single_card(card_img, ref_images, orb, matcher):
         
         for filename, ref_data in batch:
             ref_des = ref_data['descriptors']
-            num_matches = match_features(test_des, ref_des, matcher)
+            num_matches = match_features(ref_des, test_des, matcher)
             if num_matches > 0:  # Only add if there are matches
                 batch_matches.append((filename, num_matches, ref_data.get('metadata')))
         
@@ -774,9 +961,9 @@ def main():
         cleanup_old_caches(cache_dir, max_age_days=30, verbose=verbose)
     
     # Set default directories if not provided
-    ref_dir = normalize_path(args.ref_dir, script_dir) if args.ref_dir else normalize_path(os.path.join(script_dir, "card_images"))
+    ref_dir = normalize_path(args.ref_dir, script_dir) if args.ref_dir else normalize_path(os.path.join(script_dir, "card_small_images"))
     test_dir = normalize_path(args.test_dir, script_dir) if args.test_dir else normalize_path(os.path.join(parent_dir, "test_images"))
-    output_dir = normalize_path(args.output_dir, script_dir) if args.output_dir else None
+    output_dir = normalize_path(args.output_dir, script_dir) if args.output_dir else normalize_path(os.path.join(parent_dir, "output"))
     
     # Debug output to show resolved paths
     print(f"\n🔍 Resolved paths:")
