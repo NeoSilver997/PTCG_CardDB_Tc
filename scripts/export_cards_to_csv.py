@@ -5,7 +5,8 @@ import sys
 import re
 
 HTML_DIR = r'c:\Users\schan15\SCCode\PTCG_CardDB_Tc\html_pages'
-OUTPUT_CSV = 'cards_output_all.csv'  # Changed name to reflect all cards
+HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages'
+OUTPUT_CSV = 'cards_output_alla.csv'  # Changed name to reflect all cards
 
 def get_energy_type_from_url(url):
     """Extract energy type name from image URL"""
@@ -188,6 +189,11 @@ def extract_card_fields(html, file_path):
         collector_span = soup.select_one('.collectorNumber')
         if collector_span:
             collector = collector_span.get_text(strip=True)
+        
+        regulation_mark = ''
+        regulation_span = soup.select_one('.alpha')
+        if regulation_span:
+            regulation_mark = regulation_span.get_text(strip=True)
             
         expansion = ''
         exp_link = soup.select_one('.expansionLinkColumn a')
@@ -227,6 +233,7 @@ def extract_card_fields(html, file_path):
         pokemon_info = clean_text_for_csv(pokemon_info)
         expansion = clean_text_for_csv(expansion)
         illustrator = clean_text_for_csv(illustrator)
+        regulation_mark = clean_text_for_csv(regulation_mark)
 
         return [
             name, evolution_stage, web_card_id, img_url, card_type, hp, attribute,
@@ -236,7 +243,7 @@ def extract_card_fields(html, file_path):
             weakness, weakness_type,
             resistance, resistance_type,
             retreat_cost,
-            collector, expansion, expansion_code, illustrator, pokemon_info,  # Added expansion_code
+            collector,regulation_mark, expansion, expansion_code, illustrator, pokemon_info,  # Added expansion_code
             ','.join(subtypes)
         ]
     except Exception as e:
@@ -285,7 +292,7 @@ def main():
                 'Weakness', 'WeaknessType',
                 'Resistance', 'ResistanceType',
                 'RetreatCost',
-                'CollectorNumber', 'Expansion', 'ExpansionCode', 'Illustrator', 'PokemonInfo',  # Added ExpansionCode
+                'CollectorNumber','Mark', 'Expansion', 'ExpansionCode', 'Illustrator', 'PokemonInfo',  # Added ExpansionCode
                 'Subtypes'
             ])
             writer.writerows(rows)
