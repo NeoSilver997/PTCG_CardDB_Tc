@@ -5,8 +5,8 @@ import sys
 import re
 
 HTML_DIR = r'c:\Users\schan15\SCCode\PTCG_CardDB_Tc\html_pages'
-HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages\sv9'
-OUTPUT_CSV = 'cards_output_all_sv9.csv'  # Changed name to reflect all cards
+HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages'
+OUTPUT_CSV = 'cards_output_allc.csv'  # Changed name to reflect all cards
 
 def get_energy_type_from_url(url):
     """Extract energy type name from image URL"""
@@ -185,19 +185,32 @@ def extract_card_fields(html, file_path):
                 retreat_imgs = retreat_td.find_all('img')
                 retreat_cost = str(len(retreat_imgs)) if retreat_imgs else '0'
 
-        collector = ''
-        collector_span = soup.select_one('.collectorNumber')
-        if collector_span:
-            collector1 = collector_span.get_text(strip=True)
         
-        collector = collector1.split('/')[0]
-        rarity = 'normal'  # Default rarity
-        if int(collector1.split('/')[1]) < int(collector) :
-            rarity = "high"
+        collector = ''
+        try:
+            collector_span = soup.select_one('.collectorNumber')
+            if collector_span:
+                collector1 = collector_span.get_text(strip=True)
+            
+            collector = collector1.split('/')[0]
+            rarity = 'normal'  # Default rarity
+            if (collector1.split('/')[1].isnumeric()) :
+                if int(collector1.split('/')[1]) < int(collector) :
+                    rarity = "high"
+            else:
+                rarity = 'promo'  # If the second part is not numeric, treat as promo
+        except Exception as e:  
+            print(f"Error extracting collector number: {str(e)}", file=sys.stderr)
+            rarity = 'n/a'
+
         regulation_mark = ''
-        regulation_span = soup.select_one('.alpha')
-        if regulation_span:
-            regulation_mark = regulation_span.get_text(strip=True)
+        try:
+            regulation_span = soup.select_one('.regulationMark')
+            if regulation_span:
+                regulation_mark = regulation_span.get_text(strip=True)
+        except Exception as e:
+            print(f"Error extracting regulation mark: {str(e)}", file=sys.stderr)
+            regulation_mark = 'n/a' 
             
         expansion = ''
         exp_link = soup.select_one('.expansionLinkColumn a')
