@@ -5,8 +5,8 @@ import sys
 import re
 
 HTML_DIR = r'c:\Users\schan15\SCCode\PTCG_CardDB_Tc\html_pages'
-HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages'
-OUTPUT_CSV = 'cards_output_alla.csv'  # Changed name to reflect all cards
+HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages\sv9'
+OUTPUT_CSV = 'cards_output_all_sv9.csv'  # Changed name to reflect all cards
 
 def get_energy_type_from_url(url):
     """Extract energy type name from image URL"""
@@ -188,8 +188,12 @@ def extract_card_fields(html, file_path):
         collector = ''
         collector_span = soup.select_one('.collectorNumber')
         if collector_span:
-            collector = collector_span.get_text(strip=True)
+            collector1 = collector_span.get_text(strip=True)
         
+        collector = collector1.split('/')[0]
+        rarity = 'normal'  # Default rarity
+        if int(collector1.split('/')[1]) < int(collector) :
+            rarity = "high"
         regulation_mark = ''
         regulation_span = soup.select_one('.alpha')
         if regulation_span:
@@ -243,7 +247,7 @@ def extract_card_fields(html, file_path):
             weakness, weakness_type,
             resistance, resistance_type,
             retreat_cost,
-            collector,regulation_mark, expansion, expansion_code, illustrator, pokemon_info,  # Added expansion_code
+            collector,rarity,regulation_mark, expansion, expansion_code, illustrator, pokemon_info,  # Added expansion_code
             ','.join(subtypes)
         ]
     except Exception as e:
@@ -292,7 +296,7 @@ def main():
                 'Weakness', 'WeaknessType',
                 'Resistance', 'ResistanceType',
                 'RetreatCost',
-                'CollectorNumber','Mark', 'Expansion', 'ExpansionCode', 'Illustrator', 'PokemonInfo',  # Added ExpansionCode
+                'CollectorNumber','Rarity','Mark', 'Expansion', 'ExpansionCode', 'Illustrator', 'PokemonInfo',  # Added ExpansionCode
                 'Subtypes'
             ])
             writer.writerows(rows)
