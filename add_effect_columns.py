@@ -160,7 +160,7 @@ class CardEffectClassifier:
             primary_types.add('傷害指示物')
         if any(word in effect for word in ['道具', '物品']) and any(word in effect for word in ['消除', '移除']):
             primary_types.add('道具消除')
-        if any(word in effect for word in ['查看', '看']):
+        if any(word in effect for word in ['查看', '看']) and '搜索效果' not in primary_types:
             primary_types.add('情報收集')
         if any(word in effect for word in ['昏厥']) and any(word in effect for word in ['若', '當']):
             primary_types.add('昏厥條件')
@@ -190,7 +190,7 @@ class CardEffectClassifier:
             primary_types.add('特殊能量')
         if any(word in effect for word in ['放回牌庫並重洗', '各自從牌庫抽出']) and '支援者卡' in effect:
             primary_types.add('牌庫操作')
-        if any(word in effect for word in ['在上個自己的回合', '必須']) and '才可使用' in effect:
+        if any(word in effect for word in ['在上個自己的回合', '在上個對手的回合', '在上個回合', '在上回合']) and '才可使用' in effect:
             primary_types.add('連續技')
         if any(word in effect for word in ['選擇1個', '持有的招式']) and '無法使用' in effect:
             primary_types.add('招式封鎖')
