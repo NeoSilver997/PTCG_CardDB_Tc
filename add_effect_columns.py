@@ -88,22 +88,29 @@ class CardEffectClassifier:
         elif '硬幣' in effect and '擲' in effect:
             primary_types.add('硬幣判定')
 
-        elif any(word in effect for word in ['在自己的回合時，物品', '物品卡']):
-            primary_types.add('物品效果')
+        # elif any(word in effect for word in ['在自己的回合時，物品', '物品卡']):
+        #     primary_types.add('物品效果')
 
         elif any(word in effect for word in ['切換', '互換']):
             primary_types.add('切換效果')
 
         elif any(word in effect for word in ['恢復', '回復']) and any(word in effect for word in ['HP', '傷害']):
             primary_types.add('回復效果')
-
+        elif any(word in effect for word in ['這張卡不會陷入特殊狀態']):
+            primary_types.add('特殊進化')
         elif any(word in effect for word in ['不會受到', '無法使用']) and '傷害' in effect:
             primary_types.add('傷害防禦')
+        elif any(word in effect for word in ['放回手牌']) :
+            primary_types.add('放回手牌')
+        elif any(word in effect for word in ['丟棄']) and '自己' in effect:
+            primary_types.add('自己丟棄')
+        elif '全部放回牌庫並重洗' in effect:    
+            primary_types.add('牌庫重洗') 
 
 
         # Special effect classifications
         if '丟棄' in effect and '對手' in effect:
-            special_types.add('丟棄效果')
+            special_types.add('丟棄對手')
 
         if '撤退' in effect:
             special_types.add('撤退效果')
