@@ -119,130 +119,130 @@ class CardEffectClassifier:
             else:
                 primary_types.add('抽卡效果')
 
-        elif any(word in effect for word in ['從', '選擇']) and any(word in effect for word in ['牌庫', '棄牌區']):
+        if any(word in effect for word in ['從', '選擇']) and any(word in effect for word in ['牌庫', '棄牌區']):
             primary_types.add('搜索效果')
 
-        elif any(word in effect for word in ['附上', '附加', '移除']) and '能量' in effect:
+        if any(word in effect for word in ['附上', '附加', '移除']) and '能量' in effect:
             primary_types.add('能量操作')
 
-        elif any(word in effect for word in ['造成', '給予']) and '傷害' in effect:
+        if any(word in effect for word in ['造成', '給予']) and '傷害' in effect:
             primary_types.add('傷害效果')
 
-        elif any(word in effect for word in ['中毒', '燃燒', '麻痺', '睡眠', '混亂']):
+        if any(word in effect for word in ['中毒', '燃燒', '麻痺', '睡眠', '混亂']):
             primary_types.add('狀態異常')
 
-        elif '硬幣' in effect and '擲' in effect:
+        if '硬幣' in effect and '擲' in effect:
             primary_types.add('硬幣判定')
 
-        # elif any(word in effect for word in ['在自己的回合時，物品', '物品卡']):
+        # if any(word in effect for word in ['在自己的回合時，物品', '物品卡']):
         #     primary_types.add('物品效果')
 
-        elif any(word in effect for word in ['切換', '互換']):
+        if any(word in effect for word in ['切換', '互換']):
             primary_types.add('切換效果')
 
-        elif any(word in effect for word in ['恢復', '回復']) and any(word in effect for word in ['HP', '傷害']):
+        if any(word in effect for word in ['恢復', '回復']) and any(word in effect for word in ['HP', '傷害']):
             primary_types.add('回復效果')
-        elif any(word in effect for word in ['這張卡不會陷入特殊狀態']):
+        if any(word in effect for word in ['這張卡不會陷入特殊狀態']):
             primary_types.add('特殊進化')
-        elif any(word in effect for word in ['不會受到', '無法使用']) and '傷害' in effect:
+        if any(word in effect for word in ['不會受到', '無法使用']) and '傷害' in effect:
             primary_types.add('傷害防禦')
-        elif any(word in effect for word in ['放回手牌']) :
+        if any(word in effect for word in ['放回手牌']) :
             primary_types.add('放回手牌')
-        elif any(word in effect for word in ['丟棄']) and '自己' in effect:
+        if any(word in effect for word in ['丟棄']) and '自己' in effect:
             primary_types.add('自己丟棄')
-        elif '全部放回牌庫並重洗' in effect:    
+        if '重洗' in effect:    
             primary_types.add('牌庫重洗') 
-        elif any(word in effect for word in ['若', '在這個回合', '在上個', '在下個']) and any(word in effect for word in ['增加', '點傷害']):
+        if any(word in effect for word in ['若', '在這個回合', '在上個', '在下個']) and any(word in effect for word in ['增加', '點傷害']):
             primary_types.add('條件傷害')
-        elif any(word in effect for word in ['恢復', '回復']) and any(word in effect for word in ['特殊狀態', '狀態']):
+        if any(word in effect for word in ['恢復', '回復']) and any(word in effect for word in ['特殊狀態', '狀態']):
             primary_types.add('狀態恢復')
-        elif '傷害指示物' in effect and any(word in effect for word in ['放置', '增加']):
+        if '傷害指示物' in effect and any(word in effect for word in ['放置', '增加']):
             primary_types.add('傷害指示物')
-        elif any(word in effect for word in ['道具', '物品']) and any(word in effect for word in ['消除', '移除']):
+        if any(word in effect for word in ['道具', '物品']) and any(word in effect for word in ['消除', '移除']):
             primary_types.add('道具消除')
-        elif any(word in effect for word in ['查看', '看']):
+        if any(word in effect for word in ['查看', '看']):
             primary_types.add('情報收集')
-        elif any(word in effect for word in ['昏厥']) and any(word in effect for word in ['若', '當']):
+        if any(word in effect for word in ['昏厥']) and any(word in effect for word in ['若', '當']):
             primary_types.add('昏厥條件')
-        elif any(word in effect for word in ['進化', '2階進化', '跳過']) and '進化' in effect:
+        if any(word in effect for word in ['進化', '2階進化', '跳過']) and '進化' in effect:
             primary_types.add('進化支援')
-        elif '撤退' in effect and any(word in effect for word in ['增加', '所需的能量']):
+        if '撤退' in effect and any(word in effect for word in ['增加', '所需的能量']):
             primary_types.add('撤退干擾')
-        elif '獎賞卡' in effect:
+        if '獎賞卡' in effect:
             primary_types.add('獎賞控制') 
-        elif any(word in effect for word in ['這隻寶可夢也受到', '自己也受到']) and '傷害' in effect:
+        if any(word in effect for word in ['這隻寶可夢也受到', '自己也受到']) and '傷害' in effect:
             primary_types.add('反噬傷害')
-        elif any(word in effect for word in ['備戰寶可夢也受到', '備戰區不計算']) and '傷害' in effect:
+        if any(word in effect for word in ['備戰寶可夢也受到', '備戰區不計算']) and '傷害' in effect:
             primary_types.add('連鎖傷害')
-        elif any(word in effect for word in ['傷害不計算', '不計算弱點', '不計算抵抗力']) and any(word in effect for word in ['弱點', '抵抗力', '附加效果']):
+        if any(word in effect for word in ['傷害不計算', '不計算弱點', '不計算抵抗力']) and any(word in effect for word in ['弱點', '抵抗力', '附加效果']):
             primary_types.add('傷害無視')
-        elif any(word in effect for word in ['下個自己的回合', '無法使用招式']):
+        if any(word in effect for word in ['下個自己的回合', '無法使用招式']):
             primary_types.add('使用限制')
-        elif any(word in effect for word in ['若', '如果']) and any(word in effect for word in ['失敗', '則這個招式失敗']):
+        if any(word in effect for word in ['若', '如果']) and any(word in effect for word in ['失敗', '則這個招式失敗']):
             primary_types.add('條件失敗')
-        elif any(word in effect for word in ['從自己的手牌選擇', '選擇1張能量卡']) and '附於' in effect:
+        if any(word in effect for word in ['從自己的手牌選擇', '選擇1張能量卡']) and '附於' in effect:
             primary_types.add('能量附著')
-        elif any(word in effect for word in ['灼傷', '將對手的戰鬥寶可夢']) and any(word in effect for word in ['灼傷', '中毒', '燃燒']) and '若' in effect:
+        if any(word in effect for word in ['灼傷', '將對手的戰鬥寶可夢']) and any(word in effect for word in ['灼傷', '中毒', '燃燒']) and '若' in effect:
             primary_types.add('狀態施加')
-        elif any(word in effect for word in ['備戰寶可夢的數量', '數量×']) and '傷害' in effect:
+        if any(word in effect for word in ['備戰寶可夢的數量', '數量×']) and '傷害' in effect:
             primary_types.add('備戰傷害加成')
-        elif any(word in effect for word in ['視為提供', '重新附於']) and '能量' in effect:
+        if any(word in effect for word in ['視為提供', '重新附於']) and '能量' in effect:
             primary_types.add('特殊能量')
-        elif any(word in effect for word in ['放回牌庫並重洗', '各自從牌庫抽出']) and '支援者卡' in effect:
+        if any(word in effect for word in ['放回牌庫並重洗', '各自從牌庫抽出']) and '支援者卡' in effect:
             primary_types.add('牌庫操作')
-        elif any(word in effect for word in ['在上個自己的回合', '必須']) and '才可使用' in effect:
+        if any(word in effect for word in ['在上個自己的回合', '必須']) and '才可使用' in effect:
             primary_types.add('連續技')
-        elif any(word in effect for word in ['選擇1個', '持有的招式']) and '無法使用' in effect:
+        if any(word in effect for word in ['選擇1個', '持有的招式']) and '無法使用' in effect:
             primary_types.add('招式封鎖')
-        elif any(word in effect for word in ['若自己', '只需要']) and '能量即可使用' in effect:
+        if any(word in effect for word in ['若自己', '只需要']) and '能量即可使用' in effect:
             primary_types.add('能量條件')
-        elif any(word in effect for word in ['若對手', '將能量卡附於']) and '對手的回合結束' in effect:
+        if any(word in effect for word in ['若對手', '將能量卡附於']) and '對手的回合結束' in effect:
             primary_types.add('附著干擾')
-        elif any(word in effect for word in ['最大HP', '+50', '+70', '+30']):
+        if any(word in effect for word in ['最大HP', '+50', '+70', '+30']):
             primary_types.add('HP提升')
-        elif any(word in effect for word in ['場上所有', '最大HP各']) and '競技場' in effect:
+        if any(word in effect for word in ['場上所有', '最大HP各']) and '競技場' in effect:
             primary_types.add('場地增幅')
-        elif any(word in effect for word in ['不會受到', '效果的影響']):
+        if any(word in effect for word in ['不會受到', '效果的影響']):
             primary_types.add('效果免疫')
-        elif any(word in effect for word in ['寶可夢道具', '將其丟棄']) and '選擇最多' in effect:
+        if any(word in effect for word in ['寶可夢道具', '將其丟棄']) and '選擇最多' in effect:
             primary_types.add('道具移除')
-        elif any(word in effect for word in ['選擇1個', '持有的招式']) and '作為這個招式使用' in effect:
+        if any(word in effect for word in ['選擇1個', '持有的招式']) and '作為這個招式使用' in effect:
             primary_types.add('招式複製')
-        elif '將對手的戰鬥寶可夢【灼傷】' in effect and not any(word in effect for word in ['若', '沒有', '失敗']):
+        if '將對手的戰鬥寶可夢【灼傷】' in effect and not any(word in effect for word in ['若', '沒有', '失敗']):
             primary_types.add('簡單灼傷') 
-        elif any(word in effect for word in ['弱點全部消除', '弱點消除']):
+        if any(word in effect for word in ['弱點全部消除', '弱點消除']):
             primary_types.add('弱點消除')
-        elif any(word in effect for word in ['受到對手的寶可夢招式的傷害', '傷害「-30」點']) and any(word in effect for word in ['【鋼】', '【鬥】']):
+        if any(word in effect for word in ['受到對手的寶可夢招式的傷害', '傷害「-30」點']) and any(word in effect for word in ['【鋼】', '【鬥】']):
             primary_types.add('屬性防禦')
-        elif any(word in effect for word in ['使用招式所需的能量', '各增加1個']):
+        if any(word in effect for word in ['使用招式所需的能量', '各增加1個']):
             primary_types.add('能量需求增加')
-        elif any(word in effect for word in ['棄牌區', '張數×']) and '傷害' in effect:
+        if any(word in effect for word in ['棄牌區', '張數×']) and '傷害' in effect:
             primary_types.add('棄牌區傷害加成')
-        elif any(word in effect for word in ['無法從手牌使出物品卡', '物品卡']):
+        if any(word in effect for word in ['無法從手牌使出物品卡', '不能使用物品卡']):
             primary_types.add('物品卡封鎖')
-        elif any(word in effect for word in ['自己的所有寶可夢', '受到對手的寶可夢招式的傷害']) and '包含新上場' in effect:
+        if any(word in effect for word in ['自己的所有寶可夢', '受到對手的寶可夢招式的傷害']) and '包含新上場' in effect:
             primary_types.add('全體防禦')
-        elif any(word in effect for word in ['無法撤退']):
+        if any(word in effect for word in ['無法撤退']):
             primary_types.add('撤退封鎖')
-        elif any(word in effect for word in ['離開戰鬥場前無法使用', '無法使用']):
+        if any(word in effect for word in ['離開戰鬥場前無法使用', '無法使用']):
             primary_types.add('招式鎖定')
-        elif any(word in effect for word in ['從自己的棄牌區抽出', '放回牌庫並重洗']) and '能量卡' in effect:
+        if any(word in effect for word in ['從自己的棄牌區抽出', '放回牌庫並重洗']) and '能量卡' in effect:
             primary_types.add('能量回收')
-        elif any(word in effect for word in ['道具卡可不限張數', '道具卡附於']):
-            primary_types.add('道具使用規則') 
-        elif any(word in effect for word in ['受到招式的傷害', '傷害「-']) and any(word in effect for word in ['-10', '-20', '-30']) and not any(word in effect for word in ['【鋼】', '【鬥】', '所有寶可夢']):
+        # if any(word in effect for word in ['道具卡可不限張數', '道具卡附於', '物品卡可不限張數']):
+        #     primary_types.add('道具使用規則') 
+        if any(word in effect for word in ['受到招式的傷害', '傷害「-']) and any(word in effect for word in ['-10', '-20', '-30']) and not any(word in effect for word in ['【鋼】', '【鬥】', '所有寶可夢']):
             primary_types.add('傷害減免')
-        elif any(word in effect for word in ['支援者卡只可使用', '支援者卡只可使用1張']):
+        if any(word in effect for word in ['支援者卡只可使用', '支援者卡只可使用1張']):
             primary_types.add('支援者限制')
-        elif any(word in effect for word in ['放回各自的牌庫並重洗', '全部放回牌庫並重洗']):
+        if any(word in effect for word in ['放回各自的牌庫並重洗', '全部放回牌庫並重洗']):
             primary_types.add('牌庫重洗')
-        elif any(word in effect for word in ['的所有「', '的寶可夢」']) and '傷害「-30」點' in effect:
+        if any(word in effect for word in ['的所有「', '的寶可夢」']) and '傷害「-30」點' in effect:
             primary_types.add('特定寶可夢防禦')
-        elif any(word in effect for word in ['弱點改為', '弱點以']):
+        if any(word in effect for word in ['弱點改為', '弱點以']):
             primary_types.add('弱點改變')
-        elif any(word in effect for word in ['對手選擇對手自己的', '作為這個招式使用']):
+        if any(word in effect for word in ['對手選擇對手自己的', '作為這個招式使用']):
             primary_types.add('招式複製對手')
-        elif any(word in effect for word in ['傷害「-80', '傷害「-100']):
+        if any(word in effect for word in ['傷害「-80', '傷害「-100']):
             primary_types.add('高額傷害減免') 
 
 
@@ -268,9 +268,11 @@ class CardEffectClassifier:
         if any(word in effect for word in ['特殊狀態', '狀態']) and any(word in effect for word in ['不會', '不能', '無法']):
             special_types.add('狀態免疫')
 
-        # If no classification found, mark as other
+        # If no classification found, mark as other (but skip for rule modifications)
         if not primary_types and not special_types:
-            primary_types.add('其他效果')
+            # Skip "其他效果" for rule-modifying effects like item card usage rules
+            if not any(word in effect for word in ['可不限張數使用', '可使用', '只能使用']):
+                primary_types.add('其他效果')
 
         return primary_types, special_types
 
