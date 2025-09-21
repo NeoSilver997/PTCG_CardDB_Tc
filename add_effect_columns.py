@@ -113,13 +113,13 @@ class CardEffectClassifier:
         special_types = set()
 
         # Primary effect classifications
-        if any(word in effect for word in ['抽取', '抽出', '加入手牌']) and '牌庫' in effect:
-            if any(num in effect for num in ['4', '5', '6']):
+        if any(word in effect for word in ['抽取', '抽出', '加入手牌', '抽卡']) and '牌庫' in effect:
+            if any(pattern in effect for pattern in ['抽4張', '抽5張', '抽6張', '抽出4張', '抽出5張', '抽出6張']):
                 special_types.add('大量抽卡')
             else:
                 primary_types.add('抽卡效果')
 
-        if any(word in effect for word in ['從', '選擇']) and any(word in effect for word in ['牌庫', '棄牌區']):
+        if any(word in effect for word in ['從', '選擇']) and any(word in effect for word in ['牌庫', '棄牌區']) and '抽卡' not in effect:
             primary_types.add('搜索效果')
 
         if any(word in effect for word in ['附上', '附加', '移除']) and '能量' in effect:
@@ -176,8 +176,8 @@ class CardEffectClassifier:
             primary_types.add('連鎖傷害')
         if any(word in effect for word in ['傷害不計算', '不計算弱點', '不計算抵抗力']) and any(word in effect for word in ['弱點', '抵抗力', '附加效果']):
             primary_types.add('傷害無視')
-        if any(word in effect for word in ['下個自己的回合', '無法使用招式']):
-            primary_types.add('使用限制')
+        if any(word in effect for word in ['下個自己的回合']) and '無法使用招式' in effect:
+            primary_types.add('不能連續使用')
         if any(word in effect for word in ['若', '如果']) and any(word in effect for word in ['失敗', '則這個招式失敗']):
             primary_types.add('條件失敗')
         if any(word in effect for word in ['從自己的手牌選擇', '選擇1張能量卡']) and '附於' in effect:
