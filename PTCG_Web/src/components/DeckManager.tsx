@@ -40,11 +40,13 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
   }, []);
 
   const loadDecks = () => {
+    if (typeof window === 'undefined') return;
     const savedDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
     setDecks(savedDecks);
   };
 
   const deleteDeck = (deckId: string) => {
+    if (typeof window === 'undefined') return;
     if (confirm('Are you sure you want to delete this deck?')) {
       const updatedDecks = decks.filter(deck => deck.id !== deckId);
       setDecks(updatedDecks);
@@ -53,6 +55,7 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
   };
 
   const duplicateDeck = (deck: Deck) => {
+    if (typeof window === 'undefined') return;
     const newDeck = {
       ...deck,
       id: `deck_${Date.now()}`,

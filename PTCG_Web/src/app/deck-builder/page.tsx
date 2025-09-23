@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { PTCGCard } from '../../types/card';
 import { Deck } from '../../types/deck';
-import DeckBuilder from '../../components/DeckBuilder';
-import DeckManager from '../../components/DeckManager';
+
+// Dynamically import components to prevent SSR issues
+const DeckBuilder = dynamic(() => import('../../components/DeckBuilder'), { ssr: false });
+const DeckManager = dynamic(() => import('../../components/DeckManager'), { ssr: false });
 
 export default function DeckBuilderPage() {
   const [cards, setCards] = useState<PTCGCard[]>([]);

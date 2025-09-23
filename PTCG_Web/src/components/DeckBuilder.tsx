@@ -284,10 +284,27 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
 
   // Save deck
   const saveDeck = () => {
+    // Check if we're on the client side
+    if (typeof window === 'undefined') return;
+
+    // Recalculate counts before saving
+    const totalCards = currentDeck.cards.reduce((sum, card) => sum + card.quantity, 0);
+    const pokemonCards = currentDeck.cards.filter(card => card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon'));
+    const trainerCards = currentDeck.cards.filter(card => card.CardType.includes('物品') || card.CardType.includes('支援') || card.CardType.includes('場地'));
+    const energyCards = currentDeck.cards.filter(card => card.CardType.includes('能量'));
+
+    const pokemonCount = pokemonCards.reduce((sum, card) => sum + card.quantity, 0);
+    const trainerCount = trainerCards.reduce((sum, card) => sum + card.quantity, 0);
+    const energyCount = energyCards.reduce((sum, card) => sum + card.quantity, 0);
+
     const deckToSave = {
       ...currentDeck,
       id: currentDeck.id || `deck_${Date.now()}`,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      pokemonCount,
+      trainerCount,
+      energyCount,
+      totalCards
     };
 
     // Save to localStorage
@@ -515,7 +532,13 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
               <Sword className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Deck Builder</h1>
+              <input
+                type="text"
+                value={currentDeck.name}
+                onChange={(e) => setCurrentDeck(prev => ({ ...prev, name: e.target.value }))}
+                className="text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white px-2 py-1 rounded"
+                placeholder="Enter deck name..."
+              />
               <p className="text-gray-600">Build and manage your Pokemon TCG decks</p>
             </div>
           </div>

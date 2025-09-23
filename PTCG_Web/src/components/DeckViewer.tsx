@@ -11,7 +11,10 @@ import {
   EyeOff,
   Filter,
   Search,
-  Zap
+  Zap,
+  Maximize,
+  Minimize,
+  ZoomOut
 } from 'lucide-react';
 import { Deck, DeckCard } from '../types/deck';
 
@@ -26,6 +29,8 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'pokemon' | 'trainer' | 'energy'>('all');
   const [showImages, setShowImages] = useState(true);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [zoomOut, setZoomOut] = useState(false);
 
   // Filter cards based on search and type
   const filteredCards = deck.cards.filter(card => {
@@ -138,8 +143,8 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl w-full h-full max-w-6xl max-h-[95vh] overflow-hidden shadow-2xl flex flex-col">
+    <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 ${isFullScreen ? 'p-0' : ''}`}>
+      <div className={`bg-white rounded-xl w-full h-full overflow-hidden shadow-2xl flex flex-col ${isFullScreen ? 'max-w-none max-h-none rounded-none' : 'max-w-6xl max-h-[95vh]'}`}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
           <div>
@@ -171,6 +176,28 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
             </div>
           </div>
           <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setZoomOut(!zoomOut)}
+              className={`p-2 rounded-lg transition-colors ${
+                zoomOut 
+                  ? 'bg-purple-500 text-white hover:bg-purple-600' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              title={zoomOut ? 'Normal View' : 'Zoom Out View'}
+            >
+              <ZoomOut className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => setIsFullScreen(!isFullScreen)}
+              className={`p-2 rounded-lg transition-colors ${
+                isFullScreen 
+                  ? 'bg-indigo-500 text-white hover:bg-indigo-600' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              title={isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+            >
+              {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+            </button>
             <button
               onClick={() => setShowStats(!showStats)}
               className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
@@ -285,11 +312,11 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
         <div className="flex-1 overflow-y-auto">
           {showImages ? (
             <div className="p-6">
-              <div className="grid grid-cols-4 gap-4">
+              <div className={`grid gap-4 ${zoomOut ? 'grid-cols-8' : 'grid-cols-4'}`}>
                 {filteredCards.map(card => (
                   <div
                     key={card.CardID}
-                    className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                    className={`bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow ${zoomOut ? 'transform scale-75' : ''}`}
                   >
                     <div className="aspect-[5/7] bg-gray-100 overflow-hidden relative">
                       {card.ImageURL ? (
@@ -310,8 +337,8 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
                         {card.quantity}x
                       </div>
                     </div>
-                    <div className="p-3">
-                      <h3 className="font-medium text-sm text-gray-900 line-clamp-2 mb-1">{card.Name}</h3>
+                    <div className={`p-3 ${zoomOut ? 'p-2' : ''}`}>
+                      <h3 className={`font-medium text-gray-900 line-clamp-2 mb-1 ${zoomOut ? 'text-xs' : 'text-sm'}`}>{card.Name}</h3>
                       <div className="flex items-center justify-between text-xs text-gray-600">
                         <span>{card.CardType}</span>
                         {card.ExpansionCode && <span>{card.ExpansionCode}</span>}
