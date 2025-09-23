@@ -44,10 +44,10 @@ export default function CardItem({ card, onClick }: CardItemProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-gray-200 overflow-hidden"
+      className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200 overflow-hidden hover:scale-105"
     >
       {/* Card Image */}
-      <div className="aspect-[3/4] bg-gray-100 relative">
+      <div className="aspect-[5/7] bg-gray-100 relative min-h-[280px] lg:min-h-[320px] xl:min-h-[360px]">
         {card.ImageURL ? (
           <img
             src={card.ImageURL}
@@ -68,28 +68,28 @@ export default function CardItem({ card, onClick }: CardItemProps) {
 
         {/* Tier Badge */}
         {card.Tier && (
-          <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold ${getTierColor(card.Tier)}`}>
+          <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-sm font-bold ${getTierColor(card.Tier)} shadow-lg`}>
             {card.Tier}
           </div>
         )}
       </div>
 
       {/* Card Info */}
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="font-bold text-gray-900 text-base leading-tight line-clamp-2">
             {card.Name}
           </h3>
           {card.Type && (
-            <span className="text-lg ml-2 flex-shrink-0" title={card.Type}>
+            <span className="text-xl ml-3 flex-shrink-0" title={card.Type}>
               {getTypeIcon(card.Type)}
             </span>
           )}
         </div>
 
-        <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
-          <span>{card.CardType}</span>
-          <span>{card.Rarity}</span>
+        <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+          <span className="font-medium">{card.CardType}</span>
+          <span className="font-medium">{card.Rarity}</span>
         </div>
 
         {/* HP */}
@@ -102,19 +102,19 @@ export default function CardItem({ card, onClick }: CardItemProps) {
 
         {/* Abilities */}
         {card.AbilityStats && card.AbilityStats !== '無' && (
-          <div className="mb-2">
-            <div className="text-xs text-gray-600 mb-1">Abilities:</div>
-            <div className="flex flex-wrap gap-1">
+          <div className="mb-3">
+            <div className="text-sm text-gray-600 mb-2 font-medium">Abilities:</div>
+            <div className="flex flex-wrap gap-2">
               {card.AbilityStats.split(',').slice(0, 2).map((ability, index) => (
                 <span
                   key={index}
-                  className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                  className="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium"
                 >
                   {ability.trim()}
                 </span>
               ))}
               {card.AbilityStats.split(',').length > 2 && (
-                <span className="text-xs text-gray-500">+{card.AbilityStats.split(',').length - 2} more</span>
+                <span className="text-sm text-gray-500 font-medium">+{card.AbilityStats.split(',').length - 2} more</span>
               )}
             </div>
           </div>
@@ -122,13 +122,13 @@ export default function CardItem({ card, onClick }: CardItemProps) {
 
         {/* Effect Types */}
         {(card.PrimaryEffectType || (card.SpecialEffectType && card.SpecialEffectType !== '無')) && (
-          <div className="mb-2">
-            <div className="text-xs text-gray-600 mb-1">Effects:</div>
-            <div className="flex flex-wrap gap-1">
+          <div className="mb-3">
+            <div className="text-sm text-gray-600 mb-2 font-medium">Effects:</div>
+            <div className="flex flex-wrap gap-2">
               {card.PrimaryEffectType && card.PrimaryEffectType.split(',').slice(0, 2).map((effect, index) => (
                 <span
                   key={index}
-                  className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full"
+                  className="inline-block bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium"
                 >
                   {effect.trim()}
                 </span>
@@ -136,7 +136,7 @@ export default function CardItem({ card, onClick }: CardItemProps) {
               {card.SpecialEffectType && card.SpecialEffectType !== '無' && card.SpecialEffectType.split(',').slice(0, 1).map((effect, index) => (
                 <span
                   key={index}
-                  className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full"
+                  className="inline-block bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium"
                 >
                   {effect.trim()}
                 </span>

@@ -45,11 +45,11 @@ export default function SearchFiltersComponent({
   const hasActiveFilters = Object.values(filters).some(value => value !== '');
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <Filter className="h-5 w-5 text-gray-600" />
-          <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+    <div className="bg-white rounded-xl shadow-lg border p-8">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <Filter className="h-6 w-6 text-gray-600" />
+          <h2 className="text-xl font-bold text-gray-900">Filters</h2>
         </div>
         {hasActiveFilters && (
           <button
@@ -62,16 +62,16 @@ export default function SearchFiltersComponent({
         )}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Ability Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
             Ability
           </label>
           <select
             value={filters.ability}
             onChange={(e) => updateFilter('ability', e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Abilities</option>
             {abilities.map((ability) => (
@@ -84,13 +84,13 @@ export default function SearchFiltersComponent({
 
         {/* Effect Type Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
             Effect Type
           </label>
           <select
             value={filters.effectType}
             onChange={(e) => updateFilter('effectType', e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Effect Types</option>
             {effectTypes.map((effect) => (
@@ -103,13 +103,13 @@ export default function SearchFiltersComponent({
 
         {/* Card Type Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
             Card Type
           </label>
           <select
             value={filters.cardType}
             onChange={(e) => updateFilter('cardType', e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Card Types</option>
             {cardTypes.map((type) => (
@@ -122,13 +122,13 @@ export default function SearchFiltersComponent({
 
         {/* Rarity Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
             Rarity
           </label>
           <select
             value={filters.rarity}
             onChange={(e) => updateFilter('rarity', e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Rarities</option>
             {rarities.map((rarity) => (
@@ -141,13 +141,13 @@ export default function SearchFiltersComponent({
 
         {/* Tier Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
             Tier
           </label>
           <select
             value={filters.tier}
             onChange={(e) => updateFilter('tier', e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Tiers</option>
             {tiers.map((tier) => (
@@ -160,13 +160,13 @@ export default function SearchFiltersComponent({
 
         {/* Attribute Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
             Attribute
           </label>
           <select
             value={filters.attribute}
             onChange={(e) => updateFilter('attribute', e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Attributes</option>
             {attributes.map((attribute) => (
