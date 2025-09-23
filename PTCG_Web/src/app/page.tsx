@@ -24,6 +24,10 @@ export default function Home() {
   const [abilities, setAbilities] = useState<AbilityOption[]>([]);
   const [effectTypes, setEffectTypes] = useState<EffectTypeOption[]>([]);
 
+  const isEnergyCard = (card: PTCGCard) => {
+    return card.CardType.includes('能量') || card.CardType.toLowerCase().includes('energy');
+  };
+
   useEffect(() => {
     loadCardData();
   }, []);
@@ -91,13 +95,15 @@ export default function Home() {
   const applyFilters = () => {
     let filtered = cards;
 
-    // Apply search term
+    // Apply search term (exclude energy cards from search)
     if (searchTerm) {
       filtered = filtered.filter(card =>
-        card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.Skill1Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.Skill2Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.AbilityEffect.toLowerCase().includes(searchTerm.toLowerCase())
+        !isEnergyCard(card) && (
+          card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          card.Skill1Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          card.Skill2Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          card.AbilityEffect.toLowerCase().includes(searchTerm.toLowerCase())
+        )
       );
     }
 
@@ -111,8 +117,10 @@ export default function Home() {
     // Apply effect type filter
     if (filters.effectType) {
       filtered = filtered.filter(card =>
-        (card.PrimaryEffectType && card.PrimaryEffectType.includes(filters.effectType)) ||
-        (card.SpecialEffectType && card.SpecialEffectType.includes(filters.effectType))
+        !isEnergyCard(card) && (
+          (card.PrimaryEffectType && card.PrimaryEffectType.includes(filters.effectType)) ||
+          (card.SpecialEffectType && card.SpecialEffectType.includes(filters.effectType))
+        )
       );
     }
 
@@ -123,18 +131,27 @@ export default function Home() {
 
     // Apply rarity filter
     if (filters.rarity) {
-      filtered = filtered.filter(card => card.Rarity === filters.rarity);
+      filtered = filtered.filter(card =>
+        !isEnergyCard(card) && card.Rarity === filters.rarity
+      );
     }
 
     // Apply tier filter
     if (filters.tier) {
-      filtered = filtered.filter(card => card.Tier === filters.tier);
+      filtered = filtered.filter(card =>
+        !isEnergyCard(card) && card.Tier === filters.tier
+      );
     }
 
     // Apply attribute filter
     if (filters.attribute) {
-      filtered = filtered.filter(card => card.Type === filters.attribute);
+      filtered = filtered.filter(card =>
+        !isEnergyCard(card) && card.Type === filters.attribute
+      );
     }
+
+    // Always exclude energy cards from final results
+    filtered = filtered.filter(card => !isEnergyCard(card));
 
     setFilteredCards(filtered);
   };
