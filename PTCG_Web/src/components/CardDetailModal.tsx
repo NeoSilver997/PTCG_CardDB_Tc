@@ -51,6 +51,38 @@ export default function CardDetailModal({
     }
   };
 
+  const renderEnergyCost = (energyCost: string) => {
+    if (!energyCost || energyCost.trim() === '') return null;
+
+    const energyTypes = energyCost.split(',').map(type => type.trim());
+    
+    return (
+      <div className="flex items-center space-x-1">
+        {energyTypes.map((energyType, index) => {
+          const energyImageUrl = `/energy/${energyType}.png`;
+          return (
+            <div
+              key={index}
+              className="w-8 h-8 rounded-full bg-white border border-gray-300 shadow-sm overflow-hidden"
+              title={energyType}
+            >
+              <img
+                src={energyImageUrl}
+                alt={energyType}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to emoji if image fails to load
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML = getTypeIcon(energyType);
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const evolutionChain = useMemo(() => {
     const getEvolutionChain = (currentCard: PTCGCard): PTCGCard[] => {
       console.log('🔄 Evolution Chain Debug for:', currentCard.Name);
@@ -318,40 +350,60 @@ export default function CardDetailModal({
 
               {/* Skill 1 */}
               {(card.Skill1Name || card.Skill1Effect) && (
-                <div className="mb-6 p-6 bg-gray-50 rounded-xl">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900 text-xl">{card.Skill1Name || 'Skill 1'}</h4>
-                    <div className="flex items-center space-x-3 text-base text-gray-600">
-                      {card.Skill1Energy && (
-                        <span>Energy: {card.Skill1Energy}</span>
-                      )}
-                      {card.Skill1Damage && (
-                        <span>Damage: {card.Skill1Damage}</span>
-                      )}
+                <div className="mb-6 p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 text-xl mb-2">{card.Skill1Name || 'Skill 1'}</h4>
+                      <div className="flex items-center space-x-4 text-sm">
+                        {card.Skill1Energy && renderEnergyCost(card.Skill1Energy)}
+                        {card.Skill1Damage && (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-red-600 font-semibold text-lg">💥</span>
+                            <span className="font-bold text-red-600">{card.Skill1Damage}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        Attack
+                      </div>
                     </div>
                   </div>
                   {card.Skill1Effect && (
-                    <p className="text-gray-700 text-base leading-relaxed">{card.Skill1Effect}</p>
+                    <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500">
+                      <p className="text-gray-700 text-base leading-relaxed">{card.Skill1Effect}</p>
+                    </div>
                   )}
                 </div>
               )}
 
               {/* Skill 2 */}
               {(card.Skill2Name || card.Skill2Effect) && (
-                <div className="mb-6 p-6 bg-gray-50 rounded-xl">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900 text-xl">{card.Skill2Name || 'Skill 2'}</h4>
-                    <div className="flex items-center space-x-3 text-base text-gray-600">
-                      {card.Skill2Energy && (
-                        <span>Energy: {card.Skill2Energy}</span>
-                      )}
-                      {card.Skill2Damage && (
-                        <span>Damage: {card.Skill2Damage}</span>
-                      )}
+                <div className="mb-6 p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 text-xl mb-2">{card.Skill2Name || 'Skill 2'}</h4>
+                      <div className="flex items-center space-x-4 text-sm">
+                        {card.Skill2Energy && renderEnergyCost(card.Skill2Energy)}
+                        {card.Skill2Damage && (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-red-600 font-semibold text-lg">💥</span>
+                            <span className="font-bold text-red-600">{card.Skill2Damage}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <div className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        Attack
+                      </div>
                     </div>
                   </div>
                   {card.Skill2Effect && (
-                    <p className="text-gray-700 text-base leading-relaxed">{card.Skill2Effect}</p>
+                    <div className="bg-white p-4 rounded-lg border-l-4 border-purple-500">
+                      <p className="text-gray-700 text-base leading-relaxed">{card.Skill2Effect}</p>
+                    </div>
                   )}
                 </div>
               )}
