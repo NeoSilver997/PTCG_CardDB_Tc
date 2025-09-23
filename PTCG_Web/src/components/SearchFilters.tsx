@@ -346,9 +346,9 @@ export default function SearchFiltersComponent({
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 >
                   <option value="">All Types</option>
-                  {attributeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.value} ({option.count})
+                  {attributes.map((attribute) => (
+                    <option key={attribute} value={attribute}>
+                      {attribute}
                     </option>
                   ))}
                 </select>

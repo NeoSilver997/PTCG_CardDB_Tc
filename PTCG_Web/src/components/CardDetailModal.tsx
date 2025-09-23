@@ -118,6 +118,29 @@ export default function CardDetailModal({
     );
   };
 
+  const renderEnergyIcon = (energyType: string) => {
+    if (!energyType || energyType.trim() === '') return null;
+
+    const energyImageUrl = `/energy/${energyType}.png`;
+    return (
+      <div
+        className="w-8 h-8 rounded-full bg-white border border-gray-300 shadow-sm overflow-hidden inline-block"
+        title={energyType}
+      >
+        <img
+          src={energyImageUrl}
+          alt={energyType}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            // Fallback to emoji if image fails to load
+            e.currentTarget.style.display = 'none';
+            e.currentTarget.parentElement!.innerHTML = getTypeIcon(energyType);
+          }}
+        />
+      </div>
+    );
+  };
+
   const evolutionChain = useMemo(() => {
     const getEvolutionChain = (currentCard: PTCGCard): PTCGCard[] => {
       console.log('🔄 Evolution Chain Debug for:', currentCard.Name);
@@ -239,9 +262,10 @@ export default function CardDetailModal({
             <h2 className="text-3xl font-bold text-gray-900">{card.Name}</h2>
             {card.Type && (
               <span className="text-3xl" title={card.Type}>
-                {getTypeIcon(card.Type)}
+                {renderEnergyCost(card.Type)}
               </span>
             )}
+            {card.Skill1Energy && renderEnergyCost(card.Skill1Energy)}
             {card.Tier && (
               <span className={`px-4 py-2 rounded-full text-base font-semibold ${getTierColor(card.Tier)}`}>
                 {card.Tier}

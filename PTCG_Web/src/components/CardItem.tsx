@@ -41,6 +41,38 @@ export default function CardItem({ card, onClick }: CardItemProps) {
     }
   };
 
+  const renderEnergyCost = (energyCost: string) => {
+    if (!energyCost || energyCost.trim() === '') return null;
+
+    const energyTypes = energyCost.split(',').map(type => type.trim());
+    
+    return (
+      <div className="flex items-center space-x-1">
+        {energyTypes.map((energyType, index) => {
+          const energyImageUrl = `/energy/${energyType}.png`;
+          return (
+            <div
+              key={index}
+              className="w-8 h-8 rounded-full bg-white border border-gray-300 shadow-sm overflow-hidden"
+              title={energyType}
+            >
+              <img
+                src={energyImageUrl}
+                alt={energyType}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to emoji if image fails to load
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML = getTypeIcon(energyType);
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div
       onClick={onClick}
@@ -82,7 +114,7 @@ export default function CardItem({ card, onClick }: CardItemProps) {
           </h3>
           {card.Type && (
             <span className="text-xl ml-3 flex-shrink-0" title={card.Type}>
-              {getTypeIcon(card.Type)}
+              {renderEnergyCost(card.Type)}
             </span>
           )}
         </div>
