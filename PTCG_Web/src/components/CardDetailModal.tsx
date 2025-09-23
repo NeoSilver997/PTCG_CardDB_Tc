@@ -10,6 +10,7 @@ interface CardDetailModalProps {
   onClose: () => void;
   onCardClick: (card: PTCGCard) => void;
   allCards: PTCGCard[]; // Add allCards prop for evolution chain
+  onAddToDeck?: (card: PTCGCard, quantity?: number) => void; // Add deck functionality
 }
 
 export default function CardDetailModal({
@@ -17,11 +18,26 @@ export default function CardDetailModal({
   relatedCards,
   onClose,
   onCardClick,
-  allCards
+  allCards,
+  onAddToDeck
 }: CardDetailModalProps) {
   const [detailedCards, setDetailedCards] = useState<PTCGCard[]>([]);
   const [versionPage, setVersionPage] = useState(0);
+  const [selectedVersion, setSelectedVersion] = useState<PTCGCard>(card);
+  const [addQuantity, setAddQuantity] = useState(1);
   const versionsPerPage = 8;
+
+  // Helper function to check if a card is basic energy
+  const isBasicEnergy = (card: PTCGCard): boolean => {
+    const basicEnergyNames = [
+      '草能量', '炎能量', '水能量', '雷能量', '超能量', '鬥能量', '惡能量', '鋼能量', '妖精能量',
+      'Grass Energy', 'Fire Energy', 'Water Energy', 'Lightning Energy', 'Psychic Energy', 
+      'Fighting Energy', 'Darkness Energy', 'Metal Energy', 'Fairy Energy'
+    ];
+    
+    return card.CardType.includes('能量') && 
+           (basicEnergyNames.includes(card.Name) || card.Name.includes('基本') || card.Name.includes('Basic'));
+  };
 
   // Load detailed card data for version information
   useEffect(() => {
@@ -321,10 +337,10 @@ export default function CardDetailModal({
           {/* Card Image and Basic Info */}
           <div className="xl:w-2/5 p-8">
             <div className="aspect-[5/7] bg-gray-100 rounded-xl overflow-hidden mb-6 shadow-lg">
-              {card.ImageURL ? (
+              {selectedVersion.ImageURL ? (
                 <img
-                  src={card.ImageURL}
-                  alt={card.Name}
+                  src={selectedVersion.ImageURL}
+                  alt={selectedVersion.Name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.currentTarget.src = '/placeholder-card.svg';
@@ -442,6 +458,59 @@ export default function CardDetailModal({
                   </div>
                 )}
               </div>
+
+              {/* Add to Deck Controls */}
+              {onAddToDeck && (
+                <div className="pt-4 border-t">
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Add to Deck</h3>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <label htmlFor="quantity" className="text-sm font-medium text-gray-700">
+                          Quantity:
+                        </label>
+                        <select
+                          id="quantity"
+                          value={addQuantity}
+                          onChange={(e) => setAddQuantity(Number(e.target.value))}
+                          className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value={1}>1</option>
+                          <option value={2}>2</option>
+                          <option value={3}>3</option>
+                          <option value={4}>4</option>
+                          {isBasicEnergy(selectedVersion) && (
+                            <>
+                              <option value={5}>5</option>
+                              <option value={6}>6</option>
+                              <option value={7}>7</option>
+                              <option value={8}>8</option>
+                              <option value={9}>9</option>
+                              <option value={10}>10</option>
+                              <option value={15}>15</option>
+                              <option value={20}>20</option>
+                            </>
+                          )}
+                        </select>
+                      </div>
+                      <button
+                        onClick={() => onAddToDeck(selectedVersion, addQuantity)}
+                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <span>Add to Deck</span>
+                      </button>
+                    </div>
+                    <div className="text-xs text-gray-600 mt-2">
+                      {selectedVersion.ExpansionCode && (
+                        <div>Adding: {selectedVersion.Name} ({selectedVersion.ExpansionCode})</div>
+                      )}
+                      {isBasicEnergy(selectedVersion) && (
+                        <div className="text-green-600 font-medium">⚡ Basic Energy - No limit (unlike other cards)</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Additional Details */}
               {(card.ExpansionName || card.ExpansionCode || card.Illustrator || card.Artist || card.SpecialTag) && (
@@ -642,8 +711,13 @@ export default function CardDetailModal({
                 {/* Version Grid with Pagination */}
                 <div className="grid grid-cols-4 gap-4 mb-4">
                   {/* Current card version */}
-                  <div className="relative group cursor-pointer" onClick={() => onCardClick(card)}>
-                    <div className="aspect-[5/7] bg-blue-100 border-2 border-blue-500 rounded-lg overflow-hidden">
+                  <div 
+                    className={`relative group cursor-pointer ${selectedVersion.CardID === card.CardID ? 'ring-2 ring-blue-500' : ''}`} 
+                    onClick={() => setSelectedVersion(card)}
+                  >
+                    <div className={`aspect-[5/7] bg-blue-100 border-2 rounded-lg overflow-hidden ${
+                      selectedVersion.CardID === card.CardID ? 'border-blue-500' : 'border-blue-300 hover:border-blue-400'
+                    }`}>
                       {card.OriginalImageURL || card.ImageURL ? (
                         <img
                           src={card.OriginalImageURL || card.ImageURL}
@@ -662,8 +736,11 @@ export default function CardDetailModal({
                         </div>
                       )}
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-white text-xs py-1 px-2 text-center font-medium">
+                    <div className={`absolute bottom-0 left-0 right-0 text-white text-xs py-1 px-2 text-center font-medium ${
+                      selectedVersion.CardID === card.CardID ? 'bg-blue-500' : 'bg-blue-400'
+                    }`}>
                       {card.ExpansionCode || 'Current'}
+                      {selectedVersion.CardID === card.CardID && <span className="ml-1">✓</span>}
                     </div>
                   </div>
 
@@ -671,10 +748,12 @@ export default function CardDetailModal({
                   {otherVersions.slice(versionPage * (versionsPerPage - 1), (versionPage + 1) * (versionsPerPage - 1)).map((versionCard, index) => (
                     <div
                       key={versionCard.CardID}
-                      className="relative group cursor-pointer"
-                      onClick={() => onCardClick(versionCard)}
+                      className={`relative group cursor-pointer ${selectedVersion.CardID === versionCard.CardID ? 'ring-2 ring-blue-500' : ''}`}
+                      onClick={() => setSelectedVersion(versionCard)}
                     >
-                      <div className="aspect-[5/7] bg-gray-100 border-2 border-gray-300 rounded-lg overflow-hidden hover:border-gray-400 transition-colors">
+                      <div className={`aspect-[5/7] bg-gray-100 border-2 rounded-lg overflow-hidden transition-colors ${
+                        selectedVersion.CardID === versionCard.CardID ? 'border-blue-500' : 'border-gray-300 hover:border-gray-400'
+                      }`}>
                         {versionCard.OriginalImageURL || versionCard.ImageURL ? (
                           <img
                             src={versionCard.OriginalImageURL || versionCard.ImageURL}
@@ -693,8 +772,11 @@ export default function CardDetailModal({
                           </div>
                         )}
                       </div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-gray-700 text-white text-xs py-1 px-2 text-center font-medium">
+                      <div className={`absolute bottom-0 left-0 right-0 text-white text-xs py-1 px-2 text-center font-medium ${
+                        selectedVersion.CardID === versionCard.CardID ? 'bg-blue-500' : 'bg-gray-700'
+                      }`}>
                         {versionCard.ExpansionName + "(" + versionCard.ExpansionCode + ") - "+ versionCard.CollectorNumber || `V${versionPage * (versionsPerPage - 1) + index + 2}`}
+                        {selectedVersion.CardID === versionCard.CardID && <span className="ml-1">✓</span>}
                       </div>
                     </div>
                   ))}
@@ -763,15 +845,17 @@ export default function CardDetailModal({
                   {relatedCards.map((relatedCard) => (
                     <div
                       key={relatedCard.CardID}
-                      onClick={() => onCardClick(relatedCard)}
-                      className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-gray-100 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md"
+                      className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-all duration-200 shadow-sm hover:shadow-md group"
                     >
-                      <div className="aspect-[5/7] bg-gray-200 rounded-lg mb-3 overflow-hidden">
+                      <div 
+                        className="aspect-[5/7] bg-gray-200 rounded-lg mb-3 overflow-hidden cursor-pointer"
+                        onClick={() => onCardClick(relatedCard)}
+                      >
                         {relatedCard.ImageURL ? (
                           <img
                             src={relatedCard.ImageURL}
                             alt={relatedCard.Name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">
@@ -779,12 +863,15 @@ export default function CardDetailModal({
                           </div>
                         )}
                       </div>
-                      <h4 className="font-medium text-gray-900 text-sm leading-tight line-clamp-2 mb-2">
+                      <h4 
+                        className="font-medium text-gray-900 text-sm leading-tight line-clamp-2 mb-2 cursor-pointer hover:text-blue-600"
+                        onClick={() => onCardClick(relatedCard)}
+                      >
                         {relatedCard.Name}
                       </h4>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-2">
                         {relatedCard.Tier && (
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getTierColor(relatedCard.Tier)}`}>
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${getTierColor(relatedCard.Tier)}`}>
                             {relatedCard.Tier}
                           </span>
                         )}
@@ -794,6 +881,17 @@ export default function CardDetailModal({
                           </span>
                         )}
                       </div>
+                      {onAddToDeck && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAddToDeck(relatedCard, 1);
+                          }}
+                          className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium py-1.5 px-2 rounded transition-colors"
+                        >
+                          Add to Deck
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

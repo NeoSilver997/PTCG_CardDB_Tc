@@ -31,6 +31,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [abilities, setAbilities] = useState<AbilityOption[]>([]);
   const [effectTypes, setEffectTypes] = useState<EffectTypeOption[]>([]);
+  const [notification, setNotification] = useState<string | null>(null);
 
   const isPokemonCard = (card: PTCGCard) => {
     return card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon');
@@ -235,6 +236,90 @@ export default function Home() {
 
   const handleCardClick = (card: PTCGCard) => {
     setSelectedCard(card);
+  };
+
+  // Helper function to check if a card is basic energy
+  const isBasicEnergy = (card: PTCGCard): boolean => {
+    // Basic energy cards have specific names and are energy type
+    const basicEnergyNames = [
+      '草能量', '炎能量', '水能量', '雷能量', '超能量', '鬥能量', '惡能量', '鋼能量', '妖精能量',
+      'Grass Energy', 'Fire Energy', 'Water Energy', 'Lightning Energy', 'Psychic Energy', 
+      'Fighting Energy', 'Darkness Energy', 'Metal Energy', 'Fairy Energy'
+    ];
+    
+    return card.CardType.includes('能量') && 
+           (basicEnergyNames.includes(card.Name) || card.Name.includes('基本') || card.Name.includes('Basic'));
+  };
+
+  // Get maximum allowed quantity for a card
+  const getMaxQuantity = (card: PTCGCard): number => {
+    return isBasicEnergy(card) ? 99 : 4; // Unlimited basic energy, 4 for others
+  };
+
+  const handleAddToDeck = (card: PTCGCard, quantity: number = 1) => {
+    // Get existing decks from localStorage
+    const existingDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
+    
+    // Get the current/latest deck or create a new one
+    let currentDeck = existingDecks.find((deck: any) => deck.id === 'quick-add') || {
+      id: 'quick-add',
+      name: 'Quick Add Deck',
+      format: 'Standard',
+      description: 'Cards quickly added from card browser',
+      cards: [],
+      totalCards: 0,
+      pokemonCount: 0,
+      trainerCount: 0,
+      energyCount: 0,
+      isValid: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Check if card already exists in deck
+    const existingCardIndex = currentDeck.cards.findIndex((c: any) => c.CardID === card.CardID);
+    const maxQuantity = getMaxQuantity(card);
+    
+    if (existingCardIndex >= 0) {
+      // Update quantity (respecting card-specific limits)
+      const newQuantity = Math.min(currentDeck.cards[existingCardIndex].quantity + quantity, maxQuantity);
+      currentDeck.cards[existingCardIndex].quantity = newQuantity;
+    } else {
+      // Add new card to deck
+      const deckCard = { ...card, quantity: Math.min(quantity, maxQuantity) };
+      currentDeck.cards.push(deckCard);
+    }
+
+    // Recalculate deck stats
+    currentDeck.totalCards = currentDeck.cards.reduce((sum: number, c: any) => sum + c.quantity, 0);
+    currentDeck.pokemonCount = currentDeck.cards
+      .filter((c: any) => c.CardType.includes('寶可夢') || c.CardType.toLowerCase().includes('pokemon'))
+      .reduce((sum: number, c: any) => sum + c.quantity, 0);
+    currentDeck.trainerCount = currentDeck.cards
+      .filter((c: any) => c.CardType.includes('物品') || c.CardType.includes('支援') || c.CardType.includes('場地'))
+      .reduce((sum: number, c: any) => sum + c.quantity, 0);
+    currentDeck.energyCount = currentDeck.cards
+      .filter((c: any) => c.CardType.includes('能量'))
+      .reduce((sum: number, c: any) => sum + c.quantity, 0);
+    
+    // Basic validation
+    currentDeck.isValid = currentDeck.totalCards === 60;
+    currentDeck.updatedAt = new Date();
+
+    // Update or add deck to existing decks
+    const deckIndex = existingDecks.findIndex((deck: any) => deck.id === 'quick-add');
+    if (deckIndex >= 0) {
+      existingDecks[deckIndex] = currentDeck;
+    } else {
+      existingDecks.push(currentDeck);
+    }
+
+    // Save to localStorage
+    localStorage.setItem('ptcg_decks', JSON.stringify(existingDecks));
+
+    // Show notification
+    setNotification(`Added ${quantity}x ${card.Name} to Quick Add Deck (${currentDeck.totalCards}/60 cards)`);
+    setTimeout(() => setNotification(null), 3000);
   };
 
   const getRelatedCards = (card: PTCGCard): PTCGCard[] => {
@@ -580,7 +665,15 @@ export default function Home() {
           onClose={() => setSelectedCard(null)}
           onCardClick={handleCardClick}
           allCards={cards}
+          onAddToDeck={handleAddToDeck}
         />
+      )}
+
+      {/* Notification */}
+      {notification && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
+          {notification}
+        </div>
       )}
     </div>
   );

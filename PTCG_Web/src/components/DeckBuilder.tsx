@@ -223,18 +223,29 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
     };
   }, [currentDeck.cards]);
 
+  // Helper function to check if a card is basic energy
+  const isBasicEnergy = (card: PTCGCard): boolean => {    
+    return card.CardType.includes('基本能量卡');
+  };
+
+  // Get maximum allowed quantity for a card
+  const getMaxQuantity = (card: PTCGCard): number => {
+    return isBasicEnergy(card) ? 59 : 4; // Unlimited basic energy, 4 for others
+  };
+
   // Add card to deck
   const addCardToDeck = (card: PTCGCard, quantity: number = 1) => {
     setCurrentDeck(prev => {
       const existingCardIndex = prev.cards.findIndex(c => c.CardID === card.CardID);
+      const maxQuantity = getMaxQuantity(card);
       let newCards: DeckCard[];
 
       if (existingCardIndex >= 0) {
         newCards = [...prev.cards];
-        const newQuantity = Math.min(newCards[existingCardIndex].quantity + quantity, 4);
+        const newQuantity = Math.min(newCards[existingCardIndex].quantity + quantity, maxQuantity);
         newCards[existingCardIndex] = { ...newCards[existingCardIndex], quantity: newQuantity };
       } else {
-        newCards = [...prev.cards, { ...card, quantity: Math.min(quantity, 4) }];
+        newCards = [...prev.cards, { ...card, quantity: Math.min(quantity, maxQuantity) }];
       }
 
       return {
@@ -310,7 +321,7 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
     deckList += `Format: ${currentDeck.format}\n`;
     deckList += `Total Cards: ${deckValidation.totalCards}\n\n`;
 
-    const pokemonCards = currentDeck.cards.filter(card => card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon'));
+    const pokemonCards = currentDeck.cards.filter(card => card.CardType.includes('寶可夢'));
     const trainerCards = currentDeck.cards.filter(card => card.CardType.includes('物品') || card.CardType.includes('支援') || card.CardType.includes('場地'));
     const energyCards = currentDeck.cards.filter(card => card.CardType.includes('能量'));
 
@@ -681,6 +692,7 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
                               onAdd={() => addCardToDeck(card)}
                               onRemove={() => removeCardFromDeck(card.CardID)}
                               onView={() => setSelectedCard(card)}
+                              maxQuantity={getMaxQuantity(card)}
                             />
                           ))}
                       </div>
@@ -704,6 +716,7 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
                               onAdd={() => addCardToDeck(card)}
                               onRemove={() => removeCardFromDeck(card.CardID)}
                               onView={() => setSelectedCard(card)}
+                              maxQuantity={getMaxQuantity(card)}
                             />
                           ))}
                       </div>
@@ -727,6 +740,7 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
                               onAdd={() => addCardToDeck(card)}
                               onRemove={() => removeCardFromDeck(card.CardID)}
                               onView={() => setSelectedCard(card)}
+                              maxQuantity={getMaxQuantity(card)}
                             />
                           ))}
                       </div>
@@ -788,9 +802,10 @@ interface DeckCardItemProps {
   onAdd: () => void;
   onRemove: () => void;
   onView: () => void;
+  maxQuantity?: number;
 }
 
-function DeckCardItem({ card, onAdd, onRemove, onView }: DeckCardItemProps) {
+function DeckCardItem({ card, onAdd, onRemove, onView, maxQuantity = 4 }: DeckCardItemProps) {
   return (
     <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
       <div className="flex items-center space-x-3">
@@ -839,8 +854,9 @@ function DeckCardItem({ card, onAdd, onRemove, onView }: DeckCardItemProps) {
         </span>
         <button
           onClick={onAdd}
-          disabled={card.quantity >= 4}
+          disabled={card.quantity >= maxQuantity}
           className="p-1 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          title={maxQuantity > 4 ? `Add (max ${maxQuantity} for basic energy)` : 'Add (max 4)'}
         >
           <Plus className="h-3 w-3" />
         </button>
