@@ -67,24 +67,24 @@ export default function CardDetailModal({
     const maxValue = Math.max(...parsedData.map(item => item.value));
 
     return (
-      <div className="space-y-2">
-        <div className="text-sm font-medium text-gray-700 mb-3">Score Breakdown</div>
+      <div className="space-y-3">
+        <div className="text-lg font-medium text-gray-700 mb-4">Score Breakdown</div>
         {parsedData.map((item, index) => {
           const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
           return (
-            <div key={index} className="flex items-center space-x-3">
-              <div className="w-16 text-xs text-gray-600 font-medium">{item.label}</div>
-              <div className="flex-1 bg-gray-200 rounded-full h-3">
+            <div key={index} className="flex items-center space-x-4">
+              <div className="w-20 text-sm text-gray-600 font-medium">{item.label}</div>
+              <div className="flex-1 bg-gray-200 rounded-full h-4">
                 <div
-                  className="bg-blue-500 h-3 rounded-full transition-all duration-300"
+                  className="bg-blue-500 h-4 rounded-full transition-all duration-300"
                   style={{ width: `${percentage}%` }}
                 ></div>
               </div>
-              <div className="w-8 text-xs text-gray-600 font-medium text-right">{item.value}</div>
+              <div className="w-10 text-sm text-gray-600 font-medium text-right">{item.value}</div>
             </div>
           );
         })}
-        <div className="text-xs text-gray-500 mt-2">
+        <div className="text-sm text-gray-500 mt-3">
           Total Score: {parsedData.reduce((sum, item) => sum + item.value, 0).toFixed(1)}
         </div>
       </div>
@@ -92,35 +92,35 @@ export default function CardDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
+      <div className="bg-white rounded-xl max-w-7xl w-full max-h-[95vh] overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div className="flex items-center space-x-3">
-            <h2 className="text-2xl font-bold text-gray-900">{card.Name}</h2>
+        <div className="flex items-center justify-between p-8 border-b">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-3xl font-bold text-gray-900">{card.Name}</h2>
             {card.Type && (
-              <span className="text-2xl" title={card.Type}>
+              <span className="text-3xl" title={card.Type}>
                 {getTypeIcon(card.Type)}
               </span>
             )}
             {card.Tier && (
-              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getTierColor(card.Tier)}`}>
+              <span className={`px-4 py-2 rounded-full text-base font-semibold ${getTierColor(card.Tier)}`}>
                 {card.Tier}
               </span>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-3 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <X className="h-6 w-6" />
+            <X className="h-7 w-7" />
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row max-h-[calc(90vh-80px)] overflow-y-auto">
+        <div className="flex flex-col xl:flex-row max-h-[calc(95vh-120px)] overflow-y-auto">
           {/* Card Image and Basic Info */}
-          <div className="lg:w-1/3 p-6">
-            <div className="aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden mb-4">
+          <div className="xl:w-2/5 p-8">
+            <div className="aspect-[5/7] bg-gray-100 rounded-xl overflow-hidden mb-6 shadow-lg">
               {card.ImageURL ? (
                 <img
                   src={card.ImageURL}
@@ -133,104 +133,104 @@ export default function CardDetailModal({
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">
                   <div className="text-center">
-                    <div className="text-6xl mb-4">🎴</div>
-                    <div className="text-lg">No Image Available</div>
+                    <div className="text-7xl mb-6">🎴</div>
+                    <div className="text-xl">No Image Available</div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Basic Stats */}
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-6 text-base">
                 <div>
-                  <span className="text-gray-600">Type:</span>
-                  <div className="font-semibold">{card.CardType}</div>
+                  <span className="text-gray-600 font-medium">Type:</span>
+                  <div className="font-semibold text-lg">{card.CardType}</div>
                 </div>
                 <div>
-                  <span className="text-gray-600">Rarity:</span>
-                  <div className="font-semibold">{card.Rarity}</div>
+                  <span className="text-gray-600 font-medium">Rarity:</span>
+                  <div className="font-semibold text-lg">{card.Rarity}</div>
                 </div>
                 <div>
-                  <span className="text-gray-600">HP:</span>
-                  <div className="font-semibold">{card.HP || 'N/A'}</div>
+                  <span className="text-gray-600 font-medium">HP:</span>
+                  <div className="font-semibold text-lg">{card.HP || 'N/A'}</div>
                 </div>
                 <div>
-                  <span className="text-gray-600">Evolution:</span>
-                  <div className="font-semibold">{card.Evolution}</div>
+                  <span className="text-gray-600 font-medium">Evolution:</span>
+                  <div className="font-semibold text-lg">{card.Evolution}</div>
                 </div>
                 {card.Weakness && (
                   <div>
-                    <span className="text-gray-600">Weakness:</span>
-                    <div className="font-semibold">{card.Weakness}</div>
+                    <span className="text-gray-600 font-medium">Weakness:</span>
+                    <div className="font-semibold text-lg">{card.Weakness}</div>
                   </div>
                 )}
                 {card.Resistance && (
                   <div>
-                    <span className="text-gray-600">Resistance:</span>
-                    <div className="font-semibold">{card.Resistance}</div>
+                    <span className="text-gray-600 font-medium">Resistance:</span>
+                    <div className="font-semibold text-lg">{card.Resistance}</div>
                   </div>
                 )}
                 {card.RetreatCost && (
                   <div>
-                    <span className="text-gray-600">Retreat Cost:</span>
-                    <div className="font-semibold">{card.RetreatCost}</div>
+                    <span className="text-gray-600 font-medium">Retreat Cost:</span>
+                    <div className="font-semibold text-lg">{card.RetreatCost}</div>
                   </div>
                 )}
                 {card.RegulationMark && (
                   <div>
-                    <span className="text-gray-600">Regulation:</span>
-                    <div className="font-semibold">{card.RegulationMark}</div>
+                    <span className="text-gray-600 font-medium">Regulation:</span>
+                    <div className="font-semibold text-lg">{card.RegulationMark}</div>
                   </div>
                 )}
               </div>
 
               {/* Additional Details */}
               {(card.ExpansionName || card.ExpansionCode || card.Illustrator || card.Artist || card.SpecialTag) && (
-                <div className="pt-3 border-t space-y-2">
+                <div className="pt-4 border-t space-y-3">
                   {card.ExpansionName && (
                     <div>
-                      <span className="text-gray-600 text-sm">Expansion:</span>
-                      <div className="font-semibold text-sm">{card.ExpansionName}</div>
+                      <span className="text-gray-600 text-base font-medium">Expansion:</span>
+                      <div className="font-semibold text-lg">{card.ExpansionName}</div>
                       {card.ExpansionCode && (
-                        <div className="text-xs text-gray-500">Code: {card.ExpansionCode}</div>
+                        <div className="text-sm text-gray-500">Code: {card.ExpansionCode}</div>
                       )}
                     </div>
                   )}
                   {(card.Illustrator || card.Artist) && (
                     <div>
-                      <span className="text-gray-600 text-sm">Artist:</span>
-                      <div className="font-semibold text-sm">{card.Illustrator || card.Artist}</div>
+                      <span className="text-gray-600 text-base font-medium">Artist:</span>
+                      <div className="font-semibold text-lg">{card.Illustrator || card.Artist}</div>
                     </div>
                   )}
                   {card.SpecialTag && (
                     <div>
-                      <span className="text-gray-600 text-sm">Special Tag:</span>
-                      <div className="font-semibold text-sm">{card.SpecialTag}</div>
+                      <span className="text-gray-600 text-base font-medium">Special Tag:</span>
+                      <div className="font-semibold text-lg">{card.SpecialTag}</div>
                     </div>
                   )}
                 </div>
               )}
 
               {card.Score && (
-                <div className="pt-3 border-t">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-gray-600">Score:</span>
-                    <span className="font-bold text-lg">{card.Score}</span>
+                <div className="pt-4 border-t">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-gray-600 text-base font-medium">Score:</span>
+                    <span className="font-bold text-2xl">{card.Score}</span>
                   </div>
                   {card.ScoreBreakdown && renderScoreBreakdownChart(card.ScoreBreakdown)}
                 </div>
               )}
 
               {card.ImageURL && (
-                <div className="pt-3 border-t">
+                <div className="pt-4 border-t">
                   <a
                     href={card.ImageURL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm"
+                    className="flex items-center space-x-3 text-blue-600 hover:text-blue-800 text-base font-medium"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink className="h-5 w-5" />
                     <span>View Full Image</span>
                   </a>
                 </div>
@@ -239,17 +239,17 @@ export default function CardDetailModal({
           </div>
 
           {/* Card Details */}
-          <div className="lg:w-2/3 p-6 border-t lg:border-t-0 lg:border-l">
+          <div className="xl:w-3/5 p-8 border-t xl:border-t-0 xl:border-l">
             {/* Skills */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Skills</h3>
+            <div className="mb-8">
+              <h3 className="text-2xl font-semibold text-gray-900 mb-6">Skills</h3>
 
               {/* Skill 1 */}
               {(card.Skill1Name || card.Skill1Effect) && (
-                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">{card.Skill1Name || 'Skill 1'}</h4>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <div className="mb-6 p-6 bg-gray-50 rounded-xl">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-gray-900 text-xl">{card.Skill1Name || 'Skill 1'}</h4>
+                    <div className="flex items-center space-x-3 text-base text-gray-600">
                       {card.Skill1Energy && (
                         <span>Energy: {card.Skill1Energy}</span>
                       )}
@@ -259,17 +259,17 @@ export default function CardDetailModal({
                     </div>
                   </div>
                   {card.Skill1Effect && (
-                    <p className="text-gray-700 text-sm leading-relaxed">{card.Skill1Effect}</p>
+                    <p className="text-gray-700 text-base leading-relaxed">{card.Skill1Effect}</p>
                   )}
                 </div>
               )}
 
               {/* Skill 2 */}
               {(card.Skill2Name || card.Skill2Effect) && (
-                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">{card.Skill2Name || 'Skill 2'}</h4>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <div className="mb-6 p-6 bg-gray-50 rounded-xl">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-gray-900 text-xl">{card.Skill2Name || 'Skill 2'}</h4>
+                    <div className="flex items-center space-x-3 text-base text-gray-600">
                       {card.Skill2Energy && (
                         <span>Energy: {card.Skill2Energy}</span>
                       )}
@@ -279,7 +279,7 @@ export default function CardDetailModal({
                     </div>
                   </div>
                   {card.Skill2Effect && (
-                    <p className="text-gray-700 text-sm leading-relaxed">{card.Skill2Effect}</p>
+                    <p className="text-gray-700 text-base leading-relaxed">{card.Skill2Effect}</p>
                   )}
                 </div>
               )}
@@ -287,14 +287,14 @@ export default function CardDetailModal({
 
             {/* Ability */}
             {(card.AbilityName || card.AbilityEffect) && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ability</h3>
-                <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="mb-8">
+                <h3 className="text-2xl font-semibold text-gray-900 mb-6">Ability</h3>
+                <div className="p-6 bg-blue-50 rounded-xl">
                   {card.AbilityName && (
-                    <h4 className="font-semibold text-blue-900 mb-2">{card.AbilityName}</h4>
+                    <h4 className="font-semibold text-blue-900 mb-3 text-xl">{card.AbilityName}</h4>
                   )}
                   {card.AbilityEffect && (
-                    <p className="text-blue-800 text-sm leading-relaxed">{card.AbilityEffect}</p>
+                    <p className="text-blue-800 text-base leading-relaxed">{card.AbilityEffect}</p>
                   )}
                 </div>
               </div>
@@ -302,17 +302,17 @@ export default function CardDetailModal({
 
             {/* Effect Classifications */}
             {(card.PrimaryEffectType || card.SpecialEffectType || card.AbilityStats) && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Effect Classifications</h3>
-                <div className="space-y-3">
+              <div className="mb-8">
+                <h3 className="text-2xl font-semibold text-gray-900 mb-6">Effect Classifications</h3>
+                <div className="space-y-4">
                   {card.PrimaryEffectType && (
                     <div>
-                      <span className="text-sm text-gray-600">Primary Effects:</span>
-                      <div className="flex flex-wrap gap-2 mt-1">
+                      <span className="text-base text-gray-600 font-medium">Primary Effects:</span>
+                      <div className="flex flex-wrap gap-3 mt-2">
                         {card.PrimaryEffectType.split(',').map((effect, index) => (
                           <span
                             key={index}
-                            className="inline-block bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-medium"
+                            className="inline-block bg-green-100 text-green-800 text-sm px-4 py-2 rounded-full font-medium"
                           >
                             {effect.trim()}
                           </span>
@@ -323,12 +323,12 @@ export default function CardDetailModal({
 
                   {card.SpecialEffectType && card.SpecialEffectType !== '無' && (
                     <div>
-                      <span className="text-sm text-gray-600">Special Effects:</span>
-                      <div className="flex flex-wrap gap-2 mt-1">
+                      <span className="text-base text-gray-600 font-medium">Special Effects:</span>
+                      <div className="flex flex-wrap gap-3 mt-2">
                         {card.SpecialEffectType.split(',').map((effect, index) => (
                           <span
                             key={index}
-                            className="inline-block bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full font-medium"
+                            className="inline-block bg-purple-100 text-purple-800 text-sm px-4 py-2 rounded-full font-medium"
                           >
                             {effect.trim()}
                           </span>
@@ -339,12 +339,12 @@ export default function CardDetailModal({
 
                   {card.AbilityStats && card.AbilityStats !== '無' && (
                     <div>
-                      <span className="text-sm text-gray-600">Ability Stats:</span>
-                      <div className="flex flex-wrap gap-2 mt-1">
+                      <span className="text-base text-gray-600 font-medium">Ability Stats:</span>
+                      <div className="flex flex-wrap gap-3 mt-2">
                         {card.AbilityStats.split(',').map((ability, index) => (
                           <span
                             key={index}
-                            className="inline-block bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium"
+                            className="inline-block bg-blue-100 text-blue-800 text-sm px-4 py-2 rounded-full font-medium"
                           >
                             {ability.trim()}
                           </span>
@@ -359,15 +359,15 @@ export default function CardDetailModal({
             {/* Related Cards */}
             {relatedCards.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Related Cards</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <h3 className="text-2xl font-semibold text-gray-900 mb-6">Related Cards</h3>
+                <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
                   {relatedCards.map((relatedCard) => (
                     <div
                       key={relatedCard.CardID}
                       onClick={() => onCardClick(relatedCard)}
-                      className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-gray-100 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md"
                     >
-                      <div className="aspect-[3/4] bg-gray-200 rounded mb-2 overflow-hidden">
+                      <div className="aspect-[5/7] bg-gray-200 rounded-lg mb-3 overflow-hidden">
                         {relatedCard.ImageURL ? (
                           <img
                             src={relatedCard.ImageURL}
@@ -375,21 +375,25 @@ export default function CardDetailModal({
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">
                             🎴
                           </div>
                         )}
                       </div>
-                      <h4 className="font-medium text-gray-900 text-sm leading-tight line-clamp-2">
+                      <h4 className="font-medium text-gray-900 text-sm leading-tight line-clamp-2 mb-2">
                         {relatedCard.Name}
                       </h4>
-                      <div className="text-xs text-gray-600 mt-1">
+                      <div className="flex items-center justify-between">
                         {relatedCard.Tier && (
-                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold mr-2 ${getTierColor(relatedCard.Tier)}`}>
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getTierColor(relatedCard.Tier)}`}>
                             {relatedCard.Tier}
                           </span>
                         )}
-                        {relatedCard.Score}
+                        {relatedCard.Score && (
+                          <span className="text-xs text-gray-600 font-medium">
+                            {relatedCard.Score}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
