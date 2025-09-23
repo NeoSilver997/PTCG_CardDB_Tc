@@ -78,6 +78,7 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
   const [showFilters, setShowFilters] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Filter cards based on search and filters
@@ -351,6 +352,159 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
     return deckList;
   };
 
+  // Import deck from text
+  const importDeck = (deckText: string) => {
+    console.log('🔍 [DEBUG] Starting deck import...');
+    console.log('📝 [DEBUG] Raw input:', deckText);
+
+    try {
+      const lines = deckText.split('\n').map(line => line.trim()).filter(line => line);
+      console.log('📋 [DEBUG] Processed lines:', lines);
+
+      let deckName = 'Imported Deck';
+      let format = 'Standard';
+      const importedCards: { name: string; quantity: number }[] = [];
+
+      for (const line of lines) {
+        console.log('🔍 [DEBUG] Processing line:', line);
+
+        // Parse deck name (only the first line that looks like a deck name)
+        if (!line.includes('x ') && !line.includes(':') && !line.includes('(') && !line.includes(')') &&
+            !/^\d/.test(line) && !line.includes('張') && line.length > 2 &&
+            !line.toLowerCase().includes('pokemon') && !line.toLowerCase().includes('trainer') &&
+            !line.toLowerCase().includes('energy') && deckName === 'Imported Deck') {
+          deckName = line;
+          console.log('📛 [DEBUG] Found deck name:', deckName);
+          continue;
+        }
+
+        // Parse format
+        if (line.toLowerCase().startsWith('format:')) {
+          format = line.split(':')[1].trim();
+          console.log('🏷️ [DEBUG] Found format:', format);
+          continue;
+        }
+
+        // Skip section headers
+        if (line.includes('(') && line.includes(')') && (line.toLowerCase().includes('pokemon') || line.toLowerCase().includes('trainer') || line.toLowerCase().includes('energy'))) {
+          console.log('⏭️ [DEBUG] Skipping section header:', line);
+          continue;
+        }
+
+        // Parse card lines (format: "4x Card Name EXP" or "4 Card Name EXP" or "Card Name 3張")
+        const cardMatch = line.includes('張') ? line.match(/^(.+?)\s+(\d+)張$/) : line.match(/^(\d+)\s*x?\s*(.+)$/);
+        console.log('🎯 [DEBUG] Card match result:', cardMatch);
+
+        if (cardMatch) {
+          let quantity: number;
+          let cardNameWithExp: string;
+
+          if (line.includes('張')) {
+            // Chinese format: "Card Name 3張"
+            cardNameWithExp = cardMatch[1].trim();
+            quantity = parseInt(cardMatch[2]);
+            console.log('🇨🇳 [DEBUG] Chinese format detected - Name:', cardNameWithExp, 'Quantity:', quantity);
+          } else {
+            // English format: "4x Card Name" or "4 Card Name"
+            quantity = parseInt(cardMatch[1]);
+            cardNameWithExp = cardMatch[2].trim();
+            console.log('🇺🇸 [DEBUG] English format detected - Quantity:', quantity, 'Name:', cardNameWithExp);
+          }
+
+          // Remove expansion code if present (usually at the end)
+          const cardName = cardNameWithExp.replace(/\s+[A-Z]{2,3}\d*$/, '').trim();
+          console.log('✂️ [DEBUG] Cleaned card name:', cardName, '(from:', cardNameWithExp, ')');
+
+          importedCards.push({ name: cardName, quantity });
+          console.log('✅ [DEBUG] Added card to import list:', { name: cardName, quantity });
+        } else {
+          console.log('❌ [DEBUG] Could not parse line as card:', line);
+        }
+      }
+
+      console.log('📊 [DEBUG] Final parsed cards:', importedCards);
+      console.log('📚 [DEBUG] Available cards in database:', initialCards.length);
+
+      // Match cards to database
+      const matchedCards: { card: PTCGCard; quantity: number }[] = [];
+      const unmatchedCards: string[] = [];
+
+      for (const importedCard of importedCards) {
+        // Clean the imported card name by removing 【 and 】 brackets
+        const cleanedCardName = importedCard.name.replace(/[【】]/g, '');
+        console.log('🔍 [DEBUG] Matching card:', importedCard.name, '(cleaned:', cleanedCardName, ')');
+
+        // Try exact match first with cleaned name
+        let matchedCard = initialCards.find(card =>
+          card.Name.toLowerCase() === cleanedCardName.toLowerCase()
+        );
+
+        if (matchedCard) {
+          console.log('🎯 [DEBUG] Exact match found:', matchedCard.Name);
+        } else {
+          console.log('⚠️ [DEBUG] No exact match, trying partial match...');
+        }
+
+        // If no exact match, try partial match with cleaned name
+        if (!matchedCard) {
+          matchedCard = initialCards.find(card =>
+            card.Name.toLowerCase().includes(cleanedCardName.toLowerCase()) ||
+            cleanedCardName.toLowerCase().includes(card.Name.toLowerCase())
+          );
+
+          if (matchedCard) {
+            console.log('🔄 [DEBUG] Partial match found:', matchedCard.Name, '(searched for:', cleanedCardName, ')');
+          } else {
+            console.log('❌ [DEBUG] No match found for:', cleanedCardName);
+          }
+        }
+
+        if (matchedCard) {
+          matchedCards.push({ card: matchedCard, quantity: importedCard.quantity });
+          console.log('✅ [DEBUG] Successfully matched card:', matchedCard.Name, 'x', importedCard.quantity);
+        } else {
+          const unmatchedEntry = `${importedCard.quantity}x ${importedCard.name}`;
+          unmatchedCards.push(unmatchedEntry);
+          console.log('🚫 [DEBUG] Added to unmatched list:', unmatchedEntry);
+        }
+      }
+
+      console.log('📊 [DEBUG] Matching summary - Matched:', matchedCards.length, 'Unmatched:', unmatchedCards.length);
+
+      // Create new deck with imported cards
+      const newDeck: Deck = {
+        id: `deck_${Date.now()}`,
+        name: deckName,
+        description: '',
+        cards: matchedCards.map(({ card, quantity }) => ({ ...card, quantity })),
+        format: format as 'Standard' | 'Expanded' | 'Unlimited',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isValid: false,
+        pokemonCount: 0,
+        trainerCount: 0,
+        energyCount: 0,
+        totalCards: matchedCards.reduce((sum, { quantity }) => sum + quantity, 0)
+      };
+
+      console.log('🎉 [DEBUG] Created new deck:', { name: deckName, format, totalCards: newDeck.totalCards });
+
+      setCurrentDeck(newDeck);
+      setShowImportModal(false);
+
+      // Show results
+      const message = `Deck imported successfully!\nMatched: ${matchedCards.length} cards\nUnmatched: ${unmatchedCards.length} cards`;
+      if (unmatchedCards.length > 0) {
+        alert(`${message}\n\nUnmatched cards:\n${unmatchedCards.slice(0, 5).join('\n')}${unmatchedCards.length > 5 ? '\n...' : ''}`);
+      } else {
+        alert(message);
+      }
+    } catch (error) {
+      console.error('❌ [DEBUG] Deck import failed:', error);
+      alert('Failed to import deck. Please check the format and try again.');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl w-full h-full max-w-7xl max-h-[95vh] overflow-hidden shadow-2xl flex flex-col">
@@ -386,6 +540,13 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
               title="Export Deck"
             >
               <Download className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              title="Import Deck"
+            >
+              <Upload className="h-5 w-5" />
             </button>
             <button
               onClick={onClose}
@@ -792,6 +953,86 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
           </div>
         )}
       </div>
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-bold text-gray-900">Import Deck</h2>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Paste your deck list below
+                </label>
+                <textarea
+                  id="deckImportText"
+                  rows={15}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder={`Example formats supported:
+
+English format:
+4x Charizard V SS
+3x Radiant Charizard PGO
+
+Chinese format:
+炭小侍 3張
+紅蓮鎧騎 2張
+阿響的鳳王ex 2張
+
+Deck Name
+Format: Standard
+
+Pokemon (20):
+[List your Pokemon cards here]
+
+Trainers (15):
+[List your Trainer cards here]
+
+Energy (25):
+[List your Energy cards here]`}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  <p>Supported formats: Standard deck list format with &quot;4x Card Name&quot; syntax</p>
+                  <p>Cards will be matched to your database automatically</p>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowImportModal(false)}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      const textarea = document.getElementById('deckImportText') as HTMLTextAreaElement;
+                      if (textarea && textarea.value.trim()) {
+                        importDeck(textarea.value.trim());
+                      } else {
+                        alert('Please paste a deck list to import.');
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Import Deck
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -869,4 +1110,6 @@ function DeckCardItem({ card, onAdd, onRemove, onView, maxQuantity = 4 }: DeckCa
       </div>
     </div>
   );
+
+  // Deck Card Item Component
 }
