@@ -1,6 +1,7 @@
 export interface PTCGCard {
   Name: string;
   Evolution: string;
+  EvolutionStage: string;
   CardID: string;
   ImageURL: string;
   CardType: string;

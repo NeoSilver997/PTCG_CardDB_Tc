@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
         // Clean up header names to match our interface
         const headerMap: { [key: string]: string } = {
           'Name': 'Name',
-          'EvolutionStage': 'Evolution',
+          'Evolution': 'Evolution',
+          'EvolutionStage': 'EvolutionStage',
           'WebCardID': 'CardID',
           'ImageURL': 'ImageURL',
           'CardType': 'CardType',

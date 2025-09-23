@@ -1,20 +1,23 @@
 'use client';
 
-import { X, ExternalLink } from 'lucide-react';
+import { X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PTCGCard } from '../types/card';
+import { useState, useMemo } from 'react';
 
 interface CardDetailModalProps {
   card: PTCGCard;
   relatedCards: PTCGCard[];
   onClose: () => void;
   onCardClick: (card: PTCGCard) => void;
+  allCards: PTCGCard[]; // Add allCards prop for evolution chain
 }
 
 export default function CardDetailModal({
   card,
   relatedCards,
   onClose,
-  onCardClick
+  onCardClick,
+  allCards
 }: CardDetailModalProps) {
   const getTierColor = (tier?: string) => {
     switch (tier) {
@@ -47,6 +50,75 @@ export default function CardDetailModal({
       default: return '🎴';
     }
   };
+
+  const evolutionChain = useMemo(() => {
+    const getEvolutionChain = (currentCard: PTCGCard): PTCGCard[] => {
+      console.log('🔄 Evolution Chain Debug for:', currentCard.Name);
+      console.log('📝 Evolution field:', currentCard.Evolution);
+      console.log('📊 Total cards in database:', allCards.length);
+
+      if (!currentCard.Evolution || !allCards.length) {
+        console.log('❌ No evolution field or no cards in database, returning current card');
+        return [currentCard];
+      }
+
+      // Parse the evolution chain from the Evolution field
+      // Format: "妙蛙種子 → 妙蛙草 → 妙蛙花 → 超級妙蛙花ex → 妙蛙花ex"
+      const evolutionNames = currentCard.Evolution.split('→').map(name => name.trim()).filter(name => name.length > 0);
+      console.log('🔍 Parsed evolution names:', evolutionNames);
+
+      const chain: PTCGCard[] = [];
+
+      // Find cards for each evolution stage
+      evolutionNames.forEach(evolutionName => {
+        console.log(`🔎 Searching for: "${evolutionName}"`);
+        
+        // Find all cards with this exact name (excluding energy cards)
+        const matchingCards = allCards.filter(c =>
+          c.Name === evolutionName &&
+          !c.CardType.includes('能量')
+        );
+        
+        console.log(`📋 Found ${matchingCards.length} matching cards for "${evolutionName}"`);
+        if (matchingCards.length > 0) {
+          console.log('🎯 Matching cards:', matchingCards.map(c => ({ name: c.Name, score: c.Score, type: c.CardType })));
+        }
+
+        // Add the best card (prioritize higher scores), but avoid duplicates
+        if (matchingCards.length > 0) {
+          const bestCard = matchingCards.sort((a, b) => (parseFloat(b.Score || '0') - parseFloat(a.Score || '0')))[0];
+          console.log(`⭐ Selected best card: ${bestCard.Name} (Score: ${bestCard.Score})`);
+          
+          // Only add if we don't already have a card with this name
+          if (!chain.some(c => c.Name === bestCard.Name)) {
+            chain.push(bestCard);
+            console.log(`✅ Added to chain: ${bestCard.Name}`);
+          } else {
+            console.log(`⏭️ Skipped duplicate: ${bestCard.Name}`);
+          }
+        } else {
+          console.log(`❌ No cards found for: "${evolutionName}"`);
+        }
+      });
+
+      console.log('🔗 Chain before filtering:', chain.map(c => c.Name));
+
+      // If no evolution chain found, return just the current card
+      const result = chain.length > 0 ? chain : [currentCard];
+      console.log('📋 Result before current card filter:', result.map(c => c.Name));
+      
+      // Filter out the current card from the evolution chain display
+      // Only show cards that are different from the current card
+      const filteredResult = result.filter(chainCard => chainCard.Name !== currentCard.Name);
+      console.log('🎯 Final filtered result:', filteredResult.map(c => c.Name));
+      console.log('📏 Final chain length:', filteredResult.length);
+      
+      // If no other evolutions exist, don't show the evolution chain
+      return filteredResult;
+    };
+
+    return getEvolutionChain(card);
+  }, [card, allCards]);
 
   const renderScoreBreakdownChart = (breakdown: string) => {
     if (!breakdown) return null;
@@ -352,6 +424,36 @@ export default function CardDetailModal({
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Evolution Chain Progression */}
+            {card.Evolution && evolutionChain.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-2xl font-semibold text-gray-900 mb-6">Evolution Chain</h3>
+
+                {/* Evolution Chain Text Display */}
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
+                  <div className="text-center">
+                    <div className="text-lg font-medium text-gray-800">
+                      {evolutionChain.map((chainCard, index) => (
+                        <span key={chainCard.Name + index}>
+                          <span
+                            className={`cursor-pointer hover:text-blue-600 transition-colors ${
+                              chainCard.Name === card.Name ? 'font-bold text-blue-700' : ''
+                            }`}
+                            onClick={() => onCardClick(chainCard)}
+                          >
+                            {chainCard.Name}
+                          </span>
+                          {index < evolutionChain.length - 1 && (
+                            <span className="text-gray-500 mx-2">→</span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

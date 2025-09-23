@@ -100,6 +100,16 @@ export default function CardItem({ card, onClick }: CardItemProps) {
           </div>
         )}
 
+        {/* Evolution and Regulation Mark */}
+        <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
+          {card.Evolution && (
+            <span className="font-medium">Evolution: {card.Evolution}</span>
+          )}
+          {card.RegulationMark && (
+            <span className="font-medium">Mark: {card.RegulationMark}</span>
+          )}
+        </div>
+
         {/* Abilities */}
         {card.AbilityStats && card.AbilityStats !== '無' && (
           <div className="mb-3">

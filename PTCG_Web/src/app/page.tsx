@@ -226,6 +226,66 @@ export default function Home() {
 
     if (relatedCards.length >= 6) return relatedCards;
 
+    // 2.6. Same evolution stage (Basic, Stage 1, Stage 2, etc.)
+    if (card.Evolution) {
+      const evolutionCards = cards.filter(c =>
+        c.CardID !== card.CardID &&
+        !usedCardIds.has(c.CardID) &&
+        !c.CardType.includes('能量') &&
+        c.Evolution === card.Evolution
+      );
+      addCards(evolutionCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 2.7. Evolution chain progression (Basic -> Stage 1, Stage 1 -> Stage 2, etc.)
+    if (card.Evolution && card.Name) {
+      const baseName = card.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim();
+      let evolutionChainCards: PTCGCard[] = [];
+
+      if (card.Evolution === 'Basic') {
+        // For Basic cards, find their Stage 1 evolutions
+        evolutionChainCards = cards.filter(c =>
+          c.CardID !== card.CardID &&
+          !usedCardIds.has(c.CardID) &&
+          !c.CardType.includes('能量') &&
+          c.Evolution === 'Stage 1' &&
+          c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+        );
+      } else if (card.Evolution === 'Stage 1') {
+        // For Stage 1 cards, find their Basic forms and Stage 2 evolutions
+        const basicCards = cards.filter(c =>
+          c.CardID !== card.CardID &&
+          !usedCardIds.has(c.CardID) &&
+          !c.CardType.includes('能量') &&
+          c.Evolution === 'Basic' &&
+          c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+        );
+        const stage2Cards = cards.filter(c =>
+          c.CardID !== card.CardID &&
+          !usedCardIds.has(c.CardID) &&
+          !c.CardType.includes('能量') &&
+          c.Evolution === 'Stage 2' &&
+          c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+        );
+        evolutionChainCards = [...basicCards, ...stage2Cards];
+      } else if (card.Evolution === 'Stage 2') {
+        // For Stage 2 cards, find their Stage 1 forms
+        evolutionChainCards = cards.filter(c =>
+          c.CardID !== card.CardID &&
+          !usedCardIds.has(c.CardID) &&
+          !c.CardType.includes('能量') &&
+          c.Evolution === 'Stage 1' &&
+          c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+        );
+      }
+
+      addCards(evolutionChainCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
     // 2.75. Same ability themes (more flexible ability matching)
     if (card.AbilityStats) {
       const cardAbilityThemes = card.AbilityStats.split(',').map(a => a.trim().toLowerCase());
@@ -442,6 +502,7 @@ export default function Home() {
           relatedCards={getRelatedCards(selectedCard)}
           onClose={() => setSelectedCard(null)}
           onCardClick={handleCardClick}
+          allCards={cards}
         />
       )}
     </div>
