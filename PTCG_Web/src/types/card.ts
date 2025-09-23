@@ -40,6 +40,7 @@ export interface SearchFilters {
   cardType: string;
   rarity: string;
   tier: string;
+  attribute: string;
 }
 
 export interface AbilityOption {

@@ -15,7 +15,8 @@ export default function Home() {
     effectType: '',
     cardType: '',
     rarity: '',
-    tier: ''
+    tier: '',
+    attribute: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
@@ -128,6 +129,11 @@ export default function Home() {
     // Apply tier filter
     if (filters.tier) {
       filtered = filtered.filter(card => card.Tier === filters.tier);
+    }
+
+    // Apply attribute filter
+    if (filters.attribute) {
+      filtered = filtered.filter(card => card.Type === filters.attribute);
     }
 
     setFilteredCards(filtered);

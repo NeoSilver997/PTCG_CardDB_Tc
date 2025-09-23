@@ -31,7 +31,8 @@ export default function SearchFiltersComponent({
       effectType: '',
       cardType: '',
       rarity: '',
-      tier: ''
+      tier: '',
+      attribute: ''
     });
   };
 
@@ -39,6 +40,7 @@ export default function SearchFiltersComponent({
   const cardTypes = Array.from(new Set(cards.map(card => card.CardType).filter(Boolean)));
   const rarities = Array.from(new Set(cards.map(card => card.Rarity).filter(Boolean)));
   const tiers = Array.from(new Set(cards.map(card => card.Tier).filter(Boolean)));
+  const attributes = Array.from(new Set(cards.map(card => card.Type).filter(Boolean)));
 
   const hasActiveFilters = Object.values(filters).some(value => value !== '');
 
@@ -151,6 +153,25 @@ export default function SearchFiltersComponent({
             {tiers.map((tier) => (
               <option key={tier} value={tier}>
                 {tier}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Attribute Filter */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Attribute
+          </label>
+          <select
+            value={filters.attribute}
+            onChange={(e) => updateFilter('attribute', e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">All Attributes</option>
+            {attributes.map((attribute) => (
+              <option key={attribute} value={attribute}>
+                {attribute}
               </option>
             ))}
           </select>
