@@ -5,8 +5,8 @@ import sys
 import re
 
 HTML_DIR = r'c:\Users\schan15\SCCode\PTCG_CardDB_Tc\html_pages'
-HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages'
-OUTPUT_CSV = 'cards_output_allc.csv'  # Changed name to reflect all cards
+HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages\M1L'
+OUTPUT_CSV = 'cards_output_all_mega1.csv'  # Changed name to reflect all cards
 
 def get_energy_type_from_url(url):
     """Extract energy type name from image URL"""
@@ -208,6 +208,10 @@ def extract_card_fields(html, file_path):
             regulation_span = soup.select_one('.regulationMark')
             if regulation_span:
                 regulation_mark = regulation_span.get_text(strip=True)
+            else:
+                # Try alternative selector for regulation mark
+                alpha_span = soup.select_one('.alpha')
+                regulation_mark = alpha_span.get_text(strip=True) if alpha_span else 'n/a'
         except Exception as e:
             print(f"Error extracting regulation mark: {str(e)}", file=sys.stderr)
             regulation_mark = 'n/a' 
