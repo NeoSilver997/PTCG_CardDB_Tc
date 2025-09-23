@@ -8,7 +8,9 @@ export interface PTCGCard {
   HP: string;
   Type: string;
   Weakness: string;
+  WeaknessType: string;
   Resistance: string;
+  ResistanceType: string;
   Skill1Name: string;
   Skill1Energy: string;
   Skill1Damage: string;
@@ -42,6 +44,9 @@ export interface SearchFilters {
   rarity: string;
   tier: string;
   attribute: string;
+  regulation: string;
+  weaknessType: string;
+  resistanceType: string;
 }
 
 export interface AbilityOption {

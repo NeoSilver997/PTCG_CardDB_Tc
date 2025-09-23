@@ -16,7 +16,10 @@ export default function Home() {
     cardType: '',
     rarity: '',
     tier: '',
-    attribute: ''
+    attribute: '',
+    regulation: '',
+    weaknessType: '',
+    resistanceType: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
@@ -147,6 +150,27 @@ export default function Home() {
     if (filters.attribute) {
       filtered = filtered.filter(card =>
         !isEnergyCard(card) && card.Type === filters.attribute
+      );
+    }
+
+    // Apply weakness type filter
+    if (filters.weaknessType) {
+      filtered = filtered.filter(card =>
+        !isEnergyCard(card) && card.WeaknessType === filters.weaknessType
+      );
+    }
+
+    // Apply resistance type filter
+    if (filters.resistanceType) {
+      filtered = filtered.filter(card =>
+        !isEnergyCard(card) && card.ResistanceType === filters.resistanceType
+      );
+    }
+
+    // Apply regulation filter
+    if (filters.regulation) {
+      filtered = filtered.filter(card =>
+        !isEnergyCard(card) && card.RegulationMark === filters.regulation
       );
     }
 

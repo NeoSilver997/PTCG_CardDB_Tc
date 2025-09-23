@@ -32,7 +32,10 @@ export default function SearchFiltersComponent({
       cardType: '',
       rarity: '',
       tier: '',
-      attribute: ''
+      attribute: '',
+      regulation: '',
+      weaknessType: '',
+      resistanceType: ''
     });
   };
 
@@ -41,6 +44,9 @@ export default function SearchFiltersComponent({
   const rarities = Array.from(new Set(cards.map(card => card.Rarity).filter(Boolean)));
   const tiers = Array.from(new Set(cards.map(card => card.Tier).filter(Boolean)));
   const attributes = Array.from(new Set(cards.map(card => card.Type).filter(Boolean)));
+  const regulations = Array.from(new Set(cards.map(card => card.RegulationMark).filter(Boolean)));
+  const weaknessTypes = Array.from(new Set(cards.map(card => card.WeaknessType).filter(Boolean)));
+  const resistanceTypes = Array.from(new Set(cards.map(card => card.ResistanceType).filter(Boolean)));
 
   const hasActiveFilters = Object.values(filters).some(value => value !== '');
 
@@ -172,6 +178,63 @@ export default function SearchFiltersComponent({
             {attributes.map((attribute) => (
               <option key={attribute} value={attribute}>
                 {attribute}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Weakness Type Filter */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            Weakness Type
+          </label>
+          <select
+            value={filters.weaknessType}
+            onChange={(e) => updateFilter('weaknessType', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+          >
+            <option value="">All Weakness Types</option>
+            {weaknessTypes.map((weaknessType) => (
+              <option key={weaknessType} value={weaknessType}>
+                {weaknessType}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Resistance Type Filter */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            Resistance Type
+          </label>
+          <select
+            value={filters.resistanceType}
+            onChange={(e) => updateFilter('resistanceType', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+          >
+            <option value="">All Resistance Types</option>
+            {resistanceTypes.map((resistanceType) => (
+              <option key={resistanceType} value={resistanceType}>
+                {resistanceType}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Regulation Filter */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            Regulation
+          </label>
+          <select
+            value={filters.regulation}
+            onChange={(e) => updateFilter('regulation', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+          >
+            <option value="">All Regulations</option>
+            {regulations.map((regulation) => (
+              <option key={regulation} value={regulation}>
+                {regulation}
               </option>
             ))}
           </select>

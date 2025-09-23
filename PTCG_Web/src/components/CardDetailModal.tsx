@@ -51,29 +51,30 @@ export default function CardDetailModal({
     }
   };
 
-  const renderEnergyCost = (energyCost: string) => {
+  const renderColorlessEnergyCost = (energyCost: string) => {
     if (!energyCost || energyCost.trim() === '') return null;
 
     const energyTypes = energyCost.split(',').map(type => type.trim());
-    
+    const energyCount = energyTypes.length;
+
     return (
       <div className="flex items-center space-x-1">
-        {energyTypes.map((energyType, index) => {
-          const energyImageUrl = `/energy/${energyType}.png`;
+        {Array.from({ length: energyCount }, (_, index) => {
+          const energyImageUrl = `/energy/Colorless.png`;
           return (
             <div
               key={index}
               className="w-8 h-8 rounded-full bg-white border border-gray-300 shadow-sm overflow-hidden"
-              title={energyType}
+              title="Colorless"
             >
               <img
                 src={energyImageUrl}
-                alt={energyType}
+                alt="Colorless"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   // Fallback to emoji if image fails to load
                   e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.innerHTML = getTypeIcon(energyType);
+                  e.currentTarget.parentElement!.innerHTML = '⚪';
                 }}
               />
             </div>
@@ -255,30 +256,88 @@ export default function CardDetailModal({
                   <span className="text-gray-600 font-medium">Rarity:</span>
                   <div className="font-semibold text-lg">{card.Rarity}</div>
                 </div>
-                <div>
-                  <span className="text-gray-600 font-medium">HP:</span>
-                  <div className="font-semibold text-lg">{card.HP || 'N/A'}</div>
-                </div>
-                <div>
-                  <span className="text-gray-600 font-medium">Evolution:</span>
-                  <div className="font-semibold text-lg">{card.Evolution}</div>
-                </div>
-                {card.Weakness && (
+                {card.CardType.includes('寶可夢') && (
                   <div>
+                    <span className="text-gray-600 font-medium">HP:</span>
+                    <div className="font-semibold text-lg">{card.HP || 'N/A'}</div>
+                  </div>
+                )}
+                {card.CardType.includes('寶可夢') && (
+                  <div>
+                    <span className="text-gray-600 font-medium">Evolution:</span>
+                    <div className="font-semibold text-lg">{card.Evolution}</div>
+                  </div>
+                )}
+                {card.CardType.includes('寶可夢')  && (
+                  <div className="group relative">
                     <span className="text-gray-600 font-medium">Weakness:</span>
-                    <div className="font-semibold text-lg">{card.Weakness}</div>
+                    <div className="font-semibold text-lg flex items-center space-x-2">
+                      <span className="text-red-600">{card.Weakness}</span>
+                      {card.WeaknessType && (
+                        <div className="flex items-center space-x-1">
+                          {renderEnergyCost(card.WeaknessType)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
+                      Takes extra damage from this type
+                    </div>
                   </div>
                 )}
-                {card.Resistance && (
-                  <div>
+                {card.CardType.includes('寶可夢')  && (
+                  <div className="group relative">
                     <span className="text-gray-600 font-medium">Resistance:</span>
-                    <div className="font-semibold text-lg">{card.Resistance}</div>
+                    <div className="font-semibold text-lg flex items-center space-x-2">
+                      <span className="text-green-600">{card.Resistance}</span>
+                      {card.ResistanceType && (
+                        <div className="flex items-center space-x-1">
+                          {renderEnergyCost(card.ResistanceType)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
+                      Takes less damage from this type
+                    </div>
                   </div>
                 )}
-                {card.RetreatCost && (
+                {card.RetreatCost && card.CardType.includes('寶可夢') && (
                   <div>
                     <span className="text-gray-600 font-medium">Retreat Cost:</span>
-                    <div className="font-semibold text-lg">{card.RetreatCost}</div>
+                    <div className="font-semibold text-lg flex items-center space-x-2">
+                      {renderEnergyCost(card.RetreatCost)}
+                    </div>
+                  </div>
+                )}
+                {card.CardType.includes('寶可夢') && card.Tier && (
+                  <div>
+                    <span className="text-gray-600 font-medium">Tier:</span>
+                    <div className="font-semibold text-lg">
+                      <span className={`px-2 py-1 rounded-full text-sm font-bold ${getTierColor(card.Tier)}`}>
+                        {card.Tier}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {card.CardType.includes('寶可夢') && card.Score && (
+                  <div>
+                    <span className="text-gray-600 font-medium">Score:</span>
+                    <div className="font-semibold text-lg text-blue-600">{card.Score}</div>
+                  </div>
+                )}
+                {card.CardType.includes('寶可夢') && card.SpecialTag && (
+                  <div>
+                    <span className="text-gray-600 font-medium">Special Tag:</span>
+                    <div className="font-semibold text-lg">
+                      <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm font-medium">
+                        {card.SpecialTag}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {card.Illustrator && (
+                  <div>
+                    <span className="text-gray-600 font-medium">Illustrator:</span>
+                    <div className="font-semibold text-lg">{card.Illustrator}</div>
                   </div>
                 )}
                 {card.RegulationMark && (
@@ -346,7 +405,6 @@ export default function CardDetailModal({
           <div className="xl:w-3/5 p-8 border-t xl:border-t-0 xl:border-l">
             {/* Skills */}
             <div className="mb-8">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6">Skills</h3>
 
               {/* Skill 1 */}
               {(card.Skill1Name || card.Skill1Effect) && (
@@ -412,7 +470,6 @@ export default function CardDetailModal({
             {/* Ability */}
             {(card.AbilityName || card.AbilityEffect) && (
               <div className="mb-8">
-                <h3 className="text-2xl font-semibold text-gray-900 mb-6">Ability</h3>
                 <div className="p-6 bg-blue-50 rounded-xl">
                   {card.AbilityName && (
                     <h4 className="font-semibold text-blue-900 mb-3 text-xl">{card.AbilityName}</h4>
@@ -427,7 +484,6 @@ export default function CardDetailModal({
             {/* Effect Classifications */}
             {(card.PrimaryEffectType || card.SpecialEffectType || card.AbilityStats) && (
               <div className="mb-8">
-                <h3 className="text-2xl font-semibold text-gray-900 mb-6">Effect Classifications</h3>
                 <div className="space-y-4">
                   {card.PrimaryEffectType && (
                     <div>
@@ -483,7 +539,6 @@ export default function CardDetailModal({
             {/* Evolution Chain Progression */}
             {card.Evolution && evolutionChain.length > 0 && (
               <div className="mb-8">
-                <h3 className="text-2xl font-semibold text-gray-900 mb-6">Evolution Chain</h3>
 
                 {/* Evolution Chain Text Display */}
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
@@ -513,7 +568,6 @@ export default function CardDetailModal({
             {/* Related Cards */}
             {relatedCards.length > 0 && (
               <div>
-                <h3 className="text-2xl font-semibold text-gray-900 mb-6">Related Cards</h3>
                 <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
                   {relatedCards.map((relatedCard) => (
                     <div
