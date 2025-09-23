@@ -143,8 +143,8 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
   };
 
   return (
-    <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 ${isFullScreen ? 'p-0' : ''}`}>
-      <div className={`bg-white rounded-xl w-full h-full overflow-hidden shadow-2xl flex flex-col ${isFullScreen ? 'max-w-none max-h-none rounded-none' : 'max-w-6xl max-h-[95vh]'}`}>
+    <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 ${isFullScreen ? 'p-2' : ''}`}>
+      <div className={`bg-white rounded-xl w-full h-full overflow-hidden shadow-2xl flex flex-col ${isFullScreen ? 'max-w-none max-h-[90vh] rounded-none' : 'max-w-6xl max-h-[95vh]'}`}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
           <div>
@@ -238,85 +238,89 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
         </div>
 
         {/* Description */}
-        {deck.description && (
+        {deck.description && !isFullScreen && (
           <div className="px-6 py-3 bg-gray-50 border-b">
             <p className="text-gray-700">{deck.description}</p>
           </div>
         )}
 
         {/* Deck Composition Summary */}
-        <div className="px-6 py-4 bg-gray-50 border-b">
-          <div className="grid grid-cols-3 gap-6 text-center">
-            <div>
-              <div className="flex items-center justify-center space-x-2 mb-1">
-                <div className="w-3 h-3 bg-red-500 rounded"></div>
-                <span className="text-sm text-gray-600">Pokemon</span>
+        {!isFullScreen && (
+          <div className="px-6 py-4 bg-gray-50 border-b">
+            <div className="grid grid-cols-3 gap-6 text-center">
+              <div>
+                <div className="flex items-center justify-center space-x-2 mb-1">
+                  <div className="w-3 h-3 bg-red-500 rounded"></div>
+                  <span className="text-sm text-gray-600">Pokemon</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900">{deck.pokemonCount}</div>
               </div>
-              <div className="text-2xl font-bold text-gray-900">{deck.pokemonCount}</div>
-            </div>
-            <div>
-              <div className="flex items-center justify-center space-x-2 mb-1">
-                <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                <span className="text-sm text-gray-600">Trainers</span>
+              <div>
+                <div className="flex items-center justify-center space-x-2 mb-1">
+                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                  <span className="text-sm text-gray-600">Trainers</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900">{deck.trainerCount}</div>
               </div>
-              <div className="text-2xl font-bold text-gray-900">{deck.trainerCount}</div>
-            </div>
-            <div>
-              <div className="flex items-center justify-center space-x-2 mb-1">
-                <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-                <span className="text-sm text-gray-600">Energy</span>
+              <div>
+                <div className="flex items-center justify-center space-x-2 mb-1">
+                  <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                  <span className="text-sm text-gray-600">Energy</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900">{deck.energyCount}</div>
               </div>
-              <div className="text-2xl font-bold text-gray-900">{deck.energyCount}</div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Filters */}
-        <div className="px-6 py-4 border-b bg-gray-50">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search cards..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+        {!isFullScreen && (
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <div className="flex items-center space-x-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search cards..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value as any)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Types</option>
+                <option value="pokemon">Pokemon</option>
+                <option value="trainer">Trainers</option>
+                <option value="energy">Energy</option>
+              </select>
+              <button
+                onClick={() => setShowImages(!showImages)}
+                className={`p-2 rounded-lg transition-colors ${
+                  showImages
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                title={showImages ? 'Hide Images' : 'Show Images'}
+              >
+                {showImages ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              </button>
             </div>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Types</option>
-              <option value="pokemon">Pokemon</option>
-              <option value="trainer">Trainers</option>
-              <option value="energy">Energy</option>
-            </select>
-            <button
-              onClick={() => setShowImages(!showImages)}
-              className={`p-2 rounded-lg transition-colors ${
-                showImages 
-                  ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-              title={showImages ? 'Hide Images' : 'Show Images'}
-            >
-              {showImages ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-            </button>
           </div>
-        </div>
+        )}
 
         {/* Card List */}
         <div className="flex-1 overflow-y-auto">
           {showImages ? (
             <div className="p-6">
-              <div className={`grid gap-4 ${zoomOut ? 'grid-cols-8' : 'grid-cols-4'}`}>
+              <div className={`grid ${isFullScreen ? 'gap-2' : 'gap-4'} ${zoomOut ? 'grid-cols-12' : 'grid-cols-4'}`}>
                 {filteredCards.map(card => (
                   <div
                     key={card.CardID}
-                    className={`bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow ${zoomOut ? 'transform scale-75' : ''}`}
+                    className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
                   >
                     <div className="aspect-[5/7] bg-gray-100 overflow-hidden relative">
                       {card.ImageURL ? (
@@ -333,11 +337,11 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
                           </div>
                         </div>
                       )}
-                      <div className="absolute top-2 right-2 bg-black bg-opacity-75 text-white text-sm font-bold px-2 py-1 rounded">
+                      <div className="absolute top-2 right-2 bg-black bg-opacity-75 text-white text-sm font-bold px-1 py-0.5 rounded">
                         {card.quantity}x
                       </div>
                     </div>
-                    <div className={`p-3 ${zoomOut ? 'p-2' : ''}`}>
+                    <div className={`p-3 ${zoomOut ? 'p-1' : ''}`}>
                       <h3 className={`font-medium text-gray-900 line-clamp-2 mb-1 ${zoomOut ? 'text-xs' : 'text-sm'}`}>{card.Name}</h3>
                       <div className="flex items-center justify-between text-xs text-gray-600">
                         <span>{card.CardType}</span>
