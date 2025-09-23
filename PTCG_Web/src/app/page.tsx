@@ -51,9 +51,7 @@ export default function Home() {
       
       // Sort cards by CardID numerically in descending order to find the latest card
       const sortedData = data.sort((a: PTCGCard, b: PTCGCard) => {
-        const aId = parseInt(a.CardID.replace(/\D/g, '')) || 0;
-        const bId = parseInt(b.CardID.replace(/\D/g, '')) || 0;
-        return bId - aId; // Descending order
+        return b.CardID - a.CardID; // Descending order (CardID is now a number)
       });
       
       setCards(sortedData);
@@ -123,7 +121,7 @@ export default function Home() {
       filtered = filtered.filter(card =>
         (
           card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          card.CardID.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          card.CardID.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
           card.Skill1Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
           card.Skill2Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
           card.AbilityEffect.toLowerCase().includes(searchTerm.toLowerCase())
@@ -241,7 +239,7 @@ export default function Home() {
     if (!card) return [];
 
     const relatedCards: PTCGCard[] = [];
-    const usedCardIds = new Set([card.CardID]);
+    const usedCardIds = new Set<number>([card.CardID]);
 
     // Helper function to add cards without duplicates
     const addCards = (cardsToAdd: PTCGCard[]) => {

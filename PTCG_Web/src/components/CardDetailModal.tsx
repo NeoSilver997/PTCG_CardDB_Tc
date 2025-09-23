@@ -229,11 +229,20 @@ export default function CardDetailModal({
 
   const otherVersions = useMemo(() => {
     // Find all cards with the same name but different CardID (different versions)
-    return detailedCards.filter(c => 
-      c.Name === card.Name && 
-      c.CardID !== card.CardID &&
-      c.ImageURL // Only include cards with images
-    );
+    // Use a Set to ensure unique WebCardIDs (CardID) and avoid duplicates
+    const seenCardIDs = new Set<number>();
+    seenCardIDs.add(card.CardID); // Exclude the current card
+
+    return detailedCards.filter(c => {
+      if (c.Name === card.Name &&
+          c.CardID !== card.CardID &&
+          c.ImageURL &&
+          !seenCardIDs.has(c.CardID)) {
+        seenCardIDs.add(c.CardID);
+        return true;
+      }
+      return false;
+    });
   }, [card, detailedCards]);
 
   const renderScoreBreakdownChart = (breakdown: string) => {

@@ -83,6 +83,11 @@ export async function GET(request: NextRequest) {
         cleanedCard[key] = card[key] || '';
       });
 
+      // Convert WebCardID (CardID) to number
+      if (cleanedCard.CardID && cleanedCard.CardID !== '') {
+        cleanedCard.CardID = parseInt(cleanedCard.CardID, 10);
+      }
+
       // For detailed requests, keep original ImageURL, for search requests convert to local paths
       if (cleanedCard.ImageURL && cleanedCard.ImageURL.startsWith('https://')) {
         if (isDetail) {

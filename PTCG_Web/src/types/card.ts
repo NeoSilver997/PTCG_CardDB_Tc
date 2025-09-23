@@ -2,7 +2,7 @@ export interface PTCGCard {
   Name: string;
   Evolution: string;
   EvolutionStage: string;
-  CardID: string;
+  CardID: number; // WebCardID converted to number
   ImageURL: string;
   OriginalImageURL?: string; // Original internet link for detailed views
   CardType: string;
