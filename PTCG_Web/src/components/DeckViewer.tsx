@@ -146,10 +146,10 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
     <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 ${isFullScreen ? 'p-2' : ''}`}>
       <div className={`bg-white rounded-xl w-full h-full overflow-hidden shadow-2xl flex flex-col ${isFullScreen ? 'max-w-none max-h-[90vh] rounded-none' : 'max-w-6xl max-h-[95vh]'}`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
+        <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-blue-50 to-purple-50">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{deck.name}</h1>
-            <div className="flex items-center space-x-4 mt-2">
+            <h1 className="text-lg font-bold text-gray-900">{deck.name}</h1>
+            <div className="flex items-center space-x-2 mt-1">
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                 deck.format === 'Standard' ? 'bg-blue-100 text-blue-800' :
                 deck.format === 'Expanded' ? 'bg-green-100 text-green-800' :
@@ -175,7 +175,7 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => setZoomOut(!zoomOut)}
               className={`p-2 rounded-lg transition-colors ${
