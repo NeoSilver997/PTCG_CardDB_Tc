@@ -44,15 +44,48 @@ export default function SearchFiltersComponent({
     });
   };
 
-  // Get unique values for dropdowns
-  const cardTypes = Array.from(new Set(cards.map(card => card.CardType).filter(Boolean)));
-  const rarities = Array.from(new Set(cards.map(card => card.Rarity).filter(Boolean)));
-  const tiers = Array.from(new Set(cards.map(card => card.Tier).filter(Boolean)));
-  const attributes = Array.from(new Set(cards.map(card => card.Type).filter(Boolean)));
-  const regulations = Array.from(new Set(cards.map(card => card.RegulationMark).filter(Boolean)));
-  const expansions = Array.from(new Set(cards.map(card => card.ExpansionName || card.ExpansionCode).filter(Boolean)));
-  const weaknessTypes = Array.from(new Set(cards.map(card => card.WeaknessType).filter(Boolean)));
-  const resistanceTypes = Array.from(new Set(cards.map(card => card.ResistanceType).filter(Boolean)));
+  // Helper function to create filter options with counts, sorted by count descending
+  const createFilterOptions = (field: keyof PTCGCard, excludeEnergy: boolean = true) => {
+    const countMap = new Map<string, number>();
+    
+    cards.forEach(card => {
+      if (excludeEnergy && card.CardType.includes('能量')) return;
+      
+      const value = card[field] as string;
+      if (value && value.trim() !== '') {
+        countMap.set(value, (countMap.get(value) || 0) + 1);
+      }
+    });
+    
+    return Array.from(countMap.entries())
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count); // Sort by count descending
+  };
+
+  // Get filter options with counts
+  const cardTypeOptions = createFilterOptions('CardType', false);
+  const rarityOptions = createFilterOptions('Rarity');
+  const tierOptions = createFilterOptions('Tier');
+  const attributeOptions = createFilterOptions('Type');
+  const regulationOptions = createFilterOptions('RegulationMark');
+  
+  // Handle expansions (combine ExpansionName and ExpansionCode, remove duplicates)
+  const expansionNameOptions = createFilterOptions('ExpansionName');
+  const expansionCodeOptions = createFilterOptions('ExpansionCode');
+  const expansionOptions = [...expansionNameOptions, ...expansionCodeOptions]
+    .reduce((acc, option) => {
+      const existing = acc.find(item => item.value === option.value);
+      if (existing) {
+        existing.count += option.count;
+      } else {
+        acc.push({ ...option });
+      }
+      return acc;
+    }, [] as { value: string; count: number }[])
+    .sort((a, b) => b.count - a.count);
+    
+  const weaknessTypeOptions = createFilterOptions('WeaknessType');
+  const resistanceTypeOptions = createFilterOptions('ResistanceType');
 
   const hasActiveFilters = Object.values(filters).some(value =>
     value !== '' && value !== false
@@ -126,9 +159,9 @@ export default function SearchFiltersComponent({
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Card Types</option>
-            {cardTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
+            {cardTypeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.value} ({option.count})
               </option>
             ))}
           </select>
@@ -145,9 +178,9 @@ export default function SearchFiltersComponent({
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Rarities</option>
-            {rarities.map((rarity) => (
-              <option key={rarity} value={rarity}>
-                {rarity}
+            {rarityOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.value} ({option.count})
               </option>
             ))}
           </select>
@@ -164,9 +197,9 @@ export default function SearchFiltersComponent({
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Tiers</option>
-            {tiers.map((tier) => (
-              <option key={tier} value={tier}>
-                {tier}
+            {tierOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.value} ({option.count})
               </option>
             ))}
           </select>
@@ -183,9 +216,9 @@ export default function SearchFiltersComponent({
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Attributes</option>
-            {attributes.map((attribute) => (
-              <option key={attribute} value={attribute}>
-                {attribute}
+            {attributeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.value} ({option.count})
               </option>
             ))}
           </select>
@@ -202,9 +235,9 @@ export default function SearchFiltersComponent({
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Weakness Types</option>
-            {weaknessTypes.map((weaknessType) => (
-              <option key={weaknessType} value={weaknessType}>
-                {weaknessType}
+            {weaknessTypeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.value} ({option.count})
               </option>
             ))}
           </select>
@@ -221,9 +254,9 @@ export default function SearchFiltersComponent({
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Resistance Types</option>
-            {resistanceTypes.map((resistanceType) => (
-              <option key={resistanceType} value={resistanceType}>
-                {resistanceType}
+            {resistanceTypeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.value} ({option.count})
               </option>
             ))}
           </select>
@@ -240,9 +273,9 @@ export default function SearchFiltersComponent({
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Regulations</option>
-            {regulations.map((regulation) => (
-              <option key={regulation} value={regulation}>
-                {regulation}
+            {regulationOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.value} ({option.count})
               </option>
             ))}
           </select>
@@ -259,9 +292,9 @@ export default function SearchFiltersComponent({
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             <option value="">All Expansions</option>
-            {expansions.map((expansion) => (
-              <option key={expansion} value={expansion}>
-                {expansion}
+            {expansionOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.value} ({option.count})
               </option>
             ))}
           </select>
@@ -313,9 +346,9 @@ export default function SearchFiltersComponent({
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 >
                   <option value="">All Types</option>
-                  {attributes.map((attribute) => (
-                    <option key={attribute} value={attribute}>
-                      {attribute}
+                  {attributeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.value} ({option.count})
                     </option>
                   ))}
                 </select>
