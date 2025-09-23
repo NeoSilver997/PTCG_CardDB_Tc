@@ -146,29 +146,214 @@ export default function Home() {
   const getRelatedCards = (card: PTCGCard): PTCGCard[] => {
     if (!card) return [];
 
-    return cards
-      .filter(c => c.CardID !== card.CardID)
-      .filter(c => {
-        // Same ability
-        if (card.AbilityStats && c.AbilityStats) {
-          const cardAbilities = card.AbilityStats.split(',').map(a => a.trim());
-          const otherAbilities = c.AbilityStats.split(',').map(a => a.trim());
-          if (cardAbilities.some(a => otherAbilities.includes(a))) return true;
+    const relatedCards: PTCGCard[] = [];
+    const usedCardIds = new Set([card.CardID]);
+
+    // Helper function to add cards without duplicates
+    const addCards = (cardsToAdd: PTCGCard[]) => {
+      for (const c of cardsToAdd) {
+        if (!usedCardIds.has(c.CardID) && !c.CardType.includes('能量')) {
+          relatedCards.push(c);
+          usedCardIds.add(c.CardID);
+          if (relatedCards.length >= 6) break;
+        }
+      }
+    };
+
+    // 1. Same type (highest priority)
+    if (card.Type) {
+      const sameTypeCards = cards.filter(c =>
+        c.CardID !== card.CardID &&
+        c.Type === card.Type &&
+        !c.CardType.includes('能量')
+      );
+      addCards(sameTypeCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 2. Same evolution family (same base name)
+    const baseName = card.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim();
+    if (baseName) {
+      const familyCards = cards.filter(c =>
+        c.CardID !== card.CardID &&
+        !usedCardIds.has(c.CardID) &&
+        !c.CardType.includes('能量') &&
+        c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+      );
+      addCards(familyCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 2.5. Complementary Pokemon pairs (like Lunatone/Solrock, Latios/Latias, etc.)
+    const complementaryPairs: { [key: string]: string[] } = {
+      '月石': ['太陽岩'],
+      '太陽岩': ['月石'],
+      '拉帝亞斯': ['拉帝歐斯'],
+      '拉帝歐斯': ['拉帝亞斯'],
+      '利歐路': ['路卡利歐'],
+      '瑪納霏': ['瑪納菲'],
+      // Add more complementary pairs as needed
+    };
+
+    if (complementaryPairs[card.Name]) {
+      const pairCards = cards.filter(c =>
+        c.CardID !== card.CardID &&
+        !usedCardIds.has(c.CardID) &&
+        !c.CardType.includes('能量') &&
+        complementaryPairs[card.Name].includes(c.Name)
+      );
+      addCards(pairCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 2.75. Same ability themes (more flexible ability matching)
+    if (card.AbilityStats) {
+      const cardAbilityThemes = card.AbilityStats.split(',').map(a => a.trim().toLowerCase());
+      const abilityThemeCards = cards.filter(c => {
+        if (c.CardID === card.CardID || usedCardIds.has(c.CardID) || c.CardType.includes('能量') || !c.AbilityStats) {
+          return false;
         }
 
-        // Same effect type
-        if (card.PrimaryEffectType && c.PrimaryEffectType) {
-          const cardEffects = card.PrimaryEffectType.split(',').map(e => e.trim());
-          const otherEffects = c.PrimaryEffectType.split(',').map(e => e.trim());
-          if (cardEffects.some(e => otherEffects.includes(e))) return true;
+        const otherAbilityThemes = c.AbilityStats.split(',').map(a => a.trim().toLowerCase());
+
+        // Check for partial matches in ability themes
+        return cardAbilityThemes.some(cardTheme =>
+          otherAbilityThemes.some(otherTheme =>
+            cardTheme.includes(otherTheme) || otherTheme.includes(cardTheme) ||
+            // Check for similar ability categories
+            (cardTheme.includes('傷害') && otherTheme.includes('傷害')) ||
+            (cardTheme.includes('防禦') && otherTheme.includes('防禦')) ||
+            (cardTheme.includes('狀態') && otherTheme.includes('狀態')) ||
+            (cardTheme.includes('回復') && otherTheme.includes('回復'))
+          )
+        );
+      });
+      addCards(abilityThemeCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 3.5. Cards with special effect keywords (like 「XXX」 patterns)
+    const specialEffectKeywords = [
+      '「', '」', // Japanese quote marks
+      '不能', '可以', '必須', // Modal verbs
+      '每次', '每回', // Frequency words
+      '對手', '我方', // Player references
+      '場上', '牌庫', '棄牌區', // Location references
+      '選擇', '查看', '抽', // Action words
+      '回復', '治療', // Healing terms
+      '交換', '進化', // Evolution terms
+      '阻擋', '防禦', // Defense terms
+    ];
+
+    const cardEffectText = [
+      card.Skill1Effect,
+      card.Skill2Effect,
+      card.AbilityEffect
+    ].filter(effect => effect).join(' ');
+
+    // Find special keywords in the current card's effects
+    const matchingKeywords = specialEffectKeywords.filter(keyword =>
+      cardEffectText.includes(keyword)
+    );
+
+    if (matchingKeywords.length > 0) {
+      const specialEffectCards = cards.filter(c => {
+        if (c.CardID === card.CardID || usedCardIds.has(c.CardID) || c.CardType.includes('能量')) {
+          return false;
         }
 
-        // Same type
-        if (card.Type === c.Type) return true;
+        const otherEffectText = [
+          c.Skill1Effect,
+          c.Skill2Effect,
+          c.AbilityEffect
+        ].filter(effect => effect).join(' ');
 
+        // Check if other card has any of the same special keywords
+        return matchingKeywords.some(keyword =>
+          otherEffectText.includes(keyword)
+        );
+      });
+      addCards(specialEffectCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 4. Same skill names
+    const skillNames = [
+      card.Skill1Name,
+      card.Skill2Name
+    ].filter(name => name && name.trim() !== '');
+
+    if (skillNames.length > 0) {
+      const sameSkillCards = cards.filter(c =>
+        c.CardID !== card.CardID &&
+        !usedCardIds.has(c.CardID) &&
+        !c.CardType.includes('能量') &&
+        (skillNames.includes(c.Skill1Name) || skillNames.includes(c.Skill2Name))
+      );
+      addCards(sameSkillCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 4. Effects containing keywords from original card
+    const effectKeywords = [
+      ...(card.Skill1Effect ? card.Skill1Effect.split(/\s+/) : []),
+      ...(card.Skill2Effect ? card.Skill2Effect.split(/\s+/) : []),
+      ...(card.AbilityEffect ? card.AbilityEffect.split(/\s+/) : [])
+    ].filter(word => word.length > 2); // Only meaningful keywords
+
+    if (effectKeywords.length > 0) {
+      const effectCards = cards.filter(c => {
+        if (c.CardID === card.CardID || usedCardIds.has(c.CardID) || c.CardType.includes('能量')) {
+          return false;
+        }
+
+        const cardEffects = [
+          c.Skill1Effect,
+          c.Skill2Effect,
+          c.AbilityEffect
+        ].filter(effect => effect).join(' ');
+
+        return effectKeywords.some(keyword =>
+          cardEffects.includes(keyword)
+        );
+      });
+      addCards(effectCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 5. Fallback: same ability or effect type (original logic)
+    const fallbackCards = cards.filter(c => {
+      if (c.CardID === card.CardID || usedCardIds.has(c.CardID) || c.CardType.includes('能量')) {
         return false;
-      })
-      .slice(0, 6);
+      }
+
+      // Same ability
+      if (card.AbilityStats && c.AbilityStats) {
+        const cardAbilities = card.AbilityStats.split(',').map(a => a.trim());
+        const otherAbilities = c.AbilityStats.split(',').map(a => a.trim());
+        if (cardAbilities.some(a => otherAbilities.includes(a))) return true;
+      }
+
+      // Same effect type
+      if (card.PrimaryEffectType && c.PrimaryEffectType) {
+        const cardEffects = card.PrimaryEffectType.split(',').map(e => e.trim());
+        const otherEffects = c.PrimaryEffectType.split(',').map(e => e.trim());
+        if (cardEffects.some(e => otherEffects.includes(e))) return true;
+      }
+
+      return false;
+    });
+
+    addCards(fallbackCards);
+
+    return relatedCards;
   };
 
   if (loading) {
