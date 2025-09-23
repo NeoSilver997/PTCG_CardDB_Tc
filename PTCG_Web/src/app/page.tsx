@@ -519,8 +519,17 @@ export default function Home() {
               <Gamepad2 className="h-10 w-10 text-blue-600" />
               <h1 className="text-3xl font-bold text-gray-900">PTCG Card Search</h1>
             </div>
-            <div className="text-base text-gray-500">
-              {filteredCards.length} cards found
+            <div className="flex items-center space-x-4">
+              <a
+                href="/deck-builder"
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <Sword className="h-5 w-5" />
+                <span>Deck Builder</span>
+              </a>
+              <div className="text-base text-gray-500">
+                {filteredCards.length} cards found
+              </div>
             </div>
           </div>
         </div>
