@@ -45,8 +45,13 @@ export interface SearchFilters {
   tier: string;
   attribute: string;
   regulation: string;
+  expansion: string;
   weaknessType: string;
   resistanceType: string;
+  noRetreat: boolean;
+  noResistance: boolean;
+  noWeakness: boolean;
+  specialPokemonType: string;
 }
 
 export interface AbilityOption {

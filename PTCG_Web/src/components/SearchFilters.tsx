@@ -34,8 +34,13 @@ export default function SearchFiltersComponent({
       tier: '',
       attribute: '',
       regulation: '',
+      expansion: '',
       weaknessType: '',
-      resistanceType: ''
+      resistanceType: '',
+      noRetreat: false,
+      noResistance: false,
+      noWeakness: false,
+      specialPokemonType: ''
     });
   };
 
@@ -45,10 +50,13 @@ export default function SearchFiltersComponent({
   const tiers = Array.from(new Set(cards.map(card => card.Tier).filter(Boolean)));
   const attributes = Array.from(new Set(cards.map(card => card.Type).filter(Boolean)));
   const regulations = Array.from(new Set(cards.map(card => card.RegulationMark).filter(Boolean)));
+  const expansions = Array.from(new Set(cards.map(card => card.ExpansionName || card.ExpansionCode).filter(Boolean)));
   const weaknessTypes = Array.from(new Set(cards.map(card => card.WeaknessType).filter(Boolean)));
   const resistanceTypes = Array.from(new Set(cards.map(card => card.ResistanceType).filter(Boolean)));
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== '');
+  const hasActiveFilters = Object.values(filters).some(value =>
+    value !== '' && value !== false
+  );
 
   return (
     <div className="bg-white rounded-xl shadow-lg border p-8">
@@ -238,6 +246,85 @@ export default function SearchFiltersComponent({
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Expansion Filter */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            Expansion
+          </label>
+          <select
+            value={filters.expansion}
+            onChange={(e) => updateFilter('expansion', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+          >
+            <option value="">All Expansions</option>
+            {expansions.map((expansion) => (
+              <option key={expansion} value={expansion}>
+                {expansion}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Special Filters */}
+        <div className="col-span-full border-t pt-6">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Special Filters</h3>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={filters.noRetreat}
+                  onChange={(e) => onFiltersChange({ ...filters, noRetreat: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-700">No Retreat Cost</span>
+              </label>
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={filters.noResistance}
+                  onChange={(e) => onFiltersChange({ ...filters, noResistance: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-700">No Resistance</span>
+              </label>
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={filters.noWeakness}
+                  onChange={(e) => onFiltersChange({ ...filters, noWeakness: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-700">No Weakness</span>
+              </label>
+            </div>
+
+            {/* Pokemon Type for Special Filters */}
+            {(filters.noRetreat || filters.noResistance || filters.noWeakness) && (
+              <div className="border-t pt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pokemon Type (for Special Filters)
+                </label>
+                <select
+                  value={filters.specialPokemonType}
+                  onChange={(e) => updateFilter('specialPokemonType', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  <option value="">All Types</option>
+                  {attributes.map((attribute) => (
+                    <option key={attribute} value={attribute}>
+                      {attribute}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Filter Pokemon by type when special filters are active
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

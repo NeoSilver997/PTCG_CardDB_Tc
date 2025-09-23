@@ -18,8 +18,13 @@ export default function Home() {
     tier: '',
     attribute: '',
     regulation: '',
+    expansion: '',
     weaknessType: '',
-    resistanceType: ''
+    resistanceType: '',
+    noRetreat: false,
+    noResistance: false,
+    noWeakness: false,
+    specialPokemonType: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
@@ -29,6 +34,10 @@ export default function Home() {
 
   const isEnergyCard = (card: PTCGCard) => {
     return card.CardType.includes('能量') || card.CardType.toLowerCase().includes('energy');
+  };
+
+  const isPokemonCard = (card: PTCGCard) => {
+    return card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon');
   };
 
   useEffect(() => {
@@ -171,6 +180,41 @@ export default function Home() {
     if (filters.regulation) {
       filtered = filtered.filter(card =>
         !isEnergyCard(card) && card.RegulationMark === filters.regulation
+      );
+    }
+
+    // Apply expansion filter
+    if (filters.expansion) {
+      filtered = filtered.filter(card =>
+        !isEnergyCard(card) && (card.ExpansionCode === filters.expansion || card.ExpansionName === filters.expansion)
+      );
+    }
+
+    // Apply no retreat filter (only for Pokemon cards)
+    if (filters.noRetreat) {
+      filtered = filtered.filter(card =>
+        isPokemonCard(card) && (!card.RetreatCost || card.RetreatCost.trim() === '' || card.RetreatCost === '0')
+      );
+    }
+
+    // Apply no resistance filter (only for Pokemon cards)
+    if (filters.noResistance) {
+      filtered = filtered.filter(card =>
+        isPokemonCard(card) && (!card.ResistanceType || card.ResistanceType.trim() === '')
+      );
+    }
+
+    // Apply no weakness filter (only for Pokemon cards)
+    if (filters.noWeakness) {
+      filtered = filtered.filter(card =>
+        isPokemonCard(card) && (!card.WeaknessType || card.WeaknessType.trim() === '')
+      );
+    }
+
+    // Apply special Pokemon type filter when any special filter is active
+    if (filters.specialPokemonType && (filters.noRetreat || filters.noResistance || filters.noWeakness)) {
+      filtered = filtered.filter(card =>
+        isPokemonCard(card) && card.Type === filters.specialPokemonType
       );
     }
 

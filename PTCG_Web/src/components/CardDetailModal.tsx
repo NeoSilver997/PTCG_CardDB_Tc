@@ -51,11 +51,45 @@ export default function CardDetailModal({
     }
   };
 
-  const renderColorlessEnergyCost = (energyCost: string) => {
+  const renderEnergyCost = (energyCost: string) => {
     if (!energyCost || energyCost.trim() === '') return null;
 
     const energyTypes = energyCost.split(',').map(type => type.trim());
-    const energyCount = energyTypes.length;
+    
+    return (
+      <div className="flex items-center space-x-1">
+        {energyTypes.map((energyType, index) => {
+          const energyImageUrl = `/energy/${energyType}.png`;
+          return (
+            <div
+              key={index}
+              className="w-8 h-8 rounded-full bg-white border border-gray-300 shadow-sm overflow-hidden"
+              title={energyType}
+            >
+              <img
+                src={energyImageUrl}
+                alt={energyType}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to emoji if image fails to load
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML = getTypeIcon(energyType);
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderColorlessEnergyCost = (energyCost: string) => {
+    if (!energyCost || energyCost.trim() === '') return null;
+
+    // For retreat cost, it's a number representing how many colorless energy are needed
+    const energyCount = parseInt(energyCost.trim(), 10);
+
+    if (isNaN(energyCount) || energyCount <= 0) return null;
 
     return (
       <div className="flex items-center space-x-1">
@@ -304,7 +338,7 @@ export default function CardDetailModal({
                   <div>
                     <span className="text-gray-600 font-medium">Retreat Cost:</span>
                     <div className="font-semibold text-lg flex items-center space-x-2">
-                      {renderEnergyCost(card.RetreatCost)}
+                      {renderColorlessEnergyCost(card.RetreatCost)}
                     </div>
                   </div>
                 )}
