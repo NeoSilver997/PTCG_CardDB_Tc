@@ -32,10 +32,6 @@ export default function Home() {
   const [abilities, setAbilities] = useState<AbilityOption[]>([]);
   const [effectTypes, setEffectTypes] = useState<EffectTypeOption[]>([]);
 
-  const isEnergyCard = (card: PTCGCard) => {
-    return card.CardType.includes('能量') || card.CardType.toLowerCase().includes('energy');
-  };
-
   const isPokemonCard = (card: PTCGCard) => {
     return card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon');
   };
@@ -125,7 +121,7 @@ export default function Home() {
     // Apply search term (exclude energy cards from search)
     if (searchTerm) {
       filtered = filtered.filter(card =>
-        !isEnergyCard(card) && (
+        (
           card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           card.CardID.toLowerCase().includes(searchTerm.toLowerCase()) ||
           card.Skill1Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -145,7 +141,7 @@ export default function Home() {
     // Apply effect type filter
     if (filters.effectType) {
       filtered = filtered.filter(card =>
-        !isEnergyCard(card) && (
+        (
           (card.PrimaryEffectType && card.PrimaryEffectType.includes(filters.effectType)) ||
           (card.SpecialEffectType && card.SpecialEffectType.includes(filters.effectType))
         )
@@ -160,49 +156,49 @@ export default function Home() {
     // Apply rarity filter
     if (filters.rarity) {
       filtered = filtered.filter(card =>
-        !isEnergyCard(card) && card.Rarity === filters.rarity
+        card.Rarity === filters.rarity
       );
     }
 
     // Apply tier filter
     if (filters.tier) {
       filtered = filtered.filter(card =>
-        !isEnergyCard(card) && card.Tier === filters.tier
+         card.Tier === filters.tier
       );
     }
 
     // Apply attribute filter
     if (filters.attribute) {
       filtered = filtered.filter(card =>
-        !isEnergyCard(card) && card.Type === filters.attribute
+         card.Type === filters.attribute
       );
     }
 
     // Apply weakness type filter
     if (filters.weaknessType) {
       filtered = filtered.filter(card =>
-        !isEnergyCard(card) && card.WeaknessType === filters.weaknessType
+         card.WeaknessType === filters.weaknessType
       );
     }
 
     // Apply resistance type filter
     if (filters.resistanceType) {
       filtered = filtered.filter(card =>
-        !isEnergyCard(card) && card.ResistanceType === filters.resistanceType
+         card.ResistanceType === filters.resistanceType
       );
     }
 
     // Apply regulation filter
     if (filters.regulation) {
       filtered = filtered.filter(card =>
-        !isEnergyCard(card) && card.RegulationMark === filters.regulation
+         card.RegulationMark === filters.regulation
       );
     }
 
     // Apply expansion filter
     if (filters.expansion) {
       filtered = filtered.filter(card =>
-        !isEnergyCard(card) && (card.ExpansionCode === filters.expansion || card.ExpansionName === filters.expansion)
+         (card.ExpansionCode === filters.expansion || card.ExpansionName === filters.expansion)
       );
     }
 
@@ -234,9 +230,6 @@ export default function Home() {
       );
     }
 
-    // Always exclude energy cards from final results
-    filtered = filtered.filter(card => !isEnergyCard(card));
-
     setFilteredCards(filtered);
   };
 
@@ -253,7 +246,7 @@ export default function Home() {
     // Helper function to add cards without duplicates
     const addCards = (cardsToAdd: PTCGCard[]) => {
       for (const c of cardsToAdd) {
-        if (!usedCardIds.has(c.CardID) && !c.CardType.includes('能量')) {
+        if (!usedCardIds.has(c.CardID)) {
           relatedCards.push(c);
           usedCardIds.add(c.CardID);
           if (relatedCards.length >= 6) break;
@@ -265,8 +258,7 @@ export default function Home() {
     if (card.Type) {
       const sameTypeCards = cards.filter(c =>
         c.CardID !== card.CardID &&
-        c.Type === card.Type &&
-        !c.CardType.includes('能量')
+        c.Type === card.Type 
       );
       addCards(sameTypeCards);
     }
@@ -278,8 +270,7 @@ export default function Home() {
     if (baseName) {
       const familyCards = cards.filter(c =>
         c.CardID !== card.CardID &&
-        !usedCardIds.has(c.CardID) &&
-        !c.CardType.includes('能量') &&
+        !usedCardIds.has(c.CardID)  &&
         c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
       );
       addCards(familyCards);
@@ -302,7 +293,6 @@ export default function Home() {
       const pairCards = cards.filter(c =>
         c.CardID !== card.CardID &&
         !usedCardIds.has(c.CardID) &&
-        !c.CardType.includes('能量') &&
         complementaryPairs[card.Name].includes(c.Name)
       );
       addCards(pairCards);
@@ -315,7 +305,6 @@ export default function Home() {
       const evolutionCards = cards.filter(c =>
         c.CardID !== card.CardID &&
         !usedCardIds.has(c.CardID) &&
-        !c.CardType.includes('能量') &&
         c.Evolution === card.Evolution
       );
       addCards(evolutionCards);
@@ -325,7 +314,7 @@ export default function Home() {
 
     // 2.7. Evolution chain progression (Basic -> Stage 1, Stage 1 -> Stage 2, etc.)
     if (card.Evolution && card.Name) {
-      const baseName = card.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim();
+      const baseName = card.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim();
       let evolutionChainCards: PTCGCard[] = [];
 
       if (card.Evolution === 'Basic') {
@@ -333,25 +322,22 @@ export default function Home() {
         evolutionChainCards = cards.filter(c =>
           c.CardID !== card.CardID &&
           !usedCardIds.has(c.CardID) &&
-          !c.CardType.includes('能量') &&
           c.Evolution === 'Stage 1' &&
-          c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+          c.Name.replace(/|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
         );
       } else if (card.Evolution === 'Stage 1') {
         // For Stage 1 cards, find their Basic forms and Stage 2 evolutions
         const basicCards = cards.filter(c =>
           c.CardID !== card.CardID &&
           !usedCardIds.has(c.CardID) &&
-          !c.CardType.includes('能量') &&
           c.Evolution === 'Basic' &&
-          c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+          c.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
         );
         const stage2Cards = cards.filter(c =>
           c.CardID !== card.CardID &&
           !usedCardIds.has(c.CardID) &&
-          !c.CardType.includes('能量') &&
           c.Evolution === 'Stage 2' &&
-          c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+          c.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
         );
         evolutionChainCards = [...basicCards, ...stage2Cards];
       } else if (card.Evolution === 'Stage 2') {
@@ -359,9 +345,8 @@ export default function Home() {
         evolutionChainCards = cards.filter(c =>
           c.CardID !== card.CardID &&
           !usedCardIds.has(c.CardID) &&
-          !c.CardType.includes('能量') &&
           c.Evolution === 'Stage 1' &&
-          c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+          c.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
         );
       }
 
@@ -374,7 +359,7 @@ export default function Home() {
     if (card.AbilityStats) {
       const cardAbilityThemes = card.AbilityStats.split(',').map(a => a.trim().toLowerCase());
       const abilityThemeCards = cards.filter(c => {
-        if (c.CardID === card.CardID || usedCardIds.has(c.CardID) || c.CardType.includes('能量') || !c.AbilityStats) {
+        if (c.CardID === card.CardID || usedCardIds.has(c.CardID)  || !c.AbilityStats) {
           return false;
         }
 
@@ -423,7 +408,7 @@ export default function Home() {
 
     if (matchingKeywords.length > 0) {
       const specialEffectCards = cards.filter(c => {
-        if (c.CardID === card.CardID || usedCardIds.has(c.CardID) || c.CardType.includes('能量')) {
+        if (c.CardID === card.CardID || usedCardIds.has(c.CardID) ) {
           return false;
         }
 
@@ -453,7 +438,6 @@ export default function Home() {
       const sameSkillCards = cards.filter(c =>
         c.CardID !== card.CardID &&
         !usedCardIds.has(c.CardID) &&
-        !c.CardType.includes('能量') &&
         (skillNames.includes(c.Skill1Name) || skillNames.includes(c.Skill2Name))
       );
       addCards(sameSkillCards);
@@ -470,7 +454,7 @@ export default function Home() {
 
     if (effectKeywords.length > 0) {
       const effectCards = cards.filter(c => {
-        if (c.CardID === card.CardID || usedCardIds.has(c.CardID) || c.CardType.includes('能量')) {
+        if (c.CardID === card.CardID || usedCardIds.has(c.CardID) ) {
           return false;
         }
 
@@ -491,7 +475,7 @@ export default function Home() {
 
     // 5. Fallback: same ability or effect type (original logic)
     const fallbackCards = cards.filter(c => {
-      if (c.CardID === card.CardID || usedCardIds.has(c.CardID) || c.CardType.includes('能量')) {
+      if (c.CardID === card.CardID || usedCardIds.has(c.CardID) ) {
         return false;
       }
 
