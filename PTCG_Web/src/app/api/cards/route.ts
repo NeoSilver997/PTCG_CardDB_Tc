@@ -6,7 +6,7 @@ import Papa from 'papaparse';
 export async function GET(request: NextRequest) {
   try {
     // Path to the merged CSV file
-    const csvPath = path.join(process.cwd(), '..', 'cards_output_all_mega_with_effects_smart_merged_final_success_with_ability_stats_rated_with_damage.csv');
+    const csvPath = path.join(process.cwd(), 'source', 'mega_card.csv');
 
     // Check if file exists
     if (!fs.existsSync(csvPath)) {
