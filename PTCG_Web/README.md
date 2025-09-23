@@ -7,6 +7,8 @@ A modern web application for searching and exploring Pokemon Trading Card Game (
 - **Advanced Search**: Search cards by name, ability, or effect descriptions
 - **Ability Filtering**: Filter cards by specific abilities and their statistics
 - **Effect Type Filtering**: Browse cards by primary and special effect classifications
+- **Attribute Filtering**: Filter cards by Pokemon types (Grass, Fire, Water, etc.)
+- **Detailed Card View**: Comprehensive card information with score breakdown charts
 - **Card Details**: View detailed card information including skills, abilities, and stats
 - **Related Cards**: Discover cards with similar abilities and effects
 - **Tier System**: Cards are rated with a comprehensive scoring system

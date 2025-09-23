@@ -1,6 +1,6 @@
 'use client';
 
-import { X, ExternalLink, Star, Zap, Shield, Sword } from 'lucide-react';
+import { X, ExternalLink } from 'lucide-react';
 import { PTCGCard } from '../types/card';
 
 interface CardDetailModalProps {
@@ -46,6 +46,49 @@ export default function CardDetailModal({
       case 'colorless': return '⚪';
       default: return '🎴';
     }
+  };
+
+  const renderScoreBreakdownChart = (breakdown: string) => {
+    if (!breakdown) return null;
+
+    // Parse the breakdown string like "Base:5.0|Meta:0.0|Exp:3.0|Func:4.0|Syn:0.0|"
+    const components = breakdown.split('|').filter(item => item.trim() !== '');
+    const parsedData = components.map(item => {
+      const [label, value] = item.split(':');
+      return {
+        label: label.trim(),
+        value: parseFloat(value) || 0
+      };
+    }).filter(item => item.value > 0); // Only show components with values > 0
+
+    if (parsedData.length === 0) return null;
+
+    // Find max value for scaling
+    const maxValue = Math.max(...parsedData.map(item => item.value));
+
+    return (
+      <div className="space-y-2">
+        <div className="text-sm font-medium text-gray-700 mb-3">Score Breakdown</div>
+        {parsedData.map((item, index) => {
+          const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
+          return (
+            <div key={index} className="flex items-center space-x-3">
+              <div className="w-16 text-xs text-gray-600 font-medium">{item.label}</div>
+              <div className="flex-1 bg-gray-200 rounded-full h-3">
+                <div
+                  className="bg-blue-500 h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${percentage}%` }}
+                ></div>
+              </div>
+              <div className="w-8 text-xs text-gray-600 font-medium text-right">{item.value}</div>
+            </div>
+          );
+        })}
+        <div className="text-xs text-gray-500 mt-2">
+          Total Score: {parsedData.reduce((sum, item) => sum + item.value, 0).toFixed(1)}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -116,19 +159,66 @@ export default function CardDetailModal({
                   <span className="text-gray-600">Evolution:</span>
                   <div className="font-semibold">{card.Evolution}</div>
                 </div>
+                {card.Weakness && (
+                  <div>
+                    <span className="text-gray-600">Weakness:</span>
+                    <div className="font-semibold">{card.Weakness}</div>
+                  </div>
+                )}
+                {card.Resistance && (
+                  <div>
+                    <span className="text-gray-600">Resistance:</span>
+                    <div className="font-semibold">{card.Resistance}</div>
+                  </div>
+                )}
+                {card.RetreatCost && (
+                  <div>
+                    <span className="text-gray-600">Retreat Cost:</span>
+                    <div className="font-semibold">{card.RetreatCost}</div>
+                  </div>
+                )}
+                {card.RegulationMark && (
+                  <div>
+                    <span className="text-gray-600">Regulation:</span>
+                    <div className="font-semibold">{card.RegulationMark}</div>
+                  </div>
+                )}
               </div>
+
+              {/* Additional Details */}
+              {(card.ExpansionName || card.ExpansionCode || card.Illustrator || card.Artist || card.SpecialTag) && (
+                <div className="pt-3 border-t space-y-2">
+                  {card.ExpansionName && (
+                    <div>
+                      <span className="text-gray-600 text-sm">Expansion:</span>
+                      <div className="font-semibold text-sm">{card.ExpansionName}</div>
+                      {card.ExpansionCode && (
+                        <div className="text-xs text-gray-500">Code: {card.ExpansionCode}</div>
+                      )}
+                    </div>
+                  )}
+                  {(card.Illustrator || card.Artist) && (
+                    <div>
+                      <span className="text-gray-600 text-sm">Artist:</span>
+                      <div className="font-semibold text-sm">{card.Illustrator || card.Artist}</div>
+                    </div>
+                  )}
+                  {card.SpecialTag && (
+                    <div>
+                      <span className="text-gray-600 text-sm">Special Tag:</span>
+                      <div className="font-semibold text-sm">{card.SpecialTag}</div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {card.Score && (
                 <div className="pt-3 border-t">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-3">
                     <span className="text-gray-600">Score:</span>
                     <span className="font-bold text-lg">{card.Score}</span>
                   </div>
-                  {card.ScoreBreakdown && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      {card.ScoreBreakdown}
-                    </div>
-                  )}
+                  {card.ScoreBreakdown && renderScoreBreakdownChart(card.ScoreBreakdown)}
                 </div>
               )}
 
