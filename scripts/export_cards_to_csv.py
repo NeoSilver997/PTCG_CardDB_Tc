@@ -5,8 +5,8 @@ import sys
 import re
 
 HTML_DIR = r'c:\Users\schan15\SCCode\PTCG_CardDB_Tc\html_pages'
-HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages\M1L'
-OUTPUT_CSV = 'cards_output_all_mega1.csv'  # Changed name to reflect all cards
+HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages'
+OUTPUT_CSV = 'cards_output_all_mega.csv'  # Changed name to reflect all cards
 
 def get_energy_type_from_url(url):
     """Extract energy type name from image URL"""
@@ -231,6 +231,20 @@ def extract_card_fields(html, file_path):
         if info_section:
             pokemon_info = info_section.get_text(strip=True)
 
+        # Extract evolution information
+        evolution = ''
+        evolution_steps = soup.find_all('ul', class_='evolutionStep')
+        if evolution_steps:
+            evolution_names = []
+            for step_ul in evolution_steps:
+                # Get all links within this evolution step
+                step_links = step_ul.find_all('a')
+                for link in step_links:
+                    step_name = link.get_text(strip=True)
+                    if step_name and step_name not in evolution_names:
+                        evolution_names.append(step_name)
+            evolution = ' → '.join(evolution_names)
+
         # Enhanced subtypes handling
         subtypes = []
         if 'ex' in name.lower():
@@ -252,6 +266,7 @@ def extract_card_fields(html, file_path):
         skill2_name = clean_text_for_csv(skill2_name)
         skill2_effect = clean_text_for_csv(skill2_effect)
         pokemon_info = clean_text_for_csv(pokemon_info)
+        evolution = clean_text_for_csv(evolution)
         expansion = clean_text_for_csv(expansion)
         illustrator = clean_text_for_csv(illustrator)
         regulation_mark = clean_text_for_csv(regulation_mark)
@@ -264,12 +279,12 @@ def extract_card_fields(html, file_path):
             weakness, weakness_type,
             resistance, resistance_type,
             retreat_cost,
-            collector,rarity,regulation_mark, expansion, expansion_code, illustrator, pokemon_info,  # Added expansion_code
+            collector,rarity,regulation_mark, expansion, expansion_code, illustrator, pokemon_info, evolution,  # Added evolution
             ','.join(subtypes)
         ]
     except Exception as e:
         print(f"Error processing HTML: {str(e)}", file=sys.stderr)
-        return [''] * 28  # Updated number of fields
+        return [''] * 29  # Updated number of fields
 
 def process_html_directory(directory):
     """Process all HTML files in a directory and its subdirectories"""
@@ -313,7 +328,7 @@ def main():
                 'Weakness', 'WeaknessType',
                 'Resistance', 'ResistanceType',
                 'RetreatCost',
-                'CollectorNumber','Rarity','Mark', 'Expansion', 'ExpansionCode', 'Illustrator', 'PokemonInfo',  # Added ExpansionCode
+                'CollectorNumber','Rarity','Mark', 'Expansion', 'ExpansionCode', 'Illustrator', 'PokemonInfo', 'Evolution',  # Added Evolution
                 'Subtypes'
             ])
             writer.writerows(rows)
