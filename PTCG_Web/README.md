@@ -1,18 +1,21 @@
-# PTCG Card Search
+# Pokemon TCG Deck Builder
 
-A modern web application for searching and exploring Pokemon Trading Card Game (PTCG) cards by abilities and effects.
+A comprehensive web application for building, managing, and analyzing Pokemon Trading Card Game (PTCG) decks with advanced search, import/export, and viewing capabilities.
 
 ## Features
 
-- **Advanced Search**: Search cards by name, ability, or effect descriptions
-- **Ability Filtering**: Filter cards by specific abilities and their statistics
-- **Effect Type Filtering**: Browse cards by primary and special effect classifications
-- **Attribute Filtering**: Filter cards by Pokemon types (Grass, Fire, Water, etc.)
-- **Detailed Card View**: Comprehensive card information with score breakdown charts
-- **Card Details**: View detailed card information including skills, abilities, and stats
-- **Related Cards**: Discover cards with similar abilities and effects
-- **Tier System**: Cards are rated with a comprehensive scoring system
-- **Responsive Design**: Works on desktop and mobile devices
+- **Deck Building**: Intuitive drag-and-drop interface for creating custom decks
+- **Advanced Search**: Search cards by name, ability, effect, or card type
+- **Smart Filtering**: Filter by abilities, effect types, card types, rarity, tiers, and attributes
+- **Import/Export**: Support for both English and Chinese deck list formats
+- **Deck Management**: Create, edit, duplicate, and delete decks with local storage
+- **Editable Deck Names**: Inline editing of deck names
+- **Real-time Validation**: Automatic deck validation with error and warning feedback
+- **Full-Screen Viewing**: Immersive deck viewing experience
+- **Zoom-Out Mode**: Compact view showing all cards with quantities
+- **Card Details**: Comprehensive card information with related cards discovery
+- **Statistics Dashboard**: Detailed deck composition and performance analytics
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
 
 ## Technology Stack
 
@@ -21,6 +24,8 @@ A modern web application for searching and exploring Pokemon Trading Card Game (
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
 - **Data Processing**: PapaParse for CSV handling
+- **State Management**: React hooks with localStorage persistence
+- **Testing**: Jest and React Testing Library
 
 ## Getting Started
 
@@ -34,7 +39,7 @@ A modern web application for searching and exploring Pokemon Trading Card Game (
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd ptcg-card-search
+cd ptcg-deck-builder
 ```
 
 2. Install dependencies:
@@ -81,17 +86,22 @@ The `download-images.js` script:
 ```
 src/
 ├── app/
-│   ├── api/cards/route.ts    # API endpoint for card data
-│   ├── globals.css           # Global styles
-│   ├── layout.tsx            # Root layout
-│   └── page.tsx              # Main page
+│   ├── api/cards/route.ts        # API endpoint for card data
+│   ├── deck-builder/page.tsx     # Deck builder and manager page
+│   ├── globals.css               # Global styles
+│   ├── layout.tsx                # Root layout
+│   └── page.tsx                  # Main landing page
 ├── components/
-│   ├── CardDetailModal.tsx   # Card detail modal
-│   ├── CardGrid.tsx          # Card grid display
-│   ├── CardItem.tsx          # Individual card component
-│   └── SearchFilters.tsx     # Search and filter controls
+│   ├── DeckBuilder.tsx           # Main deck building interface
+│   ├── DeckManager.tsx           # Deck management and listing
+│   ├── DeckViewer.tsx            # Deck viewing with full-screen support
+│   ├── CardDetailModal.tsx       # Card detail modal with related cards
+│   ├── CardGrid.tsx              # Card grid display
+│   ├── CardItem.tsx              # Individual card component
+│   └── SearchFilters.tsx         # Search and filter controls
 └── types/
-    └── card.ts               # TypeScript interfaces
+    ├── card.ts                   # Card TypeScript interfaces
+    └── deck.ts                   # Deck and validation types
 ```
 
 ## Card Data Format
@@ -115,15 +125,50 @@ Returns all card data in JSON format.
 ```json
 [
   {
-    "Name": "Card Name",
+    "Name": "Charizard V",
     "CardType": "寶可夢",
-    "AbilityStats": "傷害效果, 傷害減免",
-    "PrimaryEffectType": "傷害輸出, 防禦效果",
-    "Tier": "A+",
-    "Score": "22.00",
+    "AbilityStats": "傷害輸出, 飛行支援",
+    "PrimaryEffectType": "火焰輸出, 能量加速",
+    "Tier": "S",
+    "Score": "24.50",
     ...
   }
 ]
+```
+
+## Deck Import Formats
+
+The application supports importing deck lists in multiple formats:
+
+### English Format
+```
+Fire Deck
+Format: Standard
+
+Pokemon (20):
+4x Charizard V
+3x Professor's Research
+
+Trainers (15):
+4x Professor's Research
+
+Energy (25):
+10x Fire Energy
+```
+
+### Chinese Format
+```
+火系牌組
+
+寶可夢 (20):
+炭小侍 3張
+紅蓮鎧騎 2張
+
+訓練家 (15):
+博士的研究（大木博士） 4張
+
+能量 (25):
+基本火能量 6張
 ```
 
 ## Development
@@ -133,22 +178,57 @@ Returns all card data in JSON format.
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm start` - Start production server
+- `npm test` - Run test suite
 - `npm run lint` - Run ESLint
+
+### Testing
+
+The project includes comprehensive tests for deck building functionality:
+- Import functionality for English and Chinese formats
+- Bracket removal for card name matching
+- Error handling and edge cases
+- Component integration tests
+
+```bash
+npm test
+```
 
 ### Adding New Features
 
 1. Create components in `src/components/`
-2. Add types to `src/types/card.ts`
-3. Update the main page in `src/app/page.tsx`
-4. Add API routes in `src/app/api/`
+2. Add types to `src/types/` directory
+3. Update deck builder logic in `src/components/DeckBuilder.tsx`
+4. Add tests for new functionality
+5. Update this README
+
+## Key Components
+
+### DeckBuilder
+- Main deck construction interface
+- Card search and filtering
+- Import/export functionality
+- Real-time deck validation
+- Count updates and statistics
+
+### DeckViewer
+- Full-screen deck viewing
+- Zoom-out mode for overview
+- Export functionality
+- Statistics display
+
+### DeckManager
+- Deck listing and management
+- Create, edit, duplicate, delete operations
+- Local storage persistence
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
 
 ## License
 
