@@ -3,15 +3,21 @@ import fs from 'fs';
 import path from 'path';
 import Papa from 'papaparse';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
-    // Path to the merged CSV file
-    const csvPath = path.join(process.cwd(), 'source', 'mega_card.csv');
+    const { searchParams } = new URL(request.url);
+    const isDetail = searchParams.get('detail') === 'true';
+
+    // Choose CSV file based on request type
+    const csvFilename = isDetail ? 'cards_output_all_mega.csv' : 'mega_card.csv';
+    const csvPath = path.join(process.cwd(), 'source', csvFilename);
 
     // Check if file exists
     if (!fs.existsSync(csvPath)) {
       return NextResponse.json(
-        { error: 'Card data file not found' },
+        { error: `${csvFilename} file not found` },
         { status: 404 }
       );
     }
@@ -54,6 +60,7 @@ export async function GET(request: NextRequest) {
           'Expansion': 'ExpansionName',
           'ExpansionCode': 'ExpansionCode',
           'Illustrator': 'Illustrator',
+          'Artist': 'Artist',
           'PokemonInfo': 'PokemonInfo',
           'Subtypes': 'Subtypes',
           '主要效果類型': 'PrimaryEffectType',
@@ -61,7 +68,8 @@ export async function GET(request: NextRequest) {
           'Ability效果統計': 'AbilityStats',
           'Tier': 'Tier',
           'Score': 'Score',
-          'ScoreBreakdown': 'ScoreBreakdown'
+          'ScoreBreakdown': 'ScoreBreakdown',
+          'SpecialTag': 'SpecialTag'
         };
         return headerMap[header] || header;
       }
@@ -75,13 +83,18 @@ export async function GET(request: NextRequest) {
         cleanedCard[key] = card[key] || '';
       });
 
-      // Convert image URLs to local paths
+      // For detailed requests, keep original ImageURL, for search requests convert to local paths
       if (cleanedCard.ImageURL && cleanedCard.ImageURL.startsWith('https://')) {
-        // Extract the image filename from the URL
-        const urlParts = cleanedCard.ImageURL.split('/');
-        const filename = urlParts[urlParts.length - 1];
-        // Convert to local path: /cards/filename
-        cleanedCard.ImageURL = `/cards/${filename}`;
+        if (isDetail) {
+          // Keep original URL for detailed view
+          cleanedCard.OriginalImageURL = cleanedCard.ImageURL;
+        } else {
+          // Extract the image filename from the URL for local path
+          const urlParts = cleanedCard.ImageURL.split('/');
+          const filename = urlParts[urlParts.length - 1];
+          // Convert to local path: /cards/filename
+          cleanedCard.ImageURL = `/cards/${filename}`;
+        }
       }
 
       return cleanedCard;

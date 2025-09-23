@@ -2,7 +2,7 @@
 
 import { X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PTCGCard } from '../types/card';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 interface CardDetailModalProps {
   card: PTCGCard;
@@ -19,6 +19,23 @@ export default function CardDetailModal({
   onCardClick,
   allCards
 }: CardDetailModalProps) {
+  const [detailedCards, setDetailedCards] = useState<PTCGCard[]>([]);
+
+  // Load detailed card data for version information
+  useEffect(() => {
+    const loadDetailedCards = async () => {
+      try {
+        const response = await fetch('/api/cards?detail=true');
+        const data = await response.json();
+        setDetailedCards(data);
+      } catch (error) {
+        console.error('Failed to load detailed card data:', error);
+      }
+    };
+
+    loadDetailedCards();
+  }, []);
+
   const getTierColor = (tier?: string) => {
     switch (tier) {
       case 'S+': return 'bg-red-500 text-white';
@@ -209,6 +226,15 @@ export default function CardDetailModal({
 
     return getEvolutionChain(card);
   }, [card, allCards]);
+
+  const otherVersions = useMemo(() => {
+    // Find all cards with the same name but different CardID (different versions)
+    return detailedCards.filter(c => 
+      c.Name === card.Name && 
+      c.CardID !== card.CardID &&
+      c.ImageURL // Only include cards with images
+    );
+  }, [card, detailedCards]);
 
   const renderScoreBreakdownChart = (breakdown: string) => {
     if (!breakdown) return null;
@@ -440,6 +466,79 @@ export default function CardDetailModal({
                     <span className="font-bold text-2xl">{card.Score}</span>
                   </div>
                   {card.ScoreBreakdown && renderScoreBreakdownChart(card.ScoreBreakdown)}
+                </div>
+              )}
+
+              {/* Card Versions */}
+              {otherVersions.length > 0 && (
+                <div className="pt-4 border-t">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-gray-600 text-base font-medium">Versions:</span>
+                    <span className="font-bold text-lg text-blue-600">{otherVersions.length + 1} total</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-3">
+                    {/* Current card version */}
+                    <div className="relative group cursor-pointer" onClick={() => onCardClick(card)}>
+                      <div className="aspect-[5/7] bg-blue-100 border-2 border-blue-500 rounded-lg overflow-hidden">
+                        {card.OriginalImageURL || card.ImageURL ? (
+                          <img
+                            src={card.OriginalImageURL || card.ImageURL}
+                            alt={card.Name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-card.svg';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <div className="text-center">
+                              <div className="text-4xl mb-2">🎴</div>
+                              <div className="text-xs">Current</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-white text-xs py-1 px-2 text-center font-medium">
+                        {card.ExpansionCode || 'Current'}
+                      </div>
+                    </div>
+                    {/* Other versions */}
+                    {otherVersions.slice(0, 7).map((versionCard, index) => (
+                      <div
+                        key={versionCard.CardID}
+                        className="relative group cursor-pointer"
+                        onClick={() => onCardClick(versionCard)}
+                      >
+                        <div className="aspect-[5/7] bg-gray-100 border-2 border-gray-300 rounded-lg overflow-hidden hover:border-gray-400 transition-colors">
+                          {versionCard.OriginalImageURL || versionCard.ImageURL ? (
+                            <img
+                              src={versionCard.OriginalImageURL || versionCard.ImageURL}
+                              alt={versionCard.Name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = '/placeholder-card.svg';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <div className="text-center">
+                                <div className="text-4xl mb-2">🎴</div>
+                                <div className="text-xs">V{index + 2}</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gray-700 text-white text-xs py-1 px-2 text-center font-medium">
+                          {versionCard.ExpansionCode || `V${index + 2}`}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {otherVersions.length > 7 && (
+                    <div className="text-sm text-gray-500 mt-3 text-center">
+                      And {otherVersions.length - 7} more versions...
+                    </div>
+                  )}
                 </div>
               )}
 
