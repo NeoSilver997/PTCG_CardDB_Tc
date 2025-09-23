@@ -20,6 +20,8 @@ export default function CardDetailModal({
   allCards
 }: CardDetailModalProps) {
   const [detailedCards, setDetailedCards] = useState<PTCGCard[]>([]);
+  const [versionPage, setVersionPage] = useState(0);
+  const versionsPerPage = 8;
 
   // Load detailed card data for version information
   useEffect(() => {
@@ -478,79 +480,6 @@ export default function CardDetailModal({
                 </div>
               )}
 
-              {/* Card Versions */}
-              {otherVersions.length > 0 && (
-                <div className="pt-4 border-t">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-gray-600 text-base font-medium">Versions:</span>
-                    <span className="font-bold text-lg text-blue-600">{otherVersions.length + 1} total</span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-3">
-                    {/* Current card version */}
-                    <div className="relative group cursor-pointer" onClick={() => onCardClick(card)}>
-                      <div className="aspect-[5/7] bg-blue-100 border-2 border-blue-500 rounded-lg overflow-hidden">
-                        {card.OriginalImageURL || card.ImageURL ? (
-                          <img
-                            src={card.OriginalImageURL || card.ImageURL}
-                            alt={card.Name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder-card.svg';
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            <div className="text-center">
-                              <div className="text-4xl mb-2">🎴</div>
-                              <div className="text-xs">Current</div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-white text-xs py-1 px-2 text-center font-medium">
-                        {card.ExpansionCode || 'Current'}
-                      </div>
-                    </div>
-                    {/* Other versions */}
-                    {otherVersions.slice(0, 7).map((versionCard, index) => (
-                      <div
-                        key={versionCard.CardID}
-                        className="relative group cursor-pointer"
-                        onClick={() => onCardClick(versionCard)}
-                      >
-                        <div className="aspect-[5/7] bg-gray-100 border-2 border-gray-300 rounded-lg overflow-hidden hover:border-gray-400 transition-colors">
-                          {versionCard.OriginalImageURL || versionCard.ImageURL ? (
-                            <img
-                              src={versionCard.OriginalImageURL || versionCard.ImageURL}
-                              alt={versionCard.Name}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.src = '/placeholder-card.svg';
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              <div className="text-center">
-                                <div className="text-4xl mb-2">🎴</div>
-                                <div className="text-xs">V{index + 2}</div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-gray-700 text-white text-xs py-1 px-2 text-center font-medium">
-                          {versionCard.ExpansionCode || `V${index + 2}`}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {otherVersions.length > 7 && (
-                    <div className="text-sm text-gray-500 mt-3 text-center">
-                      And {otherVersions.length - 7} more versions...
-                    </div>
-                  )}
-                </div>
-              )}
-
               {card.ImageURL && (
                 <div className="pt-4 border-t">
                   <a
@@ -699,6 +628,102 @@ export default function CardDetailModal({
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Card Versions */}
+            {otherVersions.length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">Card Versions</h3>
+                  <span className="text-sm text-gray-600 font-medium">{otherVersions.length + 1} total versions</span>
+                </div>
+
+                {/* Version Grid with Pagination */}
+                <div className="grid grid-cols-4 gap-4 mb-4">
+                  {/* Current card version */}
+                  <div className="relative group cursor-pointer" onClick={() => onCardClick(card)}>
+                    <div className="aspect-[5/7] bg-blue-100 border-2 border-blue-500 rounded-lg overflow-hidden">
+                      {card.OriginalImageURL || card.ImageURL ? (
+                        <img
+                          src={card.OriginalImageURL || card.ImageURL}
+                          alt={card.Name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-card.svg';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <div className="text-center">
+                            <div className="text-4xl mb-2">🎴</div>
+                            <div className="text-xs">Current</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-blue-500 text-white text-xs py-1 px-2 text-center font-medium">
+                      {card.ExpansionCode || 'Current'}
+                    </div>
+                  </div>
+
+                  {/* Other versions with pagination */}
+                  {otherVersions.slice(versionPage * (versionsPerPage - 1), (versionPage + 1) * (versionsPerPage - 1)).map((versionCard, index) => (
+                    <div
+                      key={versionCard.CardID}
+                      className="relative group cursor-pointer"
+                      onClick={() => onCardClick(versionCard)}
+                    >
+                      <div className="aspect-[5/7] bg-gray-100 border-2 border-gray-300 rounded-lg overflow-hidden hover:border-gray-400 transition-colors">
+                        {versionCard.OriginalImageURL || versionCard.ImageURL ? (
+                          <img
+                            src={versionCard.OriginalImageURL || versionCard.ImageURL}
+                            alt={versionCard.Name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-card.svg';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <div className="text-center">
+                              <div className="text-4xl mb-2">🎴</div>
+                              <div className="text-xs">V{versionPage * (versionsPerPage - 1) + index + 2}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-gray-700 text-white text-xs py-1 px-2 text-center font-medium">
+                        {versionCard.ExpansionName + "(" + versionCard.ExpansionCode + ") - "+ versionCard.CollectorNumber || `V${versionPage * (versionsPerPage - 1) + index + 2}`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {otherVersions.length >= versionsPerPage && (
+                  <div className="flex items-center justify-center space-x-2">
+                    <button
+                      onClick={() => setVersionPage(Math.max(0, versionPage - 1))}
+                      disabled={versionPage === 0}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+
+                    <span className="text-sm text-gray-600 px-3">
+                      Page {versionPage + 1} of {Math.ceil((otherVersions.length + 1) / versionsPerPage)}
+                    </span>
+
+                    <button
+                      onClick={() => setVersionPage(Math.min(Math.ceil((otherVersions.length + 1) / versionsPerPage) - 1, versionPage + 1))}
+                      disabled={versionPage >= Math.ceil((otherVersions.length + 1) / versionsPerPage) - 1}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

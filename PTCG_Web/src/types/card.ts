@@ -27,6 +27,7 @@ export interface PTCGCard {
   Rarity: string;
   ExpansionCode: string;
   ExpansionName: string;
+  CollectorNumber: string;
   RegulationMark: string;
   Artist: string;
   SpecialTag: string;
