@@ -52,8 +52,23 @@ export default function Home() {
     try {
       const response = await fetch('/api/cards');
       const data = await response.json();
-      setCards(data);
-      extractFilterOptions(data);
+      
+      // Sort cards by CardID numerically in descending order to find the latest card
+      const sortedData = data.sort((a: PTCGCard, b: PTCGCard) => {
+        const aId = parseInt(a.CardID.replace(/\D/g, '')) || 0;
+        const bId = parseInt(b.CardID.replace(/\D/g, '')) || 0;
+        return bId - aId; // Descending order
+      });
+      
+      setCards(sortedData);
+      extractFilterOptions(sortedData);
+      
+      // Find the latest card (first in sorted array) and set up initial filter
+      if (sortedData.length > 0) {
+        const latestCard = sortedData[0];
+        // Set initial search term to the latest card's CardID to show only that card
+        //setSearchTerm(latestCard.CardID);
+      }
     } catch (error) {
       console.error('Failed to load card data:', error);
     } finally {
@@ -112,6 +127,7 @@ export default function Home() {
       filtered = filtered.filter(card =>
         !isEnergyCard(card) && (
           card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          card.CardID.toLowerCase().includes(searchTerm.toLowerCase()) ||
           card.Skill1Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
           card.Skill2Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
           card.AbilityEffect.toLowerCase().includes(searchTerm.toLowerCase())
