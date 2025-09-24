@@ -256,9 +256,20 @@ export default function Home() {
     return isBasicEnergy(card) ? 99 : 4; // Unlimited basic energy, 4 for others
   };
 
-  const handleAddToDeck = (card: PTCGCard, quantity: number = 1) => {
-    // Get existing decks from localStorage
-    const existingDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
+  const handleAddToDeck = async (card: PTCGCard, quantity: number = 1) => {
+    // Get existing decks from server or localStorage
+    let existingDecks = [];
+    try {
+      const response = await fetch('/api/decks');
+      if (response.ok) {
+        existingDecks = await response.json();
+      } else {
+        throw new Error('Server unavailable');
+      }
+    } catch (error) {
+      // Fallback to localStorage
+      existingDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
+    }
     
     // Get the current/latest deck or create a new one
     let currentDeck = existingDecks.find((deck: any) => deck.id === 'quick-add') || {
@@ -306,16 +317,31 @@ export default function Home() {
     currentDeck.isValid = currentDeck.totalCards === 60;
     currentDeck.updatedAt = new Date();
 
-    // Update or add deck to existing decks
-    const deckIndex = existingDecks.findIndex((deck: any) => deck.id === 'quick-add');
-    if (deckIndex >= 0) {
-      existingDecks[deckIndex] = currentDeck;
-    } else {
-      existingDecks.push(currentDeck);
-    }
+    try {
+      // Save to server
+      const response = await fetch('/api/decks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(currentDeck),
+      });
 
-    // Save to localStorage
-    localStorage.setItem('ptcg_decks', JSON.stringify(existingDecks));
+      if (!response.ok) {
+        throw new Error('Server save failed');
+      }
+    } catch (error) {
+      console.error('Error saving to server:', error);
+      // Fallback to localStorage
+      const localDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
+      const deckIndex = localDecks.findIndex((deck: any) => deck.id === 'quick-add');
+      if (deckIndex >= 0) {
+        localDecks[deckIndex] = currentDeck;
+      } else {
+        localDecks.push(currentDeck);
+      }
+      localStorage.setItem('ptcg_decks', JSON.stringify(localDecks));
+    }
 
     // Show notification
     setNotification(`Added ${quantity}x ${card.Name} to Quick Add Deck (${currentDeck.totalCards}/60 cards)`);

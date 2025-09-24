@@ -1,0 +1,62 @@
+[
+  {
+    "id": "deck_1758682451938_9lbv7py6l",
+    "name": "Test Fire Deck",
+    "description": "A test deck with fire type Pokemon",
+    "cards": [
+      {
+        "Name": "Charizard",
+        "CardType": "???",
+        "quantity": 1
+      },
+      {
+        "Name": "Fire Energy",
+        "CardType": "??",
+        "quantity": 10
+      }
+    ],
+    "format": "Standard",
+    "createdAt": "2025-09-24T02:54:11.938Z",
+    "updatedAt": "2025-09-24T02:54:11.938Z",
+    "pokemonCount": 0,
+    "trainerCount": 0,
+    "energyCount": 0,
+    "totalCards": 11,
+    "isValid": false
+  },
+  {
+    "id": "deck_1758682485840_b2g9mzkaf",
+    "name": "Complete Test Deck",
+    "description": "A complete test deck",
+    "cards": [
+      {
+        "Name": "Pikachu",
+        "CardType": "???",
+        "quantity": 4
+      },
+      {
+        "Name": "Potion",
+        "CardType": "??",
+        "quantity": 4
+      },
+      {
+        "Name": "Lightning Energy",
+        "CardType": "??",
+        "quantity": 10
+      },
+      {
+        "Name": "Professor Oak",
+        "CardType": "??",
+        "quantity": 4
+      }
+    ],
+    "format": "Standard",
+    "createdAt": "2025-09-24T02:54:45.840Z",
+    "updatedAt": "2025-09-24T02:54:45.840Z",
+    "pokemonCount": 0,
+    "trainerCount": 0,
+    "energyCount": 0,
+    "totalCards": 22,
+    "isValid": false
+  }
+]

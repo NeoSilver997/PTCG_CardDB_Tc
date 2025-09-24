@@ -14,7 +14,8 @@ import {
   Zap,
   Maximize,
   Minimize,
-  ZoomOut
+  ZoomOut,
+  Save
 } from 'lucide-react';
 import { Deck, DeckCard } from '../types/deck';
 
@@ -111,6 +112,40 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
     }
   };
 
+  const saveDeck = async () => {
+    try {
+      const response = await fetch('/api/decks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: deck.id,
+          name: deck.name,
+          description: deck.description,
+          cards: deck.cards,
+          format: deck.format,
+        }),
+      });
+
+      if (response.ok) {
+        const savedDeck = await response.json();
+        alert('Deck saved successfully!');
+        // Update the deck with the saved version if it's a new deck
+        if (!deck.id) {
+          // This would require updating the parent component's deck
+          // For now, just show success message
+        }
+      } else {
+        const error = await response.json();
+        alert(`Failed to save deck: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error saving deck:', error);
+      alert('Failed to save deck. Please try again.');
+    }
+  };
+
   const generateDeckListText = (): string => {
     let deckList = `${deck.name}\n`;
     deckList += `Format: ${deck.format}\n`;
@@ -204,6 +239,13 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
               title="Toggle Statistics"
             >
               <BarChart3 className="h-5 w-5" />
+            </button>
+            <button
+              onClick={saveDeck}
+              className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              title="Save Deck to Server"
+            >
+              <Save className="h-5 w-5" />
             </button>
             <button
               onClick={copyDeckList}

@@ -39,18 +39,56 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
     loadDecks();
   }, []);
 
-  const loadDecks = () => {
-    if (typeof window === 'undefined') return;
-    const savedDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
-    setDecks(savedDecks);
+  const loadDecks = async () => {
+    try {
+      const response = await fetch('/api/decks');
+      if (response.ok) {
+        const serverDecks = await response.json();
+        setDecks(serverDecks);
+      } else {
+        console.error('Failed to load decks from server');
+        // Fallback to localStorage
+        if (typeof window !== 'undefined') {
+          const savedDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
+          setDecks(savedDecks);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading decks:', error);
+      // Fallback to localStorage
+      if (typeof window !== 'undefined') {
+        const savedDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
+        setDecks(savedDecks);
+      }
+    }
   };
 
-  const deleteDeck = (deckId: string) => {
+  const deleteDeck = async (deckId: string) => {
     if (typeof window === 'undefined') return;
     if (confirm('Are you sure you want to delete this deck?')) {
-      const updatedDecks = decks.filter(deck => deck.id !== deckId);
-      setDecks(updatedDecks);
-      localStorage.setItem('ptcg_decks', JSON.stringify(updatedDecks));
+      try {
+        const response = await fetch(`/api/decks?id=${deckId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          // Remove from local state
+          const updatedDecks = decks.filter(deck => deck.id !== deckId);
+          setDecks(updatedDecks);
+        } else {
+          console.error('Failed to delete deck from server');
+          // Fallback to local deletion
+          const updatedDecks = decks.filter(deck => deck.id !== deckId);
+          setDecks(updatedDecks);
+          localStorage.setItem('ptcg_decks', JSON.stringify(updatedDecks));
+        }
+      } catch (error) {
+        console.error('Error deleting deck:', error);
+        // Fallback to local deletion
+        const updatedDecks = decks.filter(deck => deck.id !== deckId);
+        setDecks(updatedDecks);
+        localStorage.setItem('ptcg_decks', JSON.stringify(updatedDecks));
+      }
     }
   };
 

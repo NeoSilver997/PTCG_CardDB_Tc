@@ -283,7 +283,7 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
   };
 
   // Save deck
-  const saveDeck = () => {
+  const saveDeck = async () => {
     // Check if we're on the client side
     if (typeof window === 'undefined') return;
 
@@ -307,18 +307,39 @@ export default function DeckBuilder({ initialCards, onClose, initialDeck }: Deck
       totalCards
     };
 
-    // Save to localStorage
-    const savedDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
-    const existingIndex = savedDecks.findIndex((d: Deck) => d.id === deckToSave.id);
-    
-    if (existingIndex >= 0) {
-      savedDecks[existingIndex] = deckToSave;
-    } else {
-      savedDecks.push(deckToSave);
-    }
+    try {
+      // Save to server
+      const response = await fetch('/api/decks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(deckToSave),
+      });
 
-    localStorage.setItem('ptcg_decks', JSON.stringify(savedDecks));
-    alert('Deck saved successfully!');
+      if (response.ok) {
+        const savedDeck = await response.json();
+        // Update current deck with server response
+        setCurrentDeck(savedDeck);
+        alert('Deck saved successfully!');
+      } else {
+        throw new Error('Server save failed');
+      }
+    } catch (error) {
+      console.error('Error saving to server:', error);
+      // Fallback to localStorage
+      const savedDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
+      const existingIndex = savedDecks.findIndex((d: Deck) => d.id === deckToSave.id);
+
+      if (existingIndex >= 0) {
+        savedDecks[existingIndex] = deckToSave;
+      } else {
+        savedDecks.push(deckToSave);
+      }
+
+      localStorage.setItem('ptcg_decks', JSON.stringify(savedDecks));
+      alert('Deck saved locally (server unavailable)!');
+    }
   };
 
   // Export deck

@@ -9,6 +9,7 @@ A comprehensive web application for building, managing, and analyzing Pokemon Tr
 - **Smart Filtering**: Filter by abilities, effect types, card types, rarity, tiers, and attributes
 - **Import/Export**: Support for both English and Chinese deck list formats
 - **Deck Management**: Create, edit, duplicate, and delete decks with local storage
+- **Server Persistence**: Decks are saved to server-side JSON file for persistence across sessions
 - **Editable Deck Names**: Inline editing of deck names
 - **Real-time Validation**: Automatic deck validation with error and warning feedback
 - **Full-Screen Viewing**: Immersive deck viewing experience
@@ -135,6 +136,58 @@ Returns all card data in JSON format.
   }
 ]
 ```
+
+### GET /api/decks
+
+Returns all saved decks from the server.
+
+**Response:**
+```json
+[
+  {
+    "id": "deck_123456789",
+    "name": "Fire Deck",
+    "format": "Standard",
+    "cards": [...],
+    "totalCards": 60,
+    "isValid": true,
+    ...
+  }
+]
+```
+
+### POST /api/decks
+
+Saves a deck to the server. Creates new deck or updates existing.
+
+**Request Body:**
+```json
+{
+  "id": "deck_123456789", // optional for updates
+  "name": "Fire Deck",
+  "description": "My awesome fire deck",
+  "format": "Standard",
+  "cards": [...]
+}
+```
+
+### DELETE /api/decks?id={deckId}
+
+Deletes a deck from the server.
+
+**Response:**
+```json
+{ "success": true }
+```
+
+## Data Persistence
+
+The application uses server-side JSON file storage for deck persistence:
+
+- **Storage Location**: `data/decks.json` in the project root
+- **Automatic Creation**: Data directory and file are created automatically
+- **Backup Fallback**: Local storage is used as backup if server is unavailable
+- **Data Structure**: Decks include validation stats and metadata
 
 ## Deck Import Formats
 
