@@ -93,29 +93,43 @@ export async function POST(request: NextRequest) {
     let deck: Deck;
 
     if (deckData.id) {
-      // Update existing deck
+      // Check if deck exists
       const existingIndex = decks.findIndex(d => d.id === deckData.id);
-      if (existingIndex === -1) {
-        return NextResponse.json(
-          { error: 'Deck not found' },
-          { status: 404 }
-        );
+      if (existingIndex !== -1) {
+        // Update existing deck
+        deck = {
+          ...deckData,
+          updatedAt: now,
+          // Recalculate validation stats
+          pokemonCount: deckData.cards.filter((c: any) => c.CardType && (c.CardType.includes('寶可夢') || c.CardType.toLowerCase().includes('pokemon') || c.CardType.includes('Pokémon'))).length,
+          trainerCount: deckData.cards.filter((c: any) => c.CardType && (c.CardType.includes('物品') || c.CardType.includes('支援') || c.CardType.includes('場地') || c.CardType.toLowerCase().includes('trainer'))).length,
+          energyCount: deckData.cards.filter((c: any) => c.CardType && (c.CardType.toLowerCase().includes('energy') || c.CardType.includes('能量'))).length,
+          totalCards: deckData.cards.reduce((sum: number, c: any) => sum + c.quantity, 0),
+          isValid: deckData.cards.reduce((sum: number, c: any) => sum + c.quantity, 0) === 60,
+        };
+
+        decks[existingIndex] = deck;
+      } else {
+        // Create new deck even if ID was provided but doesn't exist
+        deck = {
+          id: deckData.id, // Use the provided ID
+          name: deckData.name,
+          description: deckData.description || '',
+          cards: deckData.cards,
+          format: deckData.format || 'Standard',
+          createdAt: now,
+          updatedAt: now,
+          pokemonCount: deckData.cards.filter((c: any) => c.CardType && (c.CardType.includes('寶可夢') || c.CardType.toLowerCase().includes('pokemon') || c.CardType.includes('Pokémon'))).length,
+          trainerCount: deckData.cards.filter((c: any) => c.CardType && (c.CardType.includes('物品') || c.CardType.includes('支援') || c.CardType.includes('場地') || c.CardType.toLowerCase().includes('trainer'))).length,
+          energyCount: deckData.cards.filter((c: any) => c.CardType && (c.CardType.toLowerCase().includes('energy') || c.CardType.includes('能量'))).length,
+          totalCards: deckData.cards.reduce((sum: number, c: any) => sum + c.quantity, 0),
+          isValid: deckData.cards.reduce((sum: number, c: any) => sum + c.quantity, 0) === 60,
+        };
+
+        decks.push(deck);
       }
-
-      deck = {
-        ...deckData,
-        updatedAt: now,
-        // Recalculate validation stats
-        pokemonCount: deckData.cards.filter((c: any) => c.CardType && (c.CardType.includes('寶可夢') || c.CardType.toLowerCase().includes('pokemon') || c.CardType.includes('Pokémon'))).length,
-        trainerCount: deckData.cards.filter((c: any) => c.CardType && (c.CardType.includes('物品') || c.CardType.includes('支援') || c.CardType.includes('場地') || c.CardType.toLowerCase().includes('trainer'))).length,
-        energyCount: deckData.cards.filter((c: any) => c.CardType && (c.CardType.toLowerCase().includes('energy') || c.CardType.includes('能量'))).length,
-        totalCards: deckData.cards.reduce((sum: number, c: any) => sum + c.quantity, 0),
-        isValid: deckData.cards.reduce((sum: number, c: any) => sum + c.quantity, 0) === 60,
-      };
-
-      decks[existingIndex] = deck;
     } else {
-      // Create new deck
+      // Create new deck with auto-generated ID
       deck = {
         id: `deck_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: deckData.name,

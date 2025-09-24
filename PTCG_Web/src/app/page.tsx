@@ -119,7 +119,10 @@ export default function Home() {
   const applyFilters = () => {
     let filtered = cards;
 
-    // Apply search term (exclude energy cards from search)
+    // Exclude energy cards from display
+    filtered = filtered.filter(card => !card.CardType.includes('能量') && !card.CardType.toLowerCase().includes('energy'));
+
+    // Apply search term
     if (searchTerm) {
       filtered = filtered.filter(card =>
         (
