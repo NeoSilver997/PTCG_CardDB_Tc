@@ -132,6 +132,75 @@ describe('/api/decks', () => {
       );
     });
 
+    it('should create a deck with real card data from database', async () => {
+      mockFs.readFileSync.mockReturnValue(JSON.stringify([]));
+      mockFs.writeFileSync.mockImplementation(() => undefined);
+
+      const mockRequest = {
+        json: jest.fn().mockResolvedValue({
+          name: 'Charcadet Deck',
+          description: 'A deck featuring Charcadet and other Pokemon',
+          cards: [
+            {
+              CardID: '12096',
+              Name: '炭小侍',
+              CardType: '寶可夢',
+              quantity: 1
+            },
+            {
+              CardID: '11995',
+              Name: '炭小侍',
+              CardType: '寶可夢',
+              quantity: 1
+            },
+            {
+              CardID: '10147',
+              Name: '炭小侍',
+              CardType: '寶可夢',
+              quantity: 1
+            },
+            {
+              CardID: '12195',
+              Name: '炭小侍',
+              CardType: '寶可夢',
+              quantity: 1
+            },
+            {
+              CardID: '14360',
+              Name: '布魯皇',
+              CardType: '寶可夢',
+              quantity: 1
+            },
+            {
+              CardID: '14361',
+              Name: '拉帝亞斯ex',
+              CardType: '寶可夢',
+              quantity: 1
+            }
+          ],
+          format: 'Standard'
+        })
+      };
+
+      await POST(mockRequest as any);
+
+      expect(mockNextResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Charcadet Deck',
+          description: 'A deck featuring Charcadet and other Pokemon',
+          cards: expect.any(Array),
+          pokemonCount: 6, // All cards are Pokemon
+          energyCount: 0,
+          trainerCount: 0,
+          totalCards: 6,
+          isValid: false, // Not 60 cards
+          id: expect.stringMatching(/^deck_\d+_[a-z0-9]+$/),
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date)
+        })
+      );
+    });
+
     it('should update existing deck when ID matches', async () => {
       const existingDeck = {
         id: 'existing-deck-123',
