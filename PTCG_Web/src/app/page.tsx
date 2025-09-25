@@ -625,23 +625,23 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header - Mobile Optimized */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-8xl mx-auto px-6 sm:px-8 lg:px-12 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Gamepad2 className="h-10 w-10 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-900">PTCG Card Search</h1>
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-12 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <Gamepad2 className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">PTCG Card Search</h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <a
                 href="/deck-builder"
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
               >
-                <Sword className="h-5 w-5" />
+                <Sword className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Deck Builder</span>
               </a>
-              <div className="text-base text-gray-500">
+              <div className="text-sm sm:text-base text-gray-500">
                 {filteredCards.length} cards found
               </div>
             </div>
@@ -649,35 +649,37 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="max-w-8xl mx-auto px-6 sm:px-8 lg:px-12 py-12">
-        {/* Search Bar */}
-        <div className="mb-12">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-12">
+        {/* Search Bar - Mobile Optimized */}
+        <div className="mb-6 sm:mb-12">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-6 w-6" />
+            <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 sm:h-6 sm:w-6" />
             <input
               type="text"
               placeholder="Search cards by name, ability, or effect..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-6 py-4 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+              className="w-full pl-10 sm:pl-12 pr-4 sm:pr-6 py-3 sm:py-4 text-base sm:text-lg border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm min-h-[48px] sm:min-h-auto"
             />
           </div>
         </div>
 
-        <div className="flex gap-12">
-          {/* Filters Sidebar */}
-          <div className="w-96 flex-shrink-0">
-            <SearchFiltersComponent
-              filters={filters}
-              onFiltersChange={setFilters}
-              abilities={abilities}
-              effectTypes={effectTypes}
-              cards={cards}
-            />
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-12">
+          {/* Filters Sidebar - Mobile Optimized */}
+          <div className="w-full lg:w-96 lg:flex-shrink-0">
+            <div className="lg:sticky lg:top-6">
+              <SearchFiltersComponent
+                filters={filters}
+                onFiltersChange={setFilters}
+                abilities={abilities}
+                effectTypes={effectTypes}
+                cards={cards}
+              />
+            </div>
           </div>
 
           {/* Card Grid */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">{/* min-w-0 prevents flex item from overflowing */}
             <CardGrid
               cards={filteredCards}
               onCardClick={handleCardClick}

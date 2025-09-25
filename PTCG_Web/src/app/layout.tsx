@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   description: 'Search and explore Pokemon Trading Card Game cards by abilities and effects',
 }
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export default function RootLayout({
   children,
 }: {

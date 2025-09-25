@@ -92,33 +92,33 @@ export default function SearchFiltersComponent({
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <Filter className="h-6 w-6 text-gray-600" />
-          <h2 className="text-xl font-bold text-gray-900">Filters</h2>
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6 lg:p-8">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <Filter className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Filters</h2>
         </div>
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700"
+            className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700 min-h-[32px] min-w-[60px] justify-center"
           >
             <X className="h-4 w-4" />
-            <span>Clear</span>
+            <span className="hidden sm:inline">Clear</span>
           </button>
         )}
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Ability Filter */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
+          <label className="block text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
             Ability
           </label>
           <select
             value={filters.ability}
             onChange={(e) => updateFilter('ability', e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+            className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base min-h-[44px]"
           >
             <option value="">All Abilities</option>
             {abilities.map((ability) => (
@@ -131,13 +131,13 @@ export default function SearchFiltersComponent({
 
         {/* Effect Type Filter */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
+          <label className="block text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
             Effect Type
           </label>
           <select
             value={filters.effectType}
             onChange={(e) => updateFilter('effectType', e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+            className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base min-h-[44px]"
           >
             <option value="">All Effect Types</option>
             {effectTypes.map((effect) => (
