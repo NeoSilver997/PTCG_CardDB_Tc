@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { PTCGCard } from '../types/card';
+import React, { useState, useEffect, useMemo } from 'react';
+import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
 import { Deck, DeckCard } from '../types/deck';
 import { Search, Plus, Minus, Eye, X, Filter, Star, Users, Zap, Shield, Sword, Heart } from 'lucide-react';
 import { useI18n } from '../i18n/context';
+import SearchFiltersComponent from './SearchFilters';
 
 interface SimpleDeckCard extends PTCGCard {
   quantity: number;
@@ -33,14 +34,57 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
   const getImagePath = (cardId: number) => {
     return `hk${cardId.toString().padStart(8, '0')}.png`;
   };
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<SearchFilters>({
     ability: '',
     effectType: '',
     cardType: '',
     rarity: '',
     tier: '',
-    attribute: ''
+    attribute: '',
+    regulation: '',
+    expansion: '',
+    weaknessType: '',
+    resistanceType: '',
+    noRetreat: false,
+    noResistance: false,
+    noWeakness: false,
+    specialPokemonType: ''
   });
+
+  // Generate abilities and effect types with counts for SearchFiltersComponent
+  const abilities: AbilityOption[] = useMemo(() => {
+    const countMap = new Map<string, number>();
+    
+    initialCards.forEach(card => {
+      if (card.CardType.includes('能量')) return; // Exclude energy cards
+      
+      const ability = card.AbilityName;
+      if (ability && ability.trim() !== '') {
+        countMap.set(ability, (countMap.get(ability) || 0) + 1);
+      }
+    });
+    
+    return Array.from(countMap.entries())
+      .map(([value, count]) => ({ value, label: value, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [initialCards]);
+
+  const effectTypes: EffectTypeOption[] = useMemo(() => {
+    const countMap = new Map<string, number>();
+    
+    initialCards.forEach(card => {
+      if (card.CardType.includes('能量')) return; // Exclude energy cards
+      
+      const effectType = card.PrimaryEffectType;
+      if (effectType && effectType.trim() !== '') {
+        countMap.set(effectType, (countMap.get(effectType) || 0) + 1);
+      }
+    });
+    
+    return Array.from(countMap.entries())
+      .map(([value, count]) => ({ value, label: value, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [initialCards]);
 
   const filteredCards = initialCards.filter(card => {
     const matchesSearch = card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -52,7 +96,15 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                           (!filters.cardType || card.CardType === filters.cardType) &&
                           (!filters.rarity || card.Rarity === filters.rarity) &&
                           (!filters.tier || card.Tier === filters.tier) &&
-                          (!filters.attribute || card.Type === filters.attribute);
+                          (!filters.attribute || card.Type === filters.attribute) &&
+                          (!filters.regulation || card.RegulationMark === filters.regulation) &&
+                          (!filters.expansion || card.ExpansionName === filters.expansion || card.ExpansionCode === filters.expansion) &&
+                          (!filters.weaknessType || card.WeaknessType === filters.weaknessType) &&
+                          (!filters.resistanceType || card.ResistanceType === filters.resistanceType) &&
+                          (!filters.noRetreat || card.RetreatCost === 'None' || card.RetreatCost === '' || card.RetreatCost === '0') &&
+                          (!filters.noResistance || !card.Resistance || card.Resistance === 'None' || card.Resistance === '') &&
+                          (!filters.noWeakness || !card.Weakness || card.Weakness === 'None' || card.Weakness === '') &&
+                          (!filters.specialPokemonType || card.SpecialTag === filters.specialPokemonType);
 
     return matchesSearch && matchesFilters;
   });
@@ -197,7 +249,15 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                       cardType: '',
                       rarity: '',
                       tier: '',
-                      attribute: ''
+                      attribute: '',
+                      regulation: '',
+                      expansion: '',
+                      weaknessType: '',
+                      resistanceType: '',
+                      noRetreat: false,
+                      noResistance: false,
+                      noWeakness: false,
+                      specialPokemonType: ''
                     })}
                     className="px-4 py-3 sm:py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm min-h-[44px] sm:min-h-auto"
                   >
@@ -206,74 +266,14 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                   </button>
                 </div>
 
-                {/* Filter Dropdowns - Mobile Optimized */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
-                  <select
-                    value={filters.ability}
-                    onChange={(e) => setFilters(prev => ({ ...prev, ability: e.target.value }))}
-                    className="px-3 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] sm:min-h-auto"
-                  >
-                    <option value="">All Abilities</option>
-                    {Array.from(new Set(initialCards.map(c => c.AbilityName).filter(Boolean))).map(ability => (
-                      <option key={ability} value={ability}>{ability}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={filters.effectType}
-                    onChange={(e) => setFilters(prev => ({ ...prev, effectType: e.target.value }))}
-                    className="px-3 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] sm:min-h-auto"
-                  >
-                    <option value="">All Effect Types</option>
-                    {Array.from(new Set(initialCards.map(c => c.PrimaryEffectType).filter(Boolean))).map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={filters.cardType}
-                    onChange={(e) => setFilters(prev => ({ ...prev, cardType: e.target.value }))}
-                    className="px-3 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] sm:min-h-auto"
-                  >
-                    <option value="">All Card Types</option>
-                    {Array.from(new Set(initialCards.map(c => c.CardType).filter(Boolean))).map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={filters.rarity}
-                    onChange={(e) => setFilters(prev => ({ ...prev, rarity: e.target.value }))}
-                    className="px-3 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] sm:min-h-auto"
-                  >
-                    <option value="">All Rarities</option>
-                    {Array.from(new Set(initialCards.map(c => c.Rarity).filter(Boolean))).map(rarity => (
-                      <option key={rarity} value={rarity}>{rarity}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={filters.tier}
-                    onChange={(e) => setFilters(prev => ({ ...prev, tier: e.target.value }))}
-                    className="px-3 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] sm:min-h-auto"
-                  >
-                    <option value="">All Tiers</option>
-                    {['S', 'A', 'B', 'C', 'D'].map(tier => (
-                      <option key={tier} value={tier}>{tier}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={filters.attribute}
-                    onChange={(e) => setFilters(prev => ({ ...prev, attribute: e.target.value }))}
-                    className="px-3 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] sm:min-h-auto"
-                  >
-                    <option value="">All Attributes</option>
-                    {Array.from(new Set(initialCards.map(c => c.Type).filter(Boolean))).map(attr => (
-                      <option key={attr} value={attr}>{attr}</option>
-                    ))}
-                  </select>
-                </div>
+                {/* Comprehensive Filters */}
+                <SearchFiltersComponent 
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  cards={initialCards}
+                  abilities={abilities}
+                  effectTypes={effectTypes}
+                />
               </div>
 
               {/* Card Grid - Mobile Optimized */}
