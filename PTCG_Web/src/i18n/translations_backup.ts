@@ -1,7 +1,9 @@
 import { TranslationStrings } from './index';
 
 const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
+  // English
   en: {
+    // Common
     loading: 'Loading PTCG cards...',
     error: 'Error',
     close: 'Close',
@@ -15,6 +17,8 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     filters: 'Filters',
     all: 'All',
     none: 'None',
+    
+    // Card related
     cardName: 'Card Name',
     cardType: 'Card Type',
     rarity: 'Rarity',
@@ -37,6 +41,8 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     noCards: 'No cards available',
     noCardsFound: 'No cards found',
     cardsFound: 'cards found',
+    
+    // Deck related
     deckBuilder: 'Deck Builder',
     deckManager: 'Deck Manager',
     deckViewer: 'Deck Viewer',
@@ -75,6 +81,8 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     valid: 'Valid',
     invalid: 'Invalid',
     duplicate: 'Duplicate',
+    
+    // Filter options
     allAbilities: 'All Abilities',
     allEffectTypes: 'All Effect Types',
     allCardTypes: 'All Card Types',
@@ -85,35 +93,49 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     allExpansions: 'All Expansions',
     allWeaknessTypes: 'All Weakness Types',
     allResistanceTypes: 'All Resistance Types',
+    
+    // Actions
     add: 'Add',
     remove: 'Remove',
     addToDeck: 'Add to Deck',
     removeFromDeck: 'Remove from Deck',
     quantity: 'Quantity',
+    
+    // Messages
     enterDeckName: 'Enter deck name',
     saveSuccess: 'Deck saved successfully',
     saveFail: 'Failed to save deck',
     saveError: 'Error saving deck',
     deleteConfirm: 'Are you sure you want to delete this deck?',
+    
+    // Navigation
     cardSearch: 'Card Search',
     results: 'Results',
     home: 'Home',
     cards: 'Cards',
     decks: 'Decks',
     settings: 'Settings',
+    
+    // Deck formats
     standard: 'Standard',
     expanded: 'Expanded',
     unlimited: 'Unlimited',
+    
+    // Card types
     pokemon: 'Pokémon',
     trainer: 'Trainer',
     energy: 'Energy',
     basic: 'Basic',
     stage1: 'Stage 1',
     stage2: 'Stage 2',
+    
+    // Special features
     noRetreat: 'No Retreat Cost',
     noResistance: 'No Resistance',
     noWeakness: 'No Weakness',
     specialPokemonType: 'Special Pokémon Type',
+    
+    // Misc
     created: 'Created',
     updated: 'Updated',
     sortBy: 'Sort By',
@@ -121,7 +143,10 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     adjustFilters: 'Try adjusting your filters or search terms.',
     tryAdjusting: 'Try adjusting your search terms.'
   },
+  
+  // Simplified Chinese
   zh: {
+    // Common
     loading: '正在加载PTCG卡牌...',
     error: '错误',
     close: '关闭',
@@ -135,6 +160,8 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     filters: '筛选',
     all: '全部',
     none: '无',
+    
+    // Card related
     cardName: '卡牌名称',
     cardType: '卡牌类型',
     rarity: '稀有度',
@@ -157,6 +184,8 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     noCards: '暂无卡牌',
     noCardsFound: '未找到卡牌',
     cardsFound: '张卡牌',
+    
+    // Deck related
     deckBuilder: '组牌器',
     deckManager: '牌组管理',
     deckViewer: '牌组查看器',
@@ -195,6 +224,8 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     valid: '有效',
     invalid: '无效',
     duplicate: '重复',
+    
+    // Filter options
     allAbilities: '全部特性',
     allEffectTypes: '全部效果类型',
     allCardTypes: '全部卡牌类型',
@@ -205,35 +236,49 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     allExpansions: '全部扩展包',
     allWeaknessTypes: '全部弱点类型',
     allResistanceTypes: '全部抗性类型',
+    
+    // Actions
     add: '添加',
     remove: '移除',
     addToDeck: '加入牌组',
     removeFromDeck: '从牌组移除',
     quantity: '数量',
+    
+    // Messages
     enterDeckName: '输入牌组名称',
     saveSuccess: '牌组保存成功',
     saveFail: '牌组保存失败',
     saveError: '保存牌组时出错',
     deleteConfirm: '确定要删除这个牌组吗？',
+    
+    // Navigation
     cardSearch: '卡牌搜索',
     results: '结果',
     home: '主页',
     cards: '卡牌',
     decks: '牌组',
     settings: '设置',
+    
+    // Deck formats
     standard: '标准',
     expanded: '扩展',
     unlimited: '无限制',
+    
+    // Card types
     pokemon: '宝可梦',
     trainer: '训练家',
     energy: '能量',
     basic: '基本',
     stage1: '一阶进化',
     stage2: '二阶进化',
+    
+    // Special features
     noRetreat: '无撤退费用',
     noResistance: '无抗性',
     noWeakness: '无弱点',
     specialPokemonType: '特殊宝可梦类型',
+    
+    // Misc
     created: '创建时间',
     updated: '更新时间',
     sortBy: '排序方式',
@@ -241,7 +286,10 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     adjustFilters: '尝试调整您的筛选条件或搜索词。',
     tryAdjusting: '尝试调整您的搜索词。'
   },
+  
+  // Traditional Chinese
   'zh-tw': {
+    // Common
     loading: '正在載入PTCG卡牌...',
     error: '錯誤',
     close: '關閉',
@@ -255,6 +303,8 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     filters: '篩選',
     all: '全部',
     none: '無',
+    
+    // Card related
     cardName: '卡牌名稱',
     cardType: '卡牌類型',
     rarity: '稀有度',
@@ -277,6 +327,8 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     noCards: '暫無卡牌',
     noCardsFound: '未找到卡牌',
     cardsFound: '張卡牌',
+    
+    // Deck related
     deckBuilder: '組牌器',
     deckManager: '牌組管理',
     deckViewer: '牌組檢視器',
@@ -315,6 +367,8 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     valid: '有效',
     invalid: '無效',
     duplicate: '重複',
+    
+    // Filter options
     allAbilities: '全部特性',
     allEffectTypes: '全部效果類型',
     allCardTypes: '全部卡牌類型',
@@ -325,35 +379,49 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     allExpansions: '全部擴充包',
     allWeaknessTypes: '全部弱點類型',
     allResistanceTypes: '全部抗性類型',
+    
+    // Actions
     add: '加入',
     remove: '移除',
     addToDeck: '加入牌組',
     removeFromDeck: '從牌組移除',
     quantity: '數量',
+    
+    // Messages
     enterDeckName: '輸入牌組名稱',
     saveSuccess: '牌組儲存成功',
     saveFail: '牌組儲存失敗',
     saveError: '儲存牌組時發生錯誤',
     deleteConfirm: '確定要刪除這個牌組嗎？',
+    
+    // Navigation
     cardSearch: '卡牌搜尋',
     results: '結果',
     home: '首頁',
     cards: '卡牌',
     decks: '牌組',
     settings: '設定',
+    
+    // Deck formats
     standard: '標準',
     expanded: '擴展',
     unlimited: '無限制',
+    
+    // Card types
     pokemon: '寶可夢',
     trainer: '訓練家',
     energy: '能量',
     basic: '基本',
     stage1: '一階進化',
     stage2: '二階進化',
+    
+    // Special features
     noRetreat: '無撤退費用',
     noResistance: '無抗性',
     noWeakness: '無弱點',
     specialPokemonType: '特殊寶可夢類型',
+    
+    // Misc
     created: '建立時間',
     updated: '更新時間',
     sortBy: '排序方式',
@@ -363,4 +431,4 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
   }
 };
 
-export default translations;
+export { translations };

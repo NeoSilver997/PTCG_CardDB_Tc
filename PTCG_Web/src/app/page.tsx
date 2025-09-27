@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, Zap, Shield, Sword, Gamepad2 } from 'lucide-react';
 import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
 import CardGrid from '../components/CardGrid';
@@ -40,15 +40,7 @@ export default function Home() {
     return card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon');
   };
 
-  useEffect(() => {
-    loadCardData();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [cards, filters, searchTerm]);
-
-  const loadCardData = async () => {
+  const loadCardData = useCallback(async () => {
     try {
       const response = await fetch('/api/cards');
       const data = await response.json();
@@ -74,7 +66,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const extractFilterOptions = (cardData: PTCGCard[]) => {
     // Extract unique abilities
@@ -119,7 +111,7 @@ export default function Home() {
     );
   };
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = cards;
 
     // Exclude energy cards from display
@@ -238,7 +230,15 @@ export default function Home() {
     }
 
     setFilteredCards(filtered);
-  };
+  }, [cards, searchTerm, filters]);
+
+  useEffect(() => {
+    loadCardData();
+  }, [loadCardData]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [cards, filters, searchTerm, applyFilters]);
 
   const handleCardClick = (card: PTCGCard) => {
     setSelectedCard(card);

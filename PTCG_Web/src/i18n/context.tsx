@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { SupportedLanguage, TranslationStrings } from './index';
-import { translations } from './translations';
+import translations from './translations.js';
 
 interface I18nContextType {
   language: SupportedLanguage;

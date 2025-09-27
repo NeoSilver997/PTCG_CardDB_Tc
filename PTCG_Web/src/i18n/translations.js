@@ -1,6 +1,4 @@
-import { TranslationStrings } from './index';
-
-const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
+const translations = {
   en: {
     loading: 'Loading PTCG cards...',
     error: 'Error',

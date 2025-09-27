@@ -43,7 +43,22 @@ export default function MainPage() {
           <div className="lg:col-span-1">
             {/* SearchFilters component will use i18n internally */}
             <SearchFilters
-              filters={{}} // your filters
+              filters={{
+                ability: '',
+                effectType: '',
+                cardType: '',
+                rarity: '',
+                tier: '',
+                attribute: '',
+                regulation: '',
+                expansion: '',
+                weaknessType: '',
+                resistanceType: '',
+                noRetreat: false,
+                noResistance: false,
+                noWeakness: false,
+                specialPokemonType: ''
+              }} // your filters
               onFiltersChange={() => {}} // your handler
               abilities={[]} // your abilities
               effectTypes={[]} // your effect types
