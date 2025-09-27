@@ -3,6 +3,8 @@ export interface InventoryCard {
   quantity: number;
   condition: 'mint' | 'near-mint' | 'lightly-played' | 'moderately-played' | 'heavily-played' | 'damaged';
   notes?: string;
+  purchaseCost?: number; // Cost when purchased (per card)
+  marketPrice?: number; // Current estimated market value (per card)
   dateAdded: string;
   lastUpdated: string;
 }
@@ -11,6 +13,8 @@ export interface InventoryFilters {
   condition: string;
   minQuantity: number;
   maxQuantity: number;
+  minValue: number;
+  maxValue: number;
   dateRange: {
     from: string;
     to: string;
@@ -19,9 +23,16 @@ export interface InventoryFilters {
 
 export interface InventoryStats {
   totalCards: number;
-  totalValue: number; // Could be implemented later with price data
+  totalPurchaseCost: number; // Total amount spent on cards
+  totalMarketValue: number; // Current estimated market value
+  totalProfit: number; // Market value - purchase cost
   uniqueCards: number;
   conditionBreakdown: Record<string, number>;
+  averageCardValue: number;
+  mostValuableCard?: {
+    name: string;
+    value: number;
+  };
 }
 
 export const CARD_CONDITIONS = [

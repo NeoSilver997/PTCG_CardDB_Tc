@@ -29,7 +29,9 @@ export function useInventory() {
     CardID: number,
     quantity: number,
     condition: string,
-    notes?: string
+    notes?: string,
+    purchaseCost?: number,
+    marketPrice?: number
   ) => {
     try {
       const response = await fetch('/api/inventory', {
@@ -37,7 +39,14 @@ export function useInventory() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ CardID, quantity, condition, notes }),
+        body: JSON.stringify({ 
+          CardID, 
+          quantity, 
+          condition, 
+          notes, 
+          purchaseCost, 
+          marketPrice 
+        }),
       });
 
       if (!response.ok) {
@@ -101,10 +110,46 @@ export function useInventory() {
       return acc;
     }, {} as Record<string, number>);
 
+    // Calculate total purchase cost and market value
+    const totalPurchaseCost = inventory.reduce((sum, item) => {
+      return sum + (item.purchaseCost || 0) * item.quantity;
+    }, 0);
+
+    const totalMarketValue = inventory.reduce((sum, item) => {
+      return sum + (item.marketPrice || 0) * item.quantity;
+    }, 0);
+
+    const totalProfit = totalMarketValue - totalPurchaseCost;
+    const averageCardValue = totalCards > 0 ? totalMarketValue / totalCards : 0;
+
+    // Find most valuable card (by total value: market price * quantity)
+    let mostValuableCard;
+    if (inventory.length > 0) {
+      const sortedByValue = inventory
+        .filter(item => item.marketPrice && item.marketPrice > 0)
+        .sort((a, b) => {
+          const aValue = (a.marketPrice || 0) * a.quantity;
+          const bValue = (b.marketPrice || 0) * b.quantity;
+          return bValue - aValue;
+        });
+
+      if (sortedByValue.length > 0) {
+        const topCard = sortedByValue[0];
+        mostValuableCard = {
+          cardId: topCard.CardID,
+          value: (topCard.marketPrice || 0) * topCard.quantity
+        };
+      }
+    }
+
     return {
       totalCards,
       uniqueCards,
-      totalValue: 0, // To be implemented with price data
+      totalPurchaseCost,
+      totalMarketValue,
+      totalProfit,
+      averageCardValue,
+      mostValuableCard,
       conditionBreakdown
     };
   }, [inventory]);

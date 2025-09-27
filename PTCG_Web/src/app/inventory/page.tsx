@@ -13,7 +13,9 @@ import {
   BarChart3, 
   Eye,
   Download,
-  Upload
+  Upload,
+  DollarSign,
+  TrendingUp
 } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -156,7 +158,7 @@ export default function InventoryPage() {
 
           {/* Stats Panel */}
           {showStats && (
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
@@ -177,10 +179,82 @@ export default function InventoryPage() {
                 </div>
               </div>
 
+              {/* Financial Stats */}
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-yellow-600 font-medium">Total Investment</p>
+                    <p className="text-2xl font-bold text-yellow-900">
+                      ${stats.totalPurchaseCost?.toFixed(2) || '0.00'}
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-yellow-600" />
+                </div>
+              </div>
+
+              <div className="bg-emerald-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-emerald-600 font-medium">Market Value</p>
+                    <p className="text-2xl font-bold text-emerald-900">
+                      ${stats.totalMarketValue?.toFixed(2) || '0.00'}
+                    </p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-emerald-600" />
+                </div>
+              </div>
+
+              {/* Profit/Loss Card */}
+              {(stats.totalPurchaseCost && stats.totalMarketValue) && (
+                <div className={`p-4 rounded-lg ${stats.totalProfit >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm font-medium ${stats.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {stats.totalProfit >= 0 ? 'Total Profit' : 'Total Loss'}
+                      </p>
+                      <p className={`text-2xl font-bold ${stats.totalProfit >= 0 ? 'text-green-900' : 'text-red-900'}`}>
+                        {stats.totalProfit >= 0 ? '+' : ''}${stats.totalProfit?.toFixed(2)}
+                      </p>
+                    </div>
+                    <TrendingUp className={`w-8 h-8 ${stats.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                  </div>
+                </div>
+              )}
+
+              {/* Average Card Value */}
+              {stats.averageCardValue && (
+                <div className="bg-indigo-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-indigo-600 font-medium">Avg Card Value</p>
+                      <p className="text-2xl font-bold text-indigo-900">
+                        ${stats.averageCardValue.toFixed(2)}
+                      </p>
+                    </div>
+                    <BarChart3 className="w-8 h-8 text-indigo-600" />
+                  </div>
+                </div>
+              )}
+
+              {/* Most Valuable Card */}
+              {stats.mostValuableCard && (
+                <div className="bg-amber-50 p-4 rounded-lg border-2 border-amber-200">
+                  <div>
+                    <p className="text-sm text-amber-700 font-medium">Most Valuable Card</p>
+                    <p className="text-lg font-bold text-amber-900 truncate">
+                      {stats.mostValuableCard.cardName}
+                    </p>
+                    <p className="text-xl font-bold text-amber-800">
+                      ${stats.mostValuableCard.value.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Condition Breakdown */}
-              <div className="bg-purple-50 p-4 rounded-lg sm:col-span-2">
+              <div className="bg-purple-50 p-4 rounded-lg sm:col-span-2 lg:col-span-3 xl:col-span-4">
                 <p className="text-sm text-purple-600 font-medium mb-2">Condition Breakdown</p>
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-sm">
                   {CARD_CONDITIONS.map(condition => {
                     const count = stats.conditionBreakdown[condition.value] || 0;
                     return count > 0 ? (

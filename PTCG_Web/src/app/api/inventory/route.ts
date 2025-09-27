@@ -54,11 +54,26 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { CardID, quantity, condition, notes } = body;
+    const { CardID, quantity, condition, notes, purchaseCost, marketPrice } = body;
 
     if (!CardID || quantity === undefined || !condition) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Validate price fields if provided
+    if (purchaseCost !== undefined && (isNaN(purchaseCost) || purchaseCost < 0)) {
+      return NextResponse.json(
+        { error: 'Purchase cost must be a valid positive number' },
+        { status: 400 }
+      );
+    }
+
+    if (marketPrice !== undefined && (isNaN(marketPrice) || marketPrice < 0)) {
+      return NextResponse.json(
+        { error: 'Market price must be a valid positive number' },
         { status: 400 }
       );
     }
@@ -75,6 +90,8 @@ export async function POST(request: NextRequest) {
       // Update existing entry
       inventory[existingIndex].quantity = quantity;
       inventory[existingIndex].notes = notes || inventory[existingIndex].notes;
+      inventory[existingIndex].purchaseCost = purchaseCost !== undefined ? purchaseCost : inventory[existingIndex].purchaseCost;
+      inventory[existingIndex].marketPrice = marketPrice !== undefined ? marketPrice : inventory[existingIndex].marketPrice;
       inventory[existingIndex].lastUpdated = now;
     } else {
       // Add new entry
@@ -83,6 +100,8 @@ export async function POST(request: NextRequest) {
         quantity,
         condition,
         notes: notes || '',
+        purchaseCost: purchaseCost || undefined,
+        marketPrice: marketPrice || undefined,
         dateAdded: now,
         lastUpdated: now
       });

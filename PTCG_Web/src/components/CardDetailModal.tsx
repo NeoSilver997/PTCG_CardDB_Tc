@@ -32,6 +32,8 @@ export default function CardDetailModal({
   const [inventoryQuantity, setInventoryQuantity] = useState(1);
   const [inventoryCondition, setInventoryCondition] = useState('near-mint');
   const [inventoryNotes, setInventoryNotes] = useState('');
+  const [purchaseCost, setPurchaseCost] = useState<number | undefined>(undefined);
+  const [marketPrice, setMarketPrice] = useState<number | undefined>(undefined);
   const versionsPerPage = 8;
 
   // Inventory functionality
@@ -579,6 +581,41 @@ export default function CardDetailModal({
                         </select>
                       </div>
                     </div>
+
+                    {/* Price Fields Row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex flex-col space-y-1">
+                        <label htmlFor="purchaseCost" className="text-sm font-medium text-gray-700">
+                          Purchase Cost ($)
+                        </label>
+                        <input
+                          type="number"
+                          id="purchaseCost"
+                          value={purchaseCost || ''}
+                          onChange={(e) => setPurchaseCost(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-1">
+                        <label htmlFor="marketPrice" className="text-sm font-medium text-gray-700">
+                          Market Price ($)
+                        </label>
+                        <input
+                          type="number"
+                          id="marketPrice"
+                          value={marketPrice || ''}
+                          onChange={(e) => setMarketPrice(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
                     
                     {/* Notes */}
                     <div className="flex flex-col space-y-1">
@@ -598,10 +635,19 @@ export default function CardDetailModal({
                     {/* Add Button */}
                     <button
                       onClick={async () => {
-                        const success = await addToInventory(selectedVersion.CardID, inventoryQuantity, inventoryCondition, inventoryNotes);
+                        const success = await addToInventory(
+                          selectedVersion.CardID, 
+                          inventoryQuantity, 
+                          inventoryCondition, 
+                          inventoryNotes,
+                          purchaseCost,
+                          marketPrice
+                        );
                         if (success) {
                           setInventoryNotes('');
                           setInventoryQuantity(1);
+                          setPurchaseCost(undefined);
+                          setMarketPrice(undefined);
                         }
                       }}
                       disabled={inventoryLoading}
