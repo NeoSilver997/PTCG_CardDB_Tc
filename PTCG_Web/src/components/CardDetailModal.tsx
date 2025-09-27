@@ -3,6 +3,7 @@
 import { X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PTCGCard } from '../types/card';
 import { useState, useMemo, useEffect } from 'react';
+import { useI18n } from '../i18n/context';
 
 interface CardDetailModalProps {
   card: PTCGCard;
@@ -22,7 +23,6 @@ export default function CardDetailModal({
   onAddToDeck
 }: CardDetailModalProps) {
   const { t } = useI18n();
-  
   const [detailedCards, setDetailedCards] = useState<PTCGCard[]>([]);
   const [versionPage, setVersionPage] = useState(0);
   const [selectedVersion, setSelectedVersion] = useState<PTCGCard>(card);
@@ -465,7 +465,7 @@ export default function CardDetailModal({
               {onAddToDeck && (
                 <div className="pt-4 border-t">
                   <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Add to Deck</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">{t.addToDeck}</h3>
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <label htmlFor="quantity" className="text-sm font-medium text-gray-700">
@@ -499,7 +499,7 @@ export default function CardDetailModal({
                         onClick={() => onAddToDeck(selectedVersion, addQuantity)}
                         className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                       >
-                        <span>Add to Deck</span>
+                        <span>{t.addToDeck}</span>
                       </button>
                     </div>
                     <div className="text-xs text-gray-600 mt-2">
@@ -843,8 +843,8 @@ export default function CardDetailModal({
             {/* Related Cards */}
             {relatedCards.length > 0 && (
               <div>
-                <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {relatedCards.map((relatedCard) => (
+                <h3 className="text-xl font-bold text-gray-900 mb-4">{t.relatedCards}</h3>
+                <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">{relatedCards.map((relatedCard) => (
                     <div
                       key={relatedCard.CardID}
                       className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-all duration-200 shadow-sm hover:shadow-md group"
@@ -891,7 +891,7 @@ export default function CardDetailModal({
                           }}
                           className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium py-1.5 px-2 rounded transition-colors"
                         >
-                          Add to Deck
+                          {t.addToDeck}
                         </button>
                       )}
                     </div>

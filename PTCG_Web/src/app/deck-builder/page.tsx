@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { PTCGCard } from '../../types/card';
 import { Deck } from '../../types/deck';
+import { useI18n } from '../../i18n/context';
 
 // Dynamically import components to prevent SSR issues
 const DeckBuilder = dynamic(() => import('../../components/DeckBuilder'), { ssr: false });
 const DeckManager = dynamic(() => import('../../components/DeckManager'), { ssr: false });
 
 export default function DeckBuilderPage() {
+  const { t } = useI18n();
   const [cards, setCards] = useState<PTCGCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<'manager' | 'builder'>('manager');
@@ -53,7 +55,7 @@ export default function DeckBuilderPage() {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-600">Loading cards...</p>
+          <p className="text-xl text-gray-600">{t.loading}</p>
         </div>
       </div>
     );

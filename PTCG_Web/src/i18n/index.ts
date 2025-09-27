@@ -50,11 +50,14 @@ export interface TranslationStrings {
   deckName: string;
   deckDescription: string;
   saveDeck: string;
+  loadDeck: string;
+  clearDeck: string;
   createDeck: string;
   editDeck: string;
   deleteDeck: string;
   duplicateDeck: string;
   exportDeck: string;
+  copyDeckCode: string;
   viewDeck: string;
   totalCards: string;
   pokemonCards: string;
@@ -63,6 +66,20 @@ export interface TranslationStrings {
   format: string;
   noDecks: string;
   deckStats: string;
+  createNewDeck: string;
+  manageDecks: string;
+  searchDecks: string;
+  allFormats: string;
+  lastUpdated: string;
+  dateCreated: string;
+  cardCount: string;
+  noDecksFound: string;
+  noDecksYet: string;
+  noMatchingDecks: string;
+  createFirstDeck: string;
+  valid: string;
+  invalid: string;
+  duplicate: string;
   
   // Filter options
   allAbilities: string;

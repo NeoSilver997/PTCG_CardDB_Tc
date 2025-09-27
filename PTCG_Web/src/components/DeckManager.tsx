@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Deck } from '../types/deck';
 import DeckViewer from './DeckViewer';
+import { useI18n } from '../i18n/context';
 
 interface DeckManagerProps {
   onCreateDeck: () => void;
@@ -29,6 +30,7 @@ interface DeckManagerProps {
 }
 
 export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerProps) {
+  const { t } = useI18n();
   const [decks, setDecks] = useState<Deck[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [formatFilter, setFormatFilter] = useState<'All' | 'Standard' | 'Expanded' | 'Unlimited'>('All');
@@ -186,15 +188,15 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Deck Manager</h1>
-          <p className="text-gray-600">Manage and organize your Pokemon TCG decks</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t.deckManager}</h1>
+          <p className="text-gray-600">{t.manageDecks}</p>
         </div>
         <button
           onClick={onCreateDeck}
           className="flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
           <Plus className="h-5 w-5" />
-          <span>Create New Deck</span>
+          <span>{t.createNewDeck}</span>
         </button>
       </div>
 
@@ -204,7 +206,7 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search decks..."
+            placeholder={t.searchDecks}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -215,20 +217,20 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
           onChange={(e) => setFormatFilter(e.target.value as any)}
           className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
         >
-          <option value="All">All Formats</option>
-          <option value="Standard">Standard</option>
-          <option value="Expanded">Expanded</option>
-          <option value="Unlimited">Unlimited</option>
+          <option value="All">{t.allFormats}</option>
+          <option value="Standard">{t.standard}</option>
+          <option value="Expanded">{t.expanded}</option>
+          <option value="Unlimited">{t.unlimited}</option>
         </select>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as any)}
           className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
         >
-          <option value="updated">Last Updated</option>
-          <option value="created">Date Created</option>
-          <option value="name">Name</option>
-          <option value="cards">Card Count</option>
+          <option value="updated">{t.lastUpdated}</option>
+          <option value="created">{t.dateCreated}</option>
+          <option value="name">{t.cardName}</option>
+          <option value="cards">{t.cardCount}</option>
         </select>
       </div>
 
@@ -238,18 +240,18 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
           <div className="mb-4">
             <Sword className="h-16 w-16 text-gray-300 mx-auto" />
           </div>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">No decks found</h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">{t.noDecksFound}</h3>
           <p className="text-gray-600 mb-6">
             {decks.length === 0 
-              ? "You haven't created any decks yet. Create your first deck to get started!"
-              : "No decks match your current filters."}
+              ? t.noDecksYet
+              : t.noMatchingDecks}
           </p>
           {decks.length === 0 && (
             <button
               onClick={onCreateDeck}
               className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
-              Create Your First Deck
+              {t.createFirstDeck}
             </button>
           )}
         </div>
@@ -294,6 +296,7 @@ interface DeckCardProps {
 }
 
 function DeckCard({ deck, onEdit, onView, onDelete, onDuplicate, onExport }: DeckCardProps) {
+  const { t } = useI18n();
   const formatColor = {
     'Standard': 'bg-blue-100 text-blue-800',
     'Expanded': 'bg-green-100 text-green-800',
@@ -319,12 +322,12 @@ function DeckCard({ deck, onEdit, onView, onDelete, onDuplicate, onExport }: Dec
             {deck.isValid ? (
               <div className="flex items-center space-x-1 text-green-600">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Valid</span>
+                <span>{t.valid}</span>
               </div>
             ) : (
               <div className="flex items-center space-x-1 text-red-600">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <span>Invalid</span>
+                <span>{t.invalid}</span>
               </div>
             )}
           </div>
@@ -337,28 +340,28 @@ function DeckCard({ deck, onEdit, onView, onDelete, onDuplicate, onExport }: Dec
           <div>
             <div className="flex items-center justify-center space-x-1 mb-1">
               <div className="w-3 h-3 bg-red-500 rounded"></div>
-              <span className="text-xs text-gray-600">Pokemon</span>
+              <span className="text-xs text-gray-600">{t.pokemon}</span>
             </div>
             <div className="font-bold text-lg">{deck.pokemonCount}</div>
           </div>
           <div>
             <div className="flex items-center justify-center space-x-1 mb-1">
               <div className="w-3 h-3 bg-blue-500 rounded"></div>
-              <span className="text-xs text-gray-600">Trainers</span>
+              <span className="text-xs text-gray-600">{t.trainer}</span>
             </div>
             <div className="font-bold text-lg">{deck.trainerCount}</div>
           </div>
           <div>
             <div className="flex items-center justify-center space-x-1 mb-1">
               <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-              <span className="text-xs text-gray-600">Energy</span>
+              <span className="text-xs text-gray-600">{t.energy}</span>
             </div>
             <div className="font-bold text-lg">{deck.energyCount}</div>
           </div>
         </div>
         <div className="text-center">
           <span className="text-lg font-bold text-gray-900">{deck.totalCards}/60</span>
-          <span className="text-sm text-gray-600"> cards</span>
+          <span className="text-sm text-gray-600"> {t.cards}</span>
         </div>
       </div>
 
@@ -370,35 +373,35 @@ function DeckCard({ deck, onEdit, onView, onDelete, onDuplicate, onExport }: Dec
             className="flex items-center justify-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
           >
             <Eye className="h-4 w-4" />
-            <span className="text-sm">View</span>
+            <span className="text-sm">{t.view}</span>
           </button>
           <button
             onClick={onEdit}
             className="flex items-center justify-center space-x-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             <Edit className="h-4 w-4" />
-            <span className="text-sm">Edit</span>
+            <span className="text-sm">{t.edit}</span>
           </button>
         </div>
         <div className="grid grid-cols-3 gap-2 mt-2">
           <button
             onClick={onDuplicate}
             className="flex items-center justify-center px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
-            title="Duplicate"
+            title={t.duplicate}
           >
             <Copy className="h-4 w-4" />
           </button>
           <button
             onClick={onExport}
             className="flex items-center justify-center px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
-            title="Export"
+            title={t.exportDeck}
           >
             <Download className="h-4 w-4" />
           </button>
           <button
             onClick={onDelete}
             className="flex items-center justify-center px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors"
-            title="Delete"
+            title={t.delete}
           >
             <Trash2 className="h-4 w-4" />
           </button>
