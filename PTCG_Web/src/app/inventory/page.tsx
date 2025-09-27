@@ -36,6 +36,22 @@ export default function InventoryPage() {
   const [conditionFilter, setConditionFilter] = useState('');
   const [showStats, setShowStats] = useState(false);
 
+  // Tier color helper function
+  const getTierColor = (tier?: string) => {
+    switch (tier) {
+      case 'S+': return 'bg-red-100 text-red-800';
+      case 'S': return 'bg-orange-100 text-orange-800';
+      case 'A+': return 'bg-yellow-100 text-yellow-800';
+      case 'A': return 'bg-green-100 text-green-800';
+      case 'B+': return 'bg-blue-100 text-blue-800';
+      case 'B': return 'bg-indigo-100 text-indigo-800';
+      case 'C+': return 'bg-purple-100 text-purple-800';
+      case 'C': return 'bg-gray-100 text-gray-800';
+      case 'D': return 'bg-gray-200 text-gray-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
   // Load card data
   useEffect(() => {
     const loadCards = async () => {
@@ -323,58 +339,85 @@ export default function InventoryPage() {
             <p className="text-gray-600">Start adding cards to your inventory from the card search page</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {Object.entries(groupedInventory).map(([cardIdStr, inventoryItems]) => {
               const cardId = parseInt(cardIdStr);
               const card = cards.find(c => c.CardID === cardId);
               if (!card) return null;
 
               const totalQuantity = inventoryItems.reduce((sum, item) => sum + item.quantity, 0);
+              const totalPurchaseValue = inventoryItems.reduce((sum, item) => 
+                sum + (item.purchaseCost ? item.purchaseCost * item.quantity : 0), 0);
+              const totalMarketValue = inventoryItems.reduce((sum, item) => 
+                sum + (item.marketPrice ? item.marketPrice * item.quantity : 0), 0);
+              const profitLoss = totalMarketValue - totalPurchaseValue;
 
               return (
-                <div key={cardId} className="bg-white rounded-lg border hover:shadow-lg transition-shadow">
-                  <div className="relative">
+                <div key={cardId} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group">
+                  {/* Full Card Image */}
+                  <div className="aspect-[5/7] bg-gray-100 relative min-h-[320px] lg:min-h-[360px]">
                     <img
                       src={card.ImageURL}
                       alt={card.Name}
-                      className="w-full h-48 object-cover rounded-t-lg"
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/placeholder-card.png';
                       }}
                     />
-                    <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded-lg text-sm font-bold">
-                      {totalQuantity}
+                    
+                    {/* Overlay Information */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                        <h3 className="font-bold text-lg mb-1">{card.Name}</h3>
+                        <p className="text-sm opacity-90 mb-2">{card.ExpansionName}</p>
+                        {card.CardType && (
+                          <p className="text-xs opacity-75">{card.CardType} • {card.Rarity}</p>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Quantity Badge */}
+                    <div className="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                      ×{totalQuantity}
+                    </div>
+
+                    {/* Tier Badge */}
+                    {card.Tier && (
+                      <div className={`absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-bold shadow-lg ${getTierColor(card.Tier)}`}>
+                        {card.Tier}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{card.Name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{card.ExpansionName}</p>
+                  {/* Card Info Panel */}
+                  <div className="p-4 space-y-3">
+                    {/* Quick Info */}
+                    <div className="text-center">
+                      <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">{card.Name}</h3>
+                      <p className="text-xs text-gray-600">{card.ExpansionName}</p>
+                    </div>
                     
-                    <div className="space-y-1 mb-3">
+                    {/* Inventory Details */}
+                    <div className="space-y-2">
                       {inventoryItems.map((item) => (
-                        <div key={`${item.CardID}-${item.condition}`} className="flex justify-between items-center text-xs bg-white rounded px-2 py-1 border">
+                        <div key={`${item.CardID}-${item.condition}`} className="flex justify-between items-center text-xs bg-gray-50 rounded-lg px-3 py-2">
                           <div className="flex items-center space-x-2">
-                            <span className="text-gray-600">
+                            <span className="text-gray-600 font-medium">
                               {CARD_CONDITIONS.find(c => c.value === item.condition)?.label}
                             </span>
-                            <span className="font-medium">×{item.quantity}</span>
+                            <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">
+                              ×{item.quantity}
+                            </span>
                           </div>
                           <div className="flex items-center space-x-2">
                             {item.purchaseCost && (
-                              <span className="text-green-600 font-medium">
+                              <span className="text-green-600 font-semibold" title="Purchase Cost">
                                 ${item.purchaseCost.toFixed(2)}
                               </span>
                             )}
                             {item.marketPrice && (
-                              <span className="text-blue-600 font-medium">
+                              <span className="text-blue-600 font-semibold" title="Market Price">
                                 ${item.marketPrice.toFixed(2)}
-                              </span>
-                            )}
-                            {item.purchaseCost && item.marketPrice && (
-                              <span className={`text-xs font-bold ${(item.marketPrice - item.purchaseCost) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {(item.marketPrice - item.purchaseCost) >= 0 ? '+' : ''}
-                                ${((item.marketPrice - item.purchaseCost) * item.quantity).toFixed(2)}
                               </span>
                             )}
                           </div>
@@ -382,12 +425,39 @@ export default function InventoryPage() {
                       ))}
                     </div>
 
+                    {/* Financial Summary */}
+                    {(totalPurchaseValue > 0 || totalMarketValue > 0) && (
+                      <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">Purchase Value:</span>
+                          <span className="font-semibold text-green-600">
+                            ${totalPurchaseValue.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">Market Value:</span>
+                          <span className="font-semibold text-blue-600">
+                            ${totalMarketValue.toFixed(2)}
+                          </span>
+                        </div>
+                        {totalPurchaseValue > 0 && totalMarketValue > 0 && (
+                          <div className="flex justify-between text-xs pt-1 border-t border-gray-200">
+                            <span className="text-gray-600 font-medium">Profit/Loss:</span>
+                            <span className={`font-bold ${profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {profitLoss >= 0 ? '+' : ''}${profitLoss.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Manage Button */}
                     <button
                       onClick={() => setSelectedCard(card)}
-                      className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                      className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                     >
                       <Eye className="w-4 h-4" />
-                      <span>Manage</span>
+                      <span>Manage Inventory</span>
                     </button>
                   </div>
                 </div>
