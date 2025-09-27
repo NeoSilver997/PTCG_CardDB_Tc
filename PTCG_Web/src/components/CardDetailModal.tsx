@@ -1,9 +1,11 @@
 'use client';
 
-import { X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ExternalLink, ChevronLeft, ChevronRight, Package, Plus } from 'lucide-react';
 import { PTCGCard } from '../types/card';
 import { useState, useMemo, useEffect } from 'react';
 import { useI18n } from '../i18n/context';
+import { useInventory } from '../hooks/useInventory';
+import { CARD_CONDITIONS } from '../types/inventory';
 
 interface CardDetailModalProps {
   card: PTCGCard;
@@ -27,7 +29,15 @@ export default function CardDetailModal({
   const [versionPage, setVersionPage] = useState(0);
   const [selectedVersion, setSelectedVersion] = useState<PTCGCard>(card);
   const [addQuantity, setAddQuantity] = useState(1);
+  const [inventoryQuantity, setInventoryQuantity] = useState(1);
+  const [inventoryCondition, setInventoryCondition] = useState('near-mint');
+  const [inventoryNotes, setInventoryNotes] = useState('');
   const versionsPerPage = 8;
+
+  // Inventory functionality
+  const { addToInventory, getTotalQuantity, isCardOwned, loading: inventoryLoading } = useInventory();
+  const totalOwned = getTotalQuantity(selectedVersion.CardID);
+  const isOwned = isCardOwned(selectedVersion.CardID);
 
   // Helper function to check if a card is basic energy
   const isBasicEnergy = (card: PTCGCard): boolean => {
@@ -55,6 +65,11 @@ export default function CardDetailModal({
 
     loadDetailedCards();
   }, []);
+
+  // Update inventory info when selected version changes
+  useEffect(() => {
+    setSelectedVersion(card);
+  }, [card]);
 
   const getTierColor = (tier?: string) => {
     switch (tier) {
@@ -513,6 +528,98 @@ export default function CardDetailModal({
                   </div>
                 </div>
               )}
+
+              {/* Add to Inventory Controls */}
+              <div className="pt-4 border-t">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-gray-900">{t.manageInventory}</h3>
+                    {isOwned && (
+                      <div className="flex items-center space-x-1 text-green-600">
+                        <Package className="h-4 w-4" />
+                        <span className="text-sm font-medium">Owned: {totalOwned}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Quantity and Condition Row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex flex-col space-y-1">
+                        <label htmlFor="inventoryQuantity" className="text-sm font-medium text-gray-700">
+                          {t.quantity}
+                        </label>
+                        <select
+                          id="inventoryQuantity"
+                          value={inventoryQuantity}
+                          onChange={(e) => setInventoryQuantity(Number(e.target.value))}
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        >
+                          {Array.from({length: 20}, (_, i) => i + 1).map(num => (
+                            <option key={num} value={num}>{num}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="flex flex-col space-y-1">
+                        <label htmlFor="inventoryCondition" className="text-sm font-medium text-gray-700">
+                          {t.condition}
+                        </label>
+                        <select
+                          id="inventoryCondition"
+                          value={inventoryCondition}
+                          onChange={(e) => setInventoryCondition(e.target.value)}
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        >
+                          {CARD_CONDITIONS.map(conditionObj => (
+                            <option key={conditionObj.value} value={conditionObj.value}>
+                              {conditionObj.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    
+                    {/* Notes */}
+                    <div className="flex flex-col space-y-1">
+                      <label htmlFor="inventoryNotes" className="text-sm font-medium text-gray-700">
+                        {t.notes} (Optional)
+                      </label>
+                      <textarea
+                        id="inventoryNotes"
+                        value={inventoryNotes}
+                        onChange={(e) => setInventoryNotes(e.target.value)}
+                        placeholder="Add notes about this card..."
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                        rows={2}
+                      />
+                    </div>
+                    
+                    {/* Add Button */}
+                    <button
+                      onClick={async () => {
+                        const success = await addToInventory(selectedVersion.CardID, inventoryQuantity, inventoryCondition, inventoryNotes);
+                        if (success) {
+                          setInventoryNotes('');
+                          setInventoryQuantity(1);
+                        }
+                      }}
+                      disabled={inventoryLoading}
+                      className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>{inventoryLoading ? 'Adding...' : t.addToInventory}</span>
+                    </button>
+                    
+                    <div className="text-xs text-gray-600">
+                      <div>Adding: {selectedVersion.Name}</div>
+                      {selectedVersion.ExpansionCode && (
+                        <div>Set: {selectedVersion.ExpansionCode}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Additional Details */}
               {(card.ExpansionName || card.ExpansionCode || card.Illustrator || card.Artist || card.SpecialTag) && (

@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { PTCGCard } from '../types/card';
 import { Star, Zap, Shield, Sword } from 'lucide-react';
+import InventoryButton from './InventoryButton';
+import InventoryManager from './InventoryManager';
 
 interface CardItemProps {
   card: PTCGCard;

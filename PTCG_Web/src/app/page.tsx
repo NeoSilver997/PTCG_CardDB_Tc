@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Zap, Shield, Sword, Gamepad2 } from 'lucide-react';
+import { Search, Filter, Zap, Shield, Sword, Gamepad2, Package } from 'lucide-react';
 import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
 import CardGrid from '../components/CardGrid';
 import SearchFiltersComponent from '../components/SearchFilters';
@@ -644,6 +644,13 @@ export default function Home() {
               >
                 <Sword className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>{t.deckBuilder}</span>
+              </a>
+              <a
+                href="/inventory"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>{t.inventory}</span>
               </a>
               <div className="text-sm sm:text-base text-gray-500">
                 {filteredCards.length} {t.results}

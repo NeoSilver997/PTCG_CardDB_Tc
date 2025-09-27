@@ -93,6 +93,24 @@ const translations = {
     saveFail: 'Failed to save deck',
     saveError: 'Error saving deck',
     deleteConfirm: 'Are you sure you want to delete this deck?',
+    
+    // Inventory
+    inventory: 'Inventory',
+    myInventory: 'My Inventory',
+    inventoryManager: 'Inventory Manager',
+    addToInventory: 'Add to Inventory',
+    removeFromInventory: 'Remove from Inventory',
+    manageInventory: 'Manage Inventory',
+    inventoryEmpty: 'Your inventory is empty',
+    inventoryStats: 'Inventory Statistics',
+    totalOwned: 'Total Owned',
+    uniqueCards: 'Unique Cards',
+    inventoryValue: 'Inventory Value',
+    condition: 'Condition',
+    notes: 'Notes',
+    dateAdded: 'Date Added',
+    
+    // Navigation
     cardSearch: 'Card Search',
     results: 'Results',
     home: 'Home',
@@ -213,6 +231,24 @@ const translations = {
     saveFail: '牌组保存失败',
     saveError: '保存牌组时出错',
     deleteConfirm: '确定要删除这个牌组吗？',
+    
+    // Inventory
+    inventory: '收藏',
+    myInventory: '我的收藏',
+    inventoryManager: '收藏管理',
+    addToInventory: '添加到收藏',
+    removeFromInventory: '从收藏移除',
+    manageInventory: '管理收藏',
+    inventoryEmpty: '你的收藏是空的',
+    inventoryStats: '收藏统计',
+    totalOwned: '总拥有量',
+    uniqueCards: '独特卡牌',
+    inventoryValue: '收藏价值',
+    condition: '品相',
+    notes: '备注',
+    dateAdded: '添加日期',
+    
+    // Navigation
     cardSearch: '卡牌搜索',
     results: '结果',
     home: '主页',

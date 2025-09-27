@@ -107,6 +107,22 @@ export interface TranslationStrings {
   saveError: string;
   deleteConfirm: string;
   
+  // Inventory
+  inventory: string;
+  myInventory: string;
+  inventoryManager: string;
+  addToInventory: string;
+  removeFromInventory: string;
+  manageInventory: string;
+  inventoryEmpty: string;
+  inventoryStats: string;
+  totalOwned: string;
+  uniqueCards: string;
+  inventoryValue: string;
+  condition: string;
+  notes: string;
+  dateAdded: string;
+  
   // Navigation
   cardSearch: string;
   results: string;
