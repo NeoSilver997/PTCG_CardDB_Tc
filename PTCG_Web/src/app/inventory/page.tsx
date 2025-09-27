@@ -15,7 +15,8 @@ import {
   Download,
   Upload,
   DollarSign,
-  TrendingUp
+  TrendingUp,
+  X
 } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -352,11 +353,31 @@ export default function InventoryPage() {
                     
                     <div className="space-y-1 mb-3">
                       {inventoryItems.map((item) => (
-                        <div key={`${item.CardID}-${item.condition}`} className="flex justify-between text-xs">
-                          <span className="text-gray-600">
-                            {CARD_CONDITIONS.find(c => c.value === item.condition)?.label}
-                          </span>
-                          <span className="font-medium">{item.quantity}</span>
+                        <div key={`${item.CardID}-${item.condition}`} className="flex justify-between items-center text-xs bg-white rounded px-2 py-1 border">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-600">
+                              {CARD_CONDITIONS.find(c => c.value === item.condition)?.label}
+                            </span>
+                            <span className="font-medium">×{item.quantity}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {item.purchaseCost && (
+                              <span className="text-green-600 font-medium">
+                                ${item.purchaseCost.toFixed(2)}
+                              </span>
+                            )}
+                            {item.marketPrice && (
+                              <span className="text-blue-600 font-medium">
+                                ${item.marketPrice.toFixed(2)}
+                              </span>
+                            )}
+                            {item.purchaseCost && item.marketPrice && (
+                              <span className={`text-xs font-bold ${(item.marketPrice - item.purchaseCost) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {(item.marketPrice - item.purchaseCost) >= 0 ? '+' : ''}
+                                ${((item.marketPrice - item.purchaseCost) * item.quantity).toFixed(2)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>

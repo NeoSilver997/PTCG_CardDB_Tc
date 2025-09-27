@@ -119,7 +119,23 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     sortBy: 'Sort By',
     searchPlaceholder: 'Search cards by name, ability, or effect...',
     adjustFilters: 'Try adjusting your filters or search terms.',
-    tryAdjusting: 'Try adjusting your search terms.'
+    tryAdjusting: 'Try adjusting your search terms.',
+
+    // Inventory
+    inventory: 'Inventory',
+    myInventory: 'My Inventory',
+    inventoryManager: 'Inventory Manager',
+    addToInventory: 'Add to Inventory',
+    removeFromInventory: 'Remove from Inventory',
+    manageInventory: 'Manage Inventory',
+    inventoryEmpty: 'Your inventory is empty',
+    inventoryStats: 'Inventory Statistics',
+    totalOwned: 'Total Owned',
+    uniqueCards: 'Unique Cards',
+    inventoryValue: 'Inventory Value',
+    condition: 'Condition',
+    notes: 'Notes',
+    dateAdded: 'Date Added'
   },
   zh: {
     loading: '正在加载PTCG卡牌...',
@@ -239,7 +255,23 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     sortBy: '排序方式',
     searchPlaceholder: '搜索卡牌、特性、效果...',
     adjustFilters: '尝试调整您的筛选条件或搜索词。',
-    tryAdjusting: '尝试调整您的搜索词。'
+    tryAdjusting: '尝试调整您的搜索词。',
+
+    // Inventory
+    inventory: '收藏',
+    myInventory: '我的收藏',
+    inventoryManager: '收藏管理器',
+    addToInventory: '加入收藏',
+    removeFromInventory: '移出收藏',
+    manageInventory: '管理收藏',
+    inventoryEmpty: '您的收藏是空的',
+    inventoryStats: '收藏统计',
+    totalOwned: '拥有总数',
+    uniqueCards: '独特卡牌',
+    inventoryValue: '收藏价值',
+    condition: '品相',
+    notes: '备注',
+    dateAdded: '添加日期'
   },
   'zh-tw': {
     loading: '正在載入PTCG卡牌...',
@@ -359,7 +391,23 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     sortBy: '排序方式',
     searchPlaceholder: '搜尋卡牌、特性、效果...',
     adjustFilters: '嘗試調整您的篩選條件或搜尋詞。',
-    tryAdjusting: '嘗試調整您的搜尋詞。'
+    tryAdjusting: '嘗試調整您的搜尋詞。',
+
+    // Inventory
+    inventory: '收藏',
+    myInventory: '我的收藏',
+    inventoryManager: '收藏管理器',
+    addToInventory: '加入收藏',
+    removeFromInventory: '移出收藏',
+    manageInventory: '管理收藏',
+    inventoryEmpty: '您的收藏是空的',
+    inventoryStats: '收藏統計',
+    totalOwned: '擁有總數',
+    uniqueCards: '獨特卡牌',
+    inventoryValue: '收藏價值',
+    condition: '品相',
+    notes: '備註',
+    dateAdded: '添加日期'
   }
 };
 

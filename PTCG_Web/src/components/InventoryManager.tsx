@@ -5,7 +5,7 @@ import { PTCGCard } from '../types/card';
 import { InventoryCard, CARD_CONDITIONS } from '../types/inventory';
 import { useInventory } from '../hooks/useInventory';
 import { useI18n } from '../i18n/context';
-import { Package, Plus, Minus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 
 interface InventoryManagerProps {
   card: PTCGCard;
@@ -26,6 +26,8 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
   const [editQuantity, setEditQuantity] = useState<number>(1);
   const [editCondition, setEditCondition] = useState<string>('near-mint');
   const [editNotes, setEditNotes] = useState<string>('');
+  const [editPurchaseCost, setEditPurchaseCost] = useState<number | undefined>(undefined);
+  const [editMarketPrice, setEditMarketPrice] = useState<number | undefined>(undefined);
   const [isAdding, setIsAdding] = useState(false);
 
   const cardInventory = getCardInventory(card.CardID);
@@ -36,10 +38,12 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
     setEditQuantity(1);
     setEditCondition('near-mint');
     setEditNotes('');
+    setEditPurchaseCost(undefined);
+    setEditMarketPrice(undefined);
   };
 
   const handleSaveNew = async () => {
-    const success = await addToInventory(card.CardID, editQuantity, editCondition, editNotes);
+    const success = await addToInventory(card.CardID, editQuantity, editCondition, editNotes, editPurchaseCost, editMarketPrice);
     if (success) {
       setIsAdding(false);
     }
@@ -49,18 +53,20 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
     setIsEditing(`${item.CardID}-${item.condition}`);
     setEditQuantity(item.quantity);
     setEditCondition(item.condition);
-    setEditNotes(item.notes || '');
+    setEditNotes(item.notes);
+    setEditPurchaseCost(item.purchaseCost);
+    setEditMarketPrice(item.marketPrice);
   };
 
   const handleSaveEdit = async (item: InventoryCard) => {
-    const success = await addToInventory(card.CardID, editQuantity, editCondition, editNotes);
+    const success = await addToInventory(card.CardID, editQuantity, editCondition, editNotes, editPurchaseCost, editMarketPrice);
     if (success) {
       setIsEditing(null);
     }
   };
 
   const handleDelete = async (item: InventoryCard) => {
-    if (confirm(t.deleteConfirm)) {
+    if (confirm('Are you sure you want to remove this card from your inventory?')) {
       await removeFromInventory(card.CardID, item.condition);
     }
   };
@@ -73,11 +79,8 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            <span className="ml-2">{t.loading}</span>
-          </div>
+        <div className="bg-white p-6 rounded-lg">
+          <p>Loading...</p>
         </div>
       </div>
     );
@@ -87,14 +90,8 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Package className="w-6 h-6 text-blue-600" />
-            <div>
-              <h2 className="text-xl font-bold">{t.cardLibrary}</h2>
-              <p className="text-sm text-gray-600">{card.Name}</p>
-            </div>
-          </div>
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-2xl font-bold text-gray-900">Inventory Manager</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg"
@@ -148,14 +145,15 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
                 className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
               >
                 <Plus className="w-4 h-4" />
-                <span>{t.add}</span>
+                <span>Add</span>
               </button>
             </div>
 
             {/* Add New Form */}
             {isAdding && (
-              <div className="bg-gray-50 p-4 rounded-lg border">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h5 className="text-lg font-medium mb-4 text-blue-800">Add to Inventory</h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">{t.quantity}</label>
                     <input
@@ -180,32 +178,57 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
                       ))}
                     </select>
                   </div>
-                  <div className="sm:col-span-2 lg:col-span-1">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Purchase Cost ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editPurchaseCost || ''}
+                      onChange={(e) => setEditPurchaseCost(e.target.value ? parseFloat(e.target.value) : undefined)}
+                      placeholder="0.00"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Market Price ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editMarketPrice || ''}
+                      onChange={(e) => setEditMarketPrice(e.target.value ? parseFloat(e.target.value) : undefined)}
+                      placeholder="0.00"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium mb-1">Notes</label>
                     <input
                       type="text"
                       value={editNotes}
                       onChange={(e) => setEditNotes(e.target.value)}
-                      placeholder="Optional notes..."
                       className="w-full px-3 py-2 border rounded-lg"
                     />
                   </div>
-                  <div className="flex items-end space-x-2">
-                    <button
-                      onClick={handleSaveNew}
-                      className="flex items-center space-x-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700"
-                    >
-                      <Save className="w-4 h-4" />
-                      <span>{t.save}</span>
-                    </button>
-                    <button
-                      onClick={() => setIsAdding(false)}
-                      className="flex items-center space-x-1 bg-gray-500 text-white px-3 py-2 rounded-lg hover:bg-gray-600"
-                    >
-                      <X className="w-4 h-4" />
-                      <span>{t.cancel}</span>
-                    </button>
-                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleSaveNew}
+                    className="flex items-center space-x-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{t.save}</span>
+                  </button>
+                  <button
+                    onClick={() => setIsAdding(false)}
+                    className="flex items-center space-x-1 bg-gray-500 text-white px-3 py-2 rounded-lg hover:bg-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>{t.cancel}</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -215,7 +238,7 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
               <div className="text-center py-8 text-gray-500">
                 <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                 <p>No cards in inventory</p>
-                <p className="text-sm">Click "Add" to add this card to your inventory</p>
+                <p className="text-sm">Click Add to add this card to your inventory</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -226,39 +249,67 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
                   return (
                     <div key={editKey} className="bg-gray-50 p-4 rounded-lg border">
                       {isEditingThis ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-1">{t.quantity}</label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={editQuantity}
-                              onChange={(e) => setEditQuantity(parseInt(e.target.value) || 1)}
-                              className="w-full px-3 py-2 border rounded-lg"
-                            />
+                        <div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">{t.quantity}</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={editQuantity}
+                                onChange={(e) => setEditQuantity(parseInt(e.target.value) || 1)}
+                                className="w-full px-3 py-2 border rounded-lg"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Condition</label>
+                              <select
+                                value={editCondition}
+                                onChange={(e) => setEditCondition(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-lg"
+                              >
+                                {CARD_CONDITIONS.map(condition => (
+                                  <option key={condition.value} value={condition.value}>
+                                    {condition.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Purchase Cost ($)</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={editPurchaseCost || ''}
+                                onChange={(e) => setEditPurchaseCost(e.target.value ? parseFloat(e.target.value) : undefined)}
+                                placeholder="0.00"
+                                className="w-full px-3 py-2 border rounded-lg"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-1">Condition</label>
-                            <select
-                              value={editCondition}
-                              onChange={(e) => setEditCondition(e.target.value)}
-                              className="w-full px-3 py-2 border rounded-lg"
-                            >
-                              {CARD_CONDITIONS.map(condition => (
-                                <option key={condition.value} value={condition.value}>
-                                  {condition.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-1">Notes</label>
-                            <input
-                              type="text"
-                              value={editNotes}
-                              onChange={(e) => setEditNotes(e.target.value)}
-                              className="w-full px-3 py-2 border rounded-lg"
-                            />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Market Price ($)</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={editMarketPrice || ''}
+                                onChange={(e) => setEditMarketPrice(e.target.value ? parseFloat(e.target.value) : undefined)}
+                                placeholder="0.00"
+                                className="w-full px-3 py-2 border rounded-lg"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Notes</label>
+                              <input
+                                type="text"
+                                value={editNotes}
+                                onChange={(e) => setEditNotes(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-lg"
+                              />
+                            </div>
                           </div>
                           <div className="flex items-end space-x-2">
                             <button
@@ -277,7 +328,7 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
                         </div>
                       ) : (
                         <div className="flex items-center justify-between">
-                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                             <div>
                               <p className="text-sm text-gray-600">{t.quantity}</p>
                               <p className="font-semibold">{item.quantity}</p>
@@ -287,11 +338,23 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
                               <p className="font-semibold">{getConditionLabel(item.condition)}</p>
                             </div>
                             <div>
+                              <p className="text-sm text-gray-600">Purchase Cost</p>
+                              <p className="font-semibold text-green-600">
+                                {item.purchaseCost ? `$${item.purchaseCost.toFixed(2)}` : '—'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-600">Market Price</p>
+                              <p className="font-semibold text-blue-600">
+                                {item.marketPrice ? `$${item.marketPrice.toFixed(2)}` : '—'}
+                              </p>
+                            </div>
+                            <div>
                               <p className="text-sm text-gray-600">Notes</p>
                               <p className="text-sm">{item.notes || '—'}</p>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 ml-4">
                             <button
                               onClick={() => handleEdit(item)}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
@@ -307,6 +370,20 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
                           </div>
                         </div>
                       )}
+                      
+                      {/* Show profit/loss calculation for individual items */}
+                      {item.purchaseCost && item.marketPrice && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">Profit/Loss per card:</span>
+                            <span className={`font-semibold ${(item.marketPrice - item.purchaseCost) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {(item.marketPrice - item.purchaseCost) >= 0 ? '+' : ''}
+                              ${((item.marketPrice - item.purchaseCost) * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="mt-2 text-xs text-gray-500">
                         Added: {new Date(item.dateAdded).toLocaleDateString()}
                         {item.lastUpdated !== item.dateAdded && (
