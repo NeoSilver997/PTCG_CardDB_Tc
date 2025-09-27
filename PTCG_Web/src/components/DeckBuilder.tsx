@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { PTCGCard } from '../types/card';
 import { Deck, DeckCard } from '../types/deck';
 import { Search, Plus, Minus, Eye, X, Filter, Star, Users, Zap, Shield, Sword, Heart } from 'lucide-react';
+import { useI18n } from '../i18n/context';
 
 interface SimpleDeckCard extends PTCGCard {
   quantity: number;
@@ -21,6 +22,8 @@ interface DeckBuilderProps {
 }
 
 const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initialDeck }) => {
+  const { t } = useI18n();
+  
   const [deck, setDeck] = useState<SimpleDeck>(initialDeck || { name: '', cards: [] });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
@@ -117,7 +120,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
 
   const saveDeck = async () => {
     if (!deck.name.trim()) {
-      alert('Please enter a deck name');
+      alert(t.enterDeckName);
       return;
     }
 
@@ -129,13 +132,13 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
       });
 
       if (response.ok) {
-        alert('Deck saved successfully!');
+        alert(t.saveSuccess);
       } else {
-        alert('Failed to save deck');
+        alert(t.saveFail);
       }
     } catch (error) {
       console.error('Error saving deck:', error);
-      alert('Error saving deck');
+      alert(t.saveError);
     }
   };
 
@@ -145,7 +148,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
       <div className="bg-white shadow-sm border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center py-3 sm:py-4">
-            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800">PTCG Deck Builder</h1>
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800">{t.deckBuilder}</h1>
             <div className="flex items-center gap-2">
               <div className="text-xs sm:text-sm text-gray-600 hidden sm:block">
                 {deck.cards.reduce((sum, card) => sum + card.quantity, 0)}/60
@@ -155,7 +158,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                   onClick={onClose}
                   className="px-3 sm:px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm min-h-[36px]"
                 >
-                  <span className="hidden sm:inline">Close</span>
+                  <span className="hidden sm:inline">{t.close}</span>
                   <X className="w-4 h-4 sm:hidden" />
                 </button>
               )}
@@ -170,7 +173,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
           {/* Card Library */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-md p-3 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Card Library</h2>
+              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">{t.cardLibrary}</h2>
 
               {/* Search and Filters */}
               <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
@@ -180,7 +183,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                       <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <input
                         type="text"
-                        placeholder="Search cards..."
+                        placeholder={t.searchPlaceholder}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -199,7 +202,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                     className="px-4 py-3 sm:py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm min-h-[44px] sm:min-h-auto"
                   >
                     <Filter className="w-4 h-4 mx-auto sm:mx-0" />
-                    <span className="ml-2 hidden sm:inline">Clear</span>
+                    <span className="ml-2 hidden sm:inline">{t.clear}</span>
                   </button>
                 </div>
 
@@ -299,7 +302,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                         className="flex-1 px-2 py-2 sm:py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed min-h-[36px] sm:min-h-auto flex items-center justify-center"
                       >
                         <Plus className="w-3 h-3 mr-1" />
-                        <span className="hidden sm:inline">Add</span>
+                        <span className="hidden sm:inline">{t.add}</span>
                       </button>
                       <button
                         onClick={() => setSelectedCard(card)}
@@ -317,12 +320,12 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
           {/* Deck Panel - Mobile Optimized */}
           <div className="lg:col-span-1 order-first lg:order-last">
             <div className="bg-white rounded-lg shadow-md p-3 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Current Deck</h2>
+              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">{t.currentDeck}</h2>
 
               <div className="mb-3 sm:mb-4">
                 <input
                   type="text"
-                  placeholder="Deck Name"
+                  placeholder={t.deckName}
                   value={deck.name}
                   onChange={(e) => setDeck(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] sm:min-h-auto"
@@ -331,13 +334,13 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
 
               <div className="mb-3 sm:mb-4">
                 <p className="text-sm text-gray-600 font-medium">
-                  Cards: {deck.cards.reduce((sum, card) => sum + card.quantity, 0)} / 60
+                  {t.cards}: {deck.cards.reduce((sum, card) => sum + card.quantity, 0)} / 60
                 </p>
               </div>
 
               <div className="space-y-2 max-h-64 sm:max-h-80 overflow-y-auto mb-4">
                 {deck.cards.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8 text-sm">No cards in deck</p>
+                  <p className="text-gray-500 text-center py-8 text-sm">{t.noCards}</p>
                 ) : (
                   deck.cards.map(card => (
                     <div key={card.CardID} className="flex items-center justify-between bg-gray-50 rounded p-2">
@@ -372,7 +375,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                 onClick={saveDeck}
                 className="w-full px-4 py-3 sm:py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium min-h-[44px] sm:min-h-auto"
               >
-                Save Deck
+                {t.saveDeck}
               </button>
             </div>
           </div>

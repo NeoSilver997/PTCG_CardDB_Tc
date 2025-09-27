@@ -2,6 +2,7 @@
 
 import { Filter, X } from 'lucide-react';
 import { SearchFilters, AbilityOption, EffectTypeOption, PTCGCard } from '../types/card';
+import { useI18n } from '../i18n/context';
 
 interface SearchFiltersProps {
   filters: SearchFilters;
@@ -18,6 +19,8 @@ export default function SearchFiltersComponent({
   effectTypes,
   cards
 }: SearchFiltersProps) {
+  const { t } = useI18n();
+  
   const updateFilter = (key: keyof SearchFilters, value: string) => {
     onFiltersChange({
       ...filters,
@@ -96,7 +99,7 @@ export default function SearchFiltersComponent({
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div className="flex items-center space-x-2 sm:space-x-3">
           <Filter className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Filters</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">{t.filters}</h2>
         </div>
         {hasActiveFilters && (
           <button
@@ -104,7 +107,7 @@ export default function SearchFiltersComponent({
             className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700 min-h-[32px] min-w-[60px] justify-center"
           >
             <X className="h-4 w-4" />
-            <span className="hidden sm:inline">Clear</span>
+            <span className="hidden sm:inline">{t.clear}</span>
           </button>
         )}
       </div>
@@ -113,14 +116,14 @@ export default function SearchFiltersComponent({
         {/* Ability Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
-            Ability
+            {t.ability}
           </label>
           <select
             value={filters.ability}
             onChange={(e) => updateFilter('ability', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base min-h-[44px]"
           >
-            <option value="">All Abilities</option>
+            <option value="">{t.allAbilities}</option>
             {abilities.map((ability) => (
               <option key={ability.value} value={ability.value}>
                 {ability.label} ({ability.count})
@@ -132,14 +135,14 @@ export default function SearchFiltersComponent({
         {/* Effect Type Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
-            Effect Type
+            {t.effectType}
           </label>
           <select
             value={filters.effectType}
             onChange={(e) => updateFilter('effectType', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base min-h-[44px]"
           >
-            <option value="">All Effect Types</option>
+            <option value="">{t.allEffectTypes}</option>
             {effectTypes.map((effect) => (
               <option key={effect.value} value={effect.value}>
                 {effect.label} ({effect.count})
@@ -151,14 +154,14 @@ export default function SearchFiltersComponent({
         {/* Card Type Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Card Type
+            {t.cardType}
           </label>
           <select
             value={filters.cardType}
             onChange={(e) => updateFilter('cardType', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
-            <option value="">All Card Types</option>
+            <option value="">{t.allCardTypes}</option>
             {cardTypeOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.value} ({option.count})
@@ -170,14 +173,14 @@ export default function SearchFiltersComponent({
         {/* Rarity Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Rarity
+            {t.rarity}
           </label>
           <select
             value={filters.rarity}
             onChange={(e) => updateFilter('rarity', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
-            <option value="">All Rarities</option>
+            <option value="">{t.allRarities}</option>
             {rarityOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.value} ({option.count})
@@ -189,14 +192,14 @@ export default function SearchFiltersComponent({
         {/* Tier Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Tier
+            {t.tier}
           </label>
           <select
             value={filters.tier}
             onChange={(e) => updateFilter('tier', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
-            <option value="">All Tiers</option>
+            <option value="">{t.allTiers}</option>
             {tierOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.value} ({option.count})
@@ -208,14 +211,14 @@ export default function SearchFiltersComponent({
         {/* Attribute Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Attribute
+            {t.attribute}
           </label>
           <select
             value={filters.attribute}
             onChange={(e) => updateFilter('attribute', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
-            <option value="">All Attributes</option>
+            <option value="">{t.allAttributes}</option>
             {attributeOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.value} ({option.count})
@@ -227,14 +230,14 @@ export default function SearchFiltersComponent({
         {/* Weakness Type Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Weakness Type
+            {t.weaknessType}
           </label>
           <select
             value={filters.weaknessType}
             onChange={(e) => updateFilter('weaknessType', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
-            <option value="">All Weakness Types</option>
+            <option value="">{t.allWeaknessTypes}</option>
             {weaknessTypeOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.value} ({option.count})
@@ -246,14 +249,14 @@ export default function SearchFiltersComponent({
         {/* Resistance Type Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Resistance Type
+            {t.resistanceType}
           </label>
           <select
             value={filters.resistanceType}
             onChange={(e) => updateFilter('resistanceType', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
-            <option value="">All Resistance Types</option>
+            <option value="">{t.allResistanceTypes}</option>
             {resistanceTypeOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.value} ({option.count})
@@ -265,14 +268,14 @@ export default function SearchFiltersComponent({
         {/* Regulation Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Regulation
+            {t.regulationMark}
           </label>
           <select
             value={filters.regulation}
             onChange={(e) => updateFilter('regulation', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
-            <option value="">All Regulations</option>
+            <option value="">{t.allRegulations}</option>
             {regulationOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.value} ({option.count})
@@ -284,14 +287,14 @@ export default function SearchFiltersComponent({
         {/* Expansion Filter */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Expansion
+            {t.expansion}
           </label>
           <select
             value={filters.expansion}
             onChange={(e) => updateFilter('expansion', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
-            <option value="">All Expansions</option>
+            <option value="">{t.allExpansions}</option>
             {expansionOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.value} ({option.count})

@@ -21,6 +21,8 @@ export default function CardDetailModal({
   allCards,
   onAddToDeck
 }: CardDetailModalProps) {
+  const { t } = useI18n();
+  
   const [detailedCards, setDetailedCards] = useState<PTCGCard[]>([]);
   const [versionPage, setVersionPage] = useState(0);
   const [selectedVersion, setSelectedVersion] = useState<PTCGCard>(card);

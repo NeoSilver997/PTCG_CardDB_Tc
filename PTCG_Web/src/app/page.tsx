@@ -6,8 +6,11 @@ import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../typ
 import CardGrid from '../components/CardGrid';
 import SearchFiltersComponent from '../components/SearchFilters';
 import CardDetailModal from '../components/CardDetailModal';
+import LanguageSelector from '../components/LanguageSelector';
+import { useI18n } from '../i18n/context';
 
 export default function Home() {
+  const { t } = useI18n();
   const [cards, setCards] = useState<PTCGCard[]>([]);
   const [filteredCards, setFilteredCards] = useState<PTCGCard[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({
@@ -618,7 +621,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading PTCG cards...</div>
+        <div className="text-xl">{t.loading}</div>
       </div>
     );
   }
@@ -631,18 +634,19 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3 sm:space-x-4">
               <Gamepad2 className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">PTCG Card Search</h1>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{t.cardSearch}</h1>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <LanguageSelector />
               <a
                 href="/deck-builder"
                 className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
               >
                 <Sword className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span>Deck Builder</span>
+                <span>{t.deckBuilder}</span>
               </a>
               <div className="text-sm sm:text-base text-gray-500">
-                {filteredCards.length} cards found
+                {filteredCards.length} {t.results}
               </div>
             </div>
           </div>
@@ -656,7 +660,7 @@ export default function Home() {
             <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 sm:h-6 sm:w-6" />
             <input
               type="text"
-              placeholder="Search cards by name, ability, or effect..."
+              placeholder={t.searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 sm:pl-12 pr-4 sm:pr-6 py-3 sm:py-4 text-base sm:text-lg border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm min-h-[48px] sm:min-h-auto"
