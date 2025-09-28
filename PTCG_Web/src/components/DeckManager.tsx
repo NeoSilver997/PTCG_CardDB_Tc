@@ -163,18 +163,66 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
       const response = await fetch('/api/cards');
       const allCards = await response.json();
       
+      console.log(`Importing deck: ${constructionDeck.name}`);
+      console.log(`Total cards in database: ${allCards.length}`);
+      console.log(`Construction deck has ${constructionDeck.cards.length} cards to import`);
+      
       // Map construction deck cards to full card objects
-      const deckCards = constructionDeck.cards.map(constructionCard => {
-        const fullCard = allCards.find((card: any) => card.id === constructionCard.cardId);
+      const deckCards = constructionDeck.cards.map((constructionCard, index) => {
+        // Try multiple possible ID fields first
+        let fullCard = allCards.find((card: any) => 
+          card.CardID === constructionCard.cardId || 
+          parseInt(String(card.CardID)) === constructionCard.cardId
+        );
+        
+        // If not found by ID, try to match by name (most likely to work)
         if (!fullCard) {
-          console.warn(`Card not found: ${constructionCard.name} (ID: ${constructionCard.cardId})`);
+          // Try exact match first
+          fullCard = allCards.find((card: any) => {
+            const cardName = (card.Name || card.name || '').trim();
+            const constructionName = (constructionCard.name || '').trim();
+            return cardName === constructionName;
+          });
+          
+          // If still not found, try more fuzzy matching
+          if (!fullCard) {
+            fullCard = allCards.find((card: any) => {
+              const cardName = (card.Name || card.name || '').toLowerCase().replace(/\s+/g, '');
+              const constructionName = (constructionCard.name || '').toLowerCase().replace(/\s+/g, '');
+              return cardName === constructionName || 
+                     cardName.includes(constructionName) || 
+                     constructionName.includes(cardName);
+            });
+            
+            if (fullCard) {
+              console.log(`Card matched by fuzzy name: "${constructionCard.name}" -> "${fullCard.Name}"`);
+            }
+          }
+          
+          if (fullCard) {
+            console.log(`✓ Card ${index + 1}: "${constructionCard.name}" matched by name to CardID ${fullCard.CardID}`);
+          }
+        } else {
+          console.log(`✓ Card ${index + 1}: "${constructionCard.name}" matched by ID ${constructionCard.cardId}`);
+        }
+        
+        if (!fullCard) {
+          console.warn(`✗ Card ${index + 1}: "${constructionCard.name}" (ID: ${constructionCard.cardId}) not found in database`);
           return null;
         }
+        
         return {
           ...fullCard,
           quantity: constructionCard.quantity
         };
       }).filter(Boolean);
+
+      console.log(`Successfully mapped ${deckCards.length}/${constructionDeck.cards.length} cards`);
+
+      if (deckCards.length === 0) {
+        alert('No cards could be imported from this construction deck. The cards may not be available in the current database.');
+        return;
+      }
 
       const newDeck = {
         name: `${constructionDeck.name} (Imported)`,
@@ -197,7 +245,10 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
         loadDecks();
         // Switch to My Decks tab
         setCurrentTab('my-decks');
-        alert(`Successfully imported "${constructionDeck.name}"!`);
+        const successMessage = deckCards.length === constructionDeck.cards.length 
+          ? `Successfully imported "${constructionDeck.name}" with all ${deckCards.length} cards!`
+          : `Partially imported "${constructionDeck.name}" - ${deckCards.length} of ${constructionDeck.cards.length} cards were found in the database.`;
+        alert(successMessage);
       } else {
         throw new Error('Failed to save imported deck');
       }
