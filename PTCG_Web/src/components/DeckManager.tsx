@@ -18,11 +18,28 @@ import {
   Star,
   Zap,
   Shield,
-  Sword
+  Sword,
+  BookOpen,
+  Package
 } from 'lucide-react';
 import { Deck } from '../types/deck';
 import DeckViewer from './DeckViewer';
 import { useI18n } from '../i18n/context';
+
+interface ConstructionDeck {
+  id: string;
+  name: string;
+  description: string;
+  format: string;
+  cards: Array<{
+    cardId: number;
+    name: string;
+    quantity: number;
+    type: string;
+    expansion: string;
+    rarity: string;
+  }>;
+}
 
 interface DeckManagerProps {
   onCreateDeck: () => void;
@@ -32,13 +49,17 @@ interface DeckManagerProps {
 export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerProps) {
   const { t } = useI18n();
   const [decks, setDecks] = useState<Deck[]>([]);
+  const [constructionDecks, setConstructionDecks] = useState<ConstructionDeck[]>([]);
+  const [currentTab, setCurrentTab] = useState<'my-decks' | 'construction'>('my-decks');
   const [searchTerm, setSearchTerm] = useState('');
   const [formatFilter, setFormatFilter] = useState<'All' | 'Standard' | 'Expanded' | 'Unlimited'>('All');
   const [sortBy, setSortBy] = useState<'name' | 'updated' | 'created' | 'cards'>('updated');
   const [viewingDeck, setViewingDeck] = useState<Deck | null>(null);
+  const [loadingConstruction, setLoadingConstruction] = useState(false);
 
   useEffect(() => {
     loadDecks();
+    loadConstructionDecks();
   }, []);
 
   const loadDecks = async () => {
@@ -62,6 +83,23 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
         const savedDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
         setDecks(savedDecks);
       }
+    }
+  };
+
+  const loadConstructionDecks = async () => {
+    setLoadingConstruction(true);
+    try {
+      const response = await fetch('/api/construction-decks');
+      if (response.ok) {
+        const data = await response.json();
+        setConstructionDecks(data);
+      } else {
+        console.error('Failed to load construction decks');
+      }
+    } catch (error) {
+      console.error('Error loading construction decks:', error);
+    } finally {
+      setLoadingConstruction(false);
     }
   };
 
@@ -117,6 +155,56 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
     a.download = `${deck.name}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const importConstructionDeck = async (constructionDeck: ConstructionDeck) => {
+    try {
+      // Convert construction deck to user deck format
+      const response = await fetch('/api/cards');
+      const allCards = await response.json();
+      
+      // Map construction deck cards to full card objects
+      const deckCards = constructionDeck.cards.map(constructionCard => {
+        const fullCard = allCards.find((card: any) => card.id === constructionCard.cardId);
+        if (!fullCard) {
+          console.warn(`Card not found: ${constructionCard.name} (ID: ${constructionCard.cardId})`);
+          return null;
+        }
+        return {
+          ...fullCard,
+          quantity: constructionCard.quantity
+        };
+      }).filter(Boolean);
+
+      const newDeck = {
+        name: `${constructionDeck.name} (Imported)`,
+        description: constructionDeck.description,
+        format: constructionDeck.format,
+        cards: deckCards
+      };
+
+      // Save as user deck
+      const saveResponse = await fetch('/api/decks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newDeck),
+      });
+
+      if (saveResponse.ok) {
+        // Refresh user decks
+        loadDecks();
+        // Switch to My Decks tab
+        setCurrentTab('my-decks');
+        alert(`Successfully imported "${constructionDeck.name}"!`);
+      } else {
+        throw new Error('Failed to save imported deck');
+      }
+    } catch (error) {
+      console.error('Error importing construction deck:', error);
+      alert('Failed to import construction deck. Please try again.');
+    }
   };
 
   const generateDeckList = (deck: Deck): string => {
@@ -186,7 +274,7 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{t.deckManager}</h1>
           <p className="text-gray-600">{t.manageDecks}</p>
@@ -197,6 +285,32 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
         >
           <Plus className="h-5 w-5" />
           <span>{t.createNewDeck}</span>
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex space-x-1 mb-6 bg-gray-100 rounded-lg p-1">
+        <button
+          onClick={() => setCurrentTab('my-decks')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+            currentTab === 'my-decks'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Package className="h-4 w-4" />
+          <span>My Decks ({decks.length})</span>
+        </button>
+        <button
+          onClick={() => setCurrentTab('construction')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+            currentTab === 'construction'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <BookOpen className="h-4 w-4" />
+          <span>Construction Decks ({constructionDecks.length})</span>
         </button>
       </div>
 
@@ -234,41 +348,78 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
         </select>
       </div>
 
-      {/* Deck Grid */}
-      {filteredDecks.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="mb-4">
-            <Sword className="h-16 w-16 text-gray-300 mx-auto" />
+      {/* Content based on current tab */}
+      {currentTab === 'my-decks' ? (
+        /* My Decks Tab */
+        filteredDecks.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="mb-4">
+              <Sword className="h-16 w-16 text-gray-300 mx-auto" />
+            </div>
+            <h3 className="text-xl font-medium text-gray-900 mb-2">{t.noDecksFound}</h3>
+            <p className="text-gray-600 mb-6">
+              {decks.length === 0 
+                ? t.noDecksYet
+                : t.noMatchingDecks}
+            </p>
+            {decks.length === 0 && (
+              <button
+                onClick={onCreateDeck}
+                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                {t.createFirstDeck}
+              </button>
+            )}
           </div>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">{t.noDecksFound}</h3>
-          <p className="text-gray-600 mb-6">
-            {decks.length === 0 
-              ? t.noDecksYet
-              : t.noMatchingDecks}
-          </p>
-          {decks.length === 0 && (
-            <button
-              onClick={onCreateDeck}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              {t.createFirstDeck}
-            </button>
-          )}
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredDecks.map(deck => (
+              <DeckCard
+                key={deck.id}
+                deck={deck}
+                onEdit={() => onEditDeck(deck)}
+                onView={() => setViewingDeck(deck)}
+                onDelete={() => deleteDeck(deck.id)}
+                onDuplicate={() => duplicateDeck(deck)}
+                onExport={() => exportDeck(deck)}
+              />
+            ))}
+          </div>
+        )
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDecks.map(deck => (
-            <DeckCard
-              key={deck.id}
-              deck={deck}
-              onEdit={() => onEditDeck(deck)}
-              onView={() => setViewingDeck(deck)}
-              onDelete={() => deleteDeck(deck.id)}
-              onDuplicate={() => duplicateDeck(deck)}
-              onExport={() => exportDeck(deck)}
-            />
-          ))}
-        </div>
+        /* Construction Decks Tab */
+        loadingConstruction ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading construction decks...</p>
+          </div>
+        ) : constructionDecks.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="mb-4">
+              <BookOpen className="h-16 w-16 text-gray-300 mx-auto" />
+            </div>
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No Construction Decks Found</h3>
+            <p className="text-gray-600 mb-6">
+              Import construction decks from the admin panel to see them here.
+            </p>
+            <a
+              href="/admin/import-decks"
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors inline-block"
+            >
+              Go to Import Panel
+            </a>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {constructionDecks.map(deck => (
+              <ConstructionDeckCard
+                key={deck.id}
+                deck={deck}
+                onImport={() => importConstructionDeck(deck)}
+              />
+            ))}
+          </div>
+        )
       )}
 
       {/* Deck Viewer Modal */}
@@ -406,6 +557,91 @@ function DeckCard({ deck, onEdit, onView, onDelete, onDuplicate, onExport }: Dec
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+interface ConstructionDeckCardProps {
+  deck: ConstructionDeck;
+  onImport: () => void;
+}
+
+function ConstructionDeckCard({ deck, onImport }: ConstructionDeckCardProps) {
+  const totalCards = deck.cards.reduce((sum, card) => sum + card.quantity, 0);
+  const pokemonCount = deck.cards.filter(card => card.type === '寶可夢').reduce((sum, card) => sum + card.quantity, 0);
+  const trainerCount = deck.cards.filter(card => card.type === '物品' || card.type === '支援' || card.type === '場地').reduce((sum, card) => sum + card.quantity, 0);
+  const energyCount = deck.cards.filter(card => card.type === '能量').reduce((sum, card) => sum + card.quantity, 0);
+
+  const formatColor = {
+    'Standard': 'bg-blue-100 text-blue-800',
+    'Expanded': 'bg-green-100 text-green-800',
+    'Unlimited': 'bg-purple-100 text-purple-800'
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-100">
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="text-xl font-bold text-gray-900 line-clamp-2">{deck.name}</h3>
+          <div className="flex items-center space-x-2">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${formatColor[deck.format]}`}>
+              {deck.format}
+            </span>
+            <div className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+              Official
+            </div>
+          </div>
+        </div>
+        {deck.description && (
+          <p className="text-gray-600 text-sm line-clamp-2 mb-3">{deck.description}</p>
+        )}
+      </div>
+
+      {/* Deck Composition */}
+      <div className="p-4 bg-gray-50">
+        <div className="grid grid-cols-3 gap-4 text-center mb-4">
+          <div>
+            <div className="flex items-center justify-center space-x-1 mb-1">
+              <div className="w-3 h-3 bg-red-500 rounded"></div>
+              <span className="text-xs text-gray-600">寶可夢</span>
+            </div>
+            <div className="font-bold text-lg">{pokemonCount}</div>
+          </div>
+          <div>
+            <div className="flex items-center justify-center space-x-1 mb-1">
+              <div className="w-3 h-3 bg-blue-500 rounded"></div>
+              <span className="text-xs text-gray-600">訓練師</span>
+            </div>
+            <div className="font-bold text-lg">{trainerCount}</div>
+          </div>
+          <div>
+            <div className="flex items-center justify-center space-x-1 mb-1">
+              <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+              <span className="text-xs text-gray-600">能量</span>
+            </div>
+            <div className="font-bold text-lg">{energyCount}</div>
+          </div>
+        </div>
+        <div className="text-center">
+          <span className="text-lg font-bold text-gray-900">{totalCards}/60</span>
+          <span className="text-sm text-gray-600"> 卡牌</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="p-4 border-t border-gray-100">
+        <button
+          onClick={onImport}
+          className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+        >
+          <Download className="h-4 w-4" />
+          <span className="text-sm">Import to My Decks</span>
+        </button>
+        <p className="text-xs text-gray-500 mt-2 text-center">
+          Import this official construction deck to your collection
+        </p>
       </div>
     </div>
   );

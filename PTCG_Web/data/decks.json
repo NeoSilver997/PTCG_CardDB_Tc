@@ -1793,5 +1793,19 @@
     "energyCount": 0,
     "totalCards": 4,
     "isValid": false
+  },
+  {
+    "id": "deck_1759022086221_vs11vcq6x",
+    "name": "挑戰牌組 超級耿鬼ex (Imported)",
+    "description": "Challenge Deck featuring Super Gengar ex with Ghost-type synergy",
+    "cards": [],
+    "format": "Standard",
+    "createdAt": "2025-09-28T01:14:46.221Z",
+    "updatedAt": "2025-09-28T01:14:46.221Z",
+    "pokemonCount": 0,
+    "trainerCount": 0,
+    "energyCount": 0,
+    "totalCards": 0,
+    "isValid": false
   }
 ]

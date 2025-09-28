@@ -1,0 +1,14 @@
+Pokemon TCG Construction Deck Import Summary
+==================================================
+
+Total decks processed: 2
+Total unmatched cards: 0
+
+Deck: 挑戰牌組 超級耿鬼ex
+  Cards: 21/21 matched
+  Match rate: 100.0%
+
+Deck: 挑戰牌組 超級蒂安希ex
+  Cards: 22/22 matched
+  Match rate: 100.0%
+

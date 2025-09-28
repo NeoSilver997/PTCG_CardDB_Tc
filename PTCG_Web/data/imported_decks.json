@@ -1,0 +1,390 @@
+[
+  {
+    "id": "import_1759021375199_3gjk6u3n4",
+    "name": "挑戰牌組 超級耿鬼ex",
+    "description": "Challenge Deck featuring Super Gengar ex with Ghost-type synergy",
+    "format": "Standard",
+    "cards": [
+      {
+        "cardId": 14383,
+        "name": "鬼斯",
+        "quantity": 4,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14384,
+        "name": "鬼斯通",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14385,
+        "name": "超級耿鬼ex",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14386,
+        "name": "黑暗鴉",
+        "quantity": 3,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14387,
+        "name": "烏鴉頭頭",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14388,
+        "name": "勾魂眼",
+        "quantity": 3,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14389,
+        "name": "阿勃梭魯",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14390,
+        "name": "無極汰那",
+        "quantity": 1,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14391,
+        "name": "桃歹郎ex",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14392,
+        "name": "米立龍",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14393,
+        "name": "好友寶芬",
+        "quantity": 3,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14394,
+        "name": "高級球",
+        "quantity": 4,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14395,
+        "name": "神奇糖果",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14396,
+        "name": "頂尖捕捉器",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14397,
+        "name": "寶可夢交替",
+        "quantity": 3,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14398,
+        "name": "超級信號",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14399,
+        "name": "夜間擔架",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14400,
+        "name": "龐克頭盔",
+        "quantity": 2,
+        "type": "寶可夢道具",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14401,
+        "name": "氣球",
+        "quantity": 2,
+        "type": "寶可夢道具",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14402,
+        "name": "艾莉絲的鬥志",
+        "quantity": 3,
+        "type": "支援者卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14403,
+        "name": "老大的指令",
+        "quantity": 2,
+        "type": "支援者卡",
+        "expansion": "",
+        "rarity": "normal"
+      }
+    ],
+    "createdAt": "2025-09-28",
+    "updatedAt": "2025-09-28",
+    "tags": [
+      "Official",
+      "Construction Deck",
+      "Standard"
+    ],
+    "source": "Official Construction Deck",
+    "isPublic": true,
+    "matchStats": {
+      "totalCards": 21,
+      "matchedCards": 21,
+      "unmatchedCards": 0
+    }
+  },
+  {
+    "id": "import_1759021375199_hhboj3709",
+    "name": "挑戰牌組 超級蒂安希ex",
+    "description": "Challenge Deck featuring Super Diancie ex with Fairy-type focus",
+    "format": "Standard",
+    "cards": [
+      {
+        "cardId": 14359,
+        "name": "布魯",
+        "quantity": 3,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14360,
+        "name": "布魯皇",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14361,
+        "name": "拉帝亞斯ex",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14362,
+        "name": "克雷色利亞",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14363,
+        "name": "美洛耶塔",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14364,
+        "name": "超級蒂安希ex",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14365,
+        "name": "謎擬Q",
+        "quantity": 3,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14366,
+        "name": "小仙奶",
+        "quantity": 3,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14367,
+        "name": "霜奶仙",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14368,
+        "name": "米立龍",
+        "quantity": 2,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14369,
+        "name": "不公印章",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14371,
+        "name": "好友寶芬",
+        "quantity": 3,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14372,
+        "name": "高級球",
+        "quantity": 4,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 4812,
+        "name": "神奇糖果",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14396,
+        "name": "頂尖捕捉器",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 4972,
+        "name": "寶可夢交替",
+        "quantity": 3,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14373,
+        "name": "超級信號",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14374,
+        "name": "夜間擔架",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14400,
+        "name": "龐克頭盔",
+        "quantity": 1,
+        "type": "寶可夢道具",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14376,
+        "name": "氣球",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14377,
+        "name": "艾莉絲的鬥志",
+        "quantity": 2,
+        "type": "支援者卡",
+        "expansion": "",
+        "rarity": "normal"
+      },
+      {
+        "cardId": 14378,
+        "name": "老大的指令",
+        "quantity": 2,
+        "type": "支援者卡",
+        "expansion": "",
+        "rarity": "normal"
+      }
+    ],
+    "createdAt": "2025-09-28",
+    "updatedAt": "2025-09-28",
+    "tags": [
+      "Official",
+      "Construction Deck",
+      "Standard"
+    ],
+    "source": "Official Construction Deck",
+    "isPublic": true,
+    "matchStats": {
+      "totalCards": 22,
+      "matchedCards": 22,
+      "unmatchedCards": 0
+    }
+  }
+]
