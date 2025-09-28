@@ -55,7 +55,7 @@ export default function InventoryPage() {
       try {
         console.log('Loading cards data...');
         setLoadingCards(true);
-        const response = await fetch('/api/cards');
+        const response = await fetch('/api/cards?detail=true');
         console.log('Cards API response status:', response.status);
         if (!response.ok) {
           throw new Error('Failed to load cards');
