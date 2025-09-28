@@ -48,7 +48,9 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
     noRetreat: false,
     noResistance: false,
     noWeakness: false,
-    specialPokemonType: ''
+    specialPokemonType: '',
+    owned: 'all',
+    priceRange: 'all'
   });
 
   // Generate abilities and effect types with counts for SearchFiltersComponent
@@ -257,7 +259,9 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                       noRetreat: false,
                       noResistance: false,
                       noWeakness: false,
-                      specialPokemonType: ''
+                      specialPokemonType: '',
+                      owned: 'all',
+                      priceRange: 'all'
                     })}
                     className="px-4 py-3 sm:py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm min-h-[44px] sm:min-h-auto"
                   >

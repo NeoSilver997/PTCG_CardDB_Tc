@@ -43,7 +43,9 @@ export default function SearchFiltersComponent({
       noRetreat: false,
       noResistance: false,
       noWeakness: false,
-      specialPokemonType: ''
+      specialPokemonType: '',
+      owned: 'all',
+      priceRange: 'all'
     });
   };
 
@@ -380,6 +382,40 @@ export default function SearchFiltersComponent({
                 />
                 <span className="text-xs text-gray-700">No Weakness</span>
               </label>
+            </div>
+
+            {/* Owned Filter */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                {t.ownershipStatus}
+              </label>
+              <select
+                value={filters.owned}
+                onChange={(e) => updateFilter('owned', e.target.value)}
+                className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
+              >
+                <option value="all">{t.allCards}</option>
+                <option value="owned">{t.ownedOnly}</option>
+                <option value="unowned">{t.unownedOnly}</option>
+              </select>
+            </div>
+
+            {/* Price Range Filter */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                {t.priceRange}
+              </label>
+              <select
+                value={filters.priceRange}
+                onChange={(e) => updateFilter('priceRange', e.target.value)}
+                className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
+              >
+                <option value="all">{t.allPrices}</option>
+                <option value="low">{t.underTen}</option>
+                <option value="medium">{t.tenToFifty}</option>
+                <option value="high">{t.overFifty}</option>
+                <option value="no-price">{t.noPriceData}</option>
+              </select>
             </div>
 
             {/* Pokemon Type for Special Filters */}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Filter, Zap, Shield, Sword, Gamepad2, Package, DollarSign, ChevronRight } from 'lucide-react';
 import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
+import { MarketPrice } from '../types/market';
 import CardGrid from '../components/CardGrid';
 import SearchFiltersComponent from '../components/SearchFilters';
 import CardDetailModal from '../components/CardDetailModal';
@@ -28,7 +29,9 @@ export default function Home() {
     noRetreat: false,
     noResistance: false,
     noWeakness: false,
-    specialPokemonType: ''
+    specialPokemonType: '',
+    owned: 'all',
+    priceRange: 'all'
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
@@ -44,12 +47,33 @@ export default function Home() {
   const [cardOnlyView, setCardOnlyView] = useState(false);
 
   // Inventory management
-  const { addToInventory } = useInventory();
+  const { addToInventory, inventory, getCardInventory, getTotalQuantity } = useInventory();
   const [addingAllToInventory, setAddingAllToInventory] = useState(false);
+  const [marketPrices, setMarketPrices] = useState<{[cardId: string]: MarketPrice[]}>({});
 
   const isPokemonCard = (card: PTCGCard) => {
     return card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon');
   };
+
+  const loadMarketPrices = useCallback(async () => {
+    try {
+      const response = await fetch('/api/market-prices');
+      const data = await response.json();
+      setMarketPrices(data);
+    } catch (error) {
+      console.error('Failed to load market prices:', error);
+      setMarketPrices({});
+    }
+  }, []);
+
+  const getCardMarketPrice = useCallback((cardId: number) => {
+    const prices = marketPrices[cardId.toString()];
+    if (!prices || prices.length === 0) return null;
+    
+    // Get the most recent price
+    const sortedPrices = prices.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    return sortedPrices[0];
+  }, [marketPrices]);
 
   const loadCardData = useCallback(async () => {
     try {
@@ -66,6 +90,9 @@ export default function Home() {
       setCards(sortedData);
       extractFilterOptions(sortedData);
       
+      // Also load market prices
+      await loadMarketPrices();
+      
       // Find the latest card (first in sorted array) and set up initial filter
       if (sortedData.length > 0) {
         const latestCard = sortedData[0];
@@ -77,7 +104,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadMarketPrices]);
 
   // Auto-hide filters after 5 seconds of inactivity
   useEffect(() => {
@@ -314,6 +341,36 @@ export default function Home() {
       );
     }
 
+    // Apply owned filter
+    if (filters.owned && filters.owned !== 'all') {
+      if (filters.owned === 'owned') {
+        filtered = filtered.filter(card => getTotalQuantity(card.CardID) > 0);
+      } else if (filters.owned === 'unowned') {
+        filtered = filtered.filter(card => getTotalQuantity(card.CardID) === 0);
+      }
+    }
+
+    // Apply price range filter
+    if (filters.priceRange && filters.priceRange !== 'all') {
+      filtered = filtered.filter(card => {
+        const marketPrice = getCardMarketPrice(card.CardID);
+        const price = marketPrice?.price || 0;
+        
+        switch (filters.priceRange) {
+          case 'low': // Under $10
+            return price > 0 && price < 10;
+          case 'medium': // $10-$50
+            return price >= 10 && price <= 50;
+          case 'high': // Over $50
+            return price > 50;
+          case 'no-price': // No price data
+            return price === 0 || !marketPrice;
+          default:
+            return true;
+        }
+      });
+    }
+
     // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
       let comparison = 0;
@@ -344,7 +401,7 @@ export default function Home() {
     });
 
     setFilteredCards(sorted);
-  }, [cards, searchTerm, filters, sortBy, sortDirection]);
+  }, [cards, searchTerm, filters, sortBy, sortDirection, getTotalQuantity, getCardMarketPrice]);
 
   const addAllToInventory = useCallback(async () => {
     if (filteredCards.length === 0) {
