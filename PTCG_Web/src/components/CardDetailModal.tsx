@@ -1,11 +1,12 @@
 'use client';
 
-import { X, ExternalLink, ChevronLeft, ChevronRight, Package, Plus } from 'lucide-react';
+import { X, ExternalLink, ChevronLeft, ChevronRight, Package, Plus, DollarSign } from 'lucide-react';
 import { PTCGCard } from '../types/card';
 import { useState, useMemo, useEffect } from 'react';
 import { useI18n } from '../i18n/context';
 import { useInventory } from '../hooks/useInventory';
 import { CARD_CONDITIONS } from '../types/inventory';
+import { getDefaultCurrencyForCard, getCurrencySymbol } from '../utils/currency';
 
 interface CardDetailModalProps {
   card: PTCGCard;
@@ -34,12 +35,71 @@ export default function CardDetailModal({
   const [inventoryNotes, setInventoryNotes] = useState('');
   const [purchaseCost, setPurchaseCost] = useState<number | undefined>(undefined);
   const [marketPrice, setMarketPrice] = useState<number | undefined>(undefined);
+  
+  // Market price form state
+  const [showMarketPriceForm, setShowMarketPriceForm] = useState(false);
+  const [marketPriceForm, setMarketPriceForm] = useState({
+    price: 0,
+    currency: 'HKD', // Default to HKD
+    condition: 'Near Mint',
+    source: ''
+  });
+  const [addingPrice, setAddingPrice] = useState(false);
+  
+  // Market price and inventory data for header display
+  const [latestMarketPrice, setLatestMarketPrice] = useState<{price: number, currency: string} | null>(null);
+  const [inventoryQty, setInventoryQty] = useState<number>(0);
+  
   const versionsPerPage = 8;
 
   // Inventory functionality
   const { addToInventory, getTotalQuantity, isCardOwned, loading: inventoryLoading } = useInventory();
   const totalOwned = getTotalQuantity(selectedVersion.CardID);
   const isOwned = isCardOwned(selectedVersion.CardID);
+
+  // Market price submission function
+  const handleAddMarketPrice = async () => {
+    if (!marketPriceForm.price || marketPriceForm.price <= 0) {
+      alert('Please enter a valid price');
+      return;
+    }
+
+    setAddingPrice(true);
+    try {
+      const response = await fetch('/api/market-prices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cardId: selectedVersion.CardID,
+          price: marketPriceForm.price,
+          currency: marketPriceForm.currency,
+          condition: marketPriceForm.condition,
+          source: marketPriceForm.source || undefined
+        }),
+      });
+
+      if (response.ok) {
+        // Reset form
+        setMarketPriceForm({
+          price: 0,
+          currency: getDefaultCurrencyForCard(selectedVersion),
+          condition: 'Near Mint',
+          source: ''
+        });
+        setShowMarketPriceForm(false);
+        alert('Market price added successfully!');
+      } else {
+        alert('Failed to add market price');
+      }
+    } catch (error) {
+      console.error('Error adding market price:', error);
+      alert('Error adding market price');
+    } finally {
+      setAddingPrice(false);
+    }
+  };
 
   // Helper function to check if a card is basic energy
   const isBasicEnergy = (card: PTCGCard): boolean => {
@@ -67,6 +127,51 @@ export default function CardDetailModal({
 
     loadDetailedCards();
   }, []);
+
+  // Fetch market price and inventory data for header display
+  useEffect(() => {
+    const fetchPriceAndInventoryData = async () => {
+      try {
+        console.log('🔍 Fetching price/inventory for card:', card.CardID, card.Name);
+        
+        // Fetch latest market price
+        const priceResponse = await fetch(`/api/market-prices?cardId=${card.CardID}`);
+        if (priceResponse.ok) {
+          const priceData = await priceResponse.json();
+          console.log('💰 Price data received:', priceData);
+          if (priceData.prices && priceData.prices.length > 0) {
+            const latest = priceData.prices[0]; // Prices are sorted by date descending
+            setLatestMarketPrice({ price: latest.price, currency: latest.currency });
+            console.log('✅ Latest price set:', latest.price, latest.currency);
+          } else {
+            setLatestMarketPrice(null);
+            console.log('❌ No price data found');
+          }
+        } else {
+          setLatestMarketPrice(null);
+          console.log('❌ Price API failed:', priceResponse.status);
+        }
+        
+      } catch (error) {
+        console.error('Error fetching price data:', error);
+        setLatestMarketPrice(null);
+      }
+    };
+    
+    fetchPriceAndInventoryData();
+  }, [card.CardID, card.Name]);
+
+  // Separate effect for inventory quantity that runs when inventory hook is ready
+  useEffect(() => {
+    if (!inventoryLoading) {
+      const qty = getTotalQuantity(card.CardID);
+      setInventoryQty(qty);
+      console.log('📦 Inventory quantity updated:', qty, 'for card:', card.CardID);
+    }
+  }, [card.CardID, getTotalQuantity, inventoryLoading]);
+
+  // Add render debugging
+  console.log('🎯 CardDetailModal render - Price:', latestMarketPrice, 'Inventory:', inventoryQty);
 
   // Update inventory info when selected version changes
   useEffect(() => {
@@ -342,6 +447,24 @@ export default function CardDetailModal({
               <span className={`px-4 py-2 rounded-full text-base font-semibold ${getTierColor(card.Tier)}`}>
                 {card.Tier}
               </span>
+            )}
+            {/* Market Price Display */}
+            {latestMarketPrice && (
+              <div className="flex items-center space-x-2 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
+                <DollarSign className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-semibold text-green-800">
+                  {getCurrencySymbol(latestMarketPrice.currency)}{latestMarketPrice.price.toLocaleString()}
+                </span>
+              </div>
+            )}
+            {/* Inventory Quantity Display */}
+            {inventoryQty > 0 && (
+              <div className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+                <Package className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-semibold text-blue-800">
+                  {inventoryQty} {inventoryQty === 1 ? 'card' : 'cards'}
+                </span>
+              </div>
             )}
           </div>
           <button
@@ -664,6 +787,116 @@ export default function CardDetailModal({
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Market Price Section */}
+              <div className="pt-4 border-t">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
+                    <DollarSign className="h-5 w-5 text-purple-600" />
+                    <span>Market Price</span>
+                  </h3>
+                  <button
+                    onClick={() => setShowMarketPriceForm(!showMarketPriceForm)}
+                    className="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded-lg transition-colors flex items-center space-x-1"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Add Price</span>
+                  </button>
+                </div>
+
+                {showMarketPriceForm && (
+                  <div className="bg-purple-50 rounded-lg p-4 space-y-3 mb-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Price */}
+                      <div className="flex flex-col space-y-1">
+                        <label className="text-sm font-medium text-gray-700">Price *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={marketPriceForm.price}
+                          onChange={(e) => setMarketPriceForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      {/* Currency */}
+                      <div className="flex flex-col space-y-1">
+                        <label className="text-sm font-medium text-gray-700">Currency</label>
+                        <select
+                          value={marketPriceForm.currency}
+                          onChange={(e) => setMarketPriceForm(prev => ({ ...prev, currency: e.target.value }))}
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        >
+                          <option value="USD">{getCurrencySymbol('USD')} USD</option>
+                          <option value="HKD">{getCurrencySymbol('HKD')} HKD</option>
+                          <option value="JPY">{getCurrencySymbol('JPY')} JPY</option>
+                          <option value="EUR">{getCurrencySymbol('EUR')} EUR</option>
+                          <option value="GBP">{getCurrencySymbol('GBP')} GBP</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                      {/* Condition */}
+                      <div className="flex flex-col space-y-1">
+                        <label className="text-sm font-medium text-gray-700">Condition *</label>
+                        <select
+                          value={marketPriceForm.condition}
+                          onChange={(e) => setMarketPriceForm(prev => ({ ...prev, condition: e.target.value }))}
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        >
+                          <option value="Near Mint">Near Mint</option>
+                          <option value="Lightly Played">Lightly Played</option>
+                          <option value="Moderately Played">Moderately Played</option>
+                          <option value="Heavily Played">Heavily Played</option>
+                          <option value="Damaged">Damaged</option>
+                        </select>
+                      </div>
+
+                      {/* Source */}
+                      <div className="flex flex-col space-y-1">
+                        <label className="text-sm font-medium text-gray-700">Source (Optional)</label>
+                        <input
+                          type="text"
+                          value={marketPriceForm.source}
+                          onChange={(e) => setMarketPriceForm(prev => ({ ...prev, source: e.target.value }))}
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          placeholder="e.g., eBay, TCGPlayer, Local Store"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleAddMarketPrice}
+                        disabled={addingPrice || !marketPriceForm.price || marketPriceForm.price <= 0}
+                        className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <DollarSign className="h-4 w-4" />
+                        <span>{addingPrice ? 'Adding...' : 'Add Price'}</span>
+                      </button>
+                      <button
+                        onClick={() => setShowMarketPriceForm(false)}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-sm text-gray-600">
+                  <p>Add market prices to help track card values over time.</p>
+                  <p className="mt-1">
+                    <a href="/market" className="text-purple-600 hover:text-purple-800 underline">
+                      View all market prices →
+                    </a>
+                  </p>
                 </div>
               </div>
 

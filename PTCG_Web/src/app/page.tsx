@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Zap, Shield, Sword, Gamepad2, Package } from 'lucide-react';
+import { Search, Filter, Zap, Shield, Sword, Gamepad2, Package, DollarSign } from 'lucide-react';
 import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
 import CardGrid from '../components/CardGrid';
 import SearchFiltersComponent from '../components/SearchFilters';
@@ -241,7 +241,7 @@ export default function Home() {
         case 'rarity':
           return a.Rarity.localeCompare(b.Rarity);
         case 'tier':
-          return a.Tier.localeCompare(b.Tier);
+          return (a.Tier || '').localeCompare(b.Tier || '');
         case 'description':
           const aDesc = [a.Skill1Effect, a.Skill2Effect, a.AbilityEffect].filter(Boolean).join(' ');
           const bDesc = [b.Skill1Effect, b.Skill2Effect, b.AbilityEffect].filter(Boolean).join(' ');
@@ -321,12 +321,13 @@ export default function Home() {
     
     if (existingCardIndex >= 0) {
       // Update quantity (respecting card-specific limits)
-      const newQuantity = Math.min(currentDeck.cards[existingCardIndex].quantity + quantity, maxQuantity);
-      currentDeck.cards[existingCardIndex].quantity = newQuantity;
+      const existingCard = currentDeck.cards[existingCardIndex] as any;
+      const newQuantity = Math.min(existingCard.quantity + quantity, maxQuantity);
+      existingCard.quantity = newQuantity;
     } else {
       // Add new card to deck
       const deckCard = { ...card, quantity: Math.min(quantity, maxQuantity) };
-      currentDeck.cards.push(deckCard);
+      (currentDeck.cards as any[]).push(deckCard);
     }
 
     // Recalculate deck stats
@@ -673,6 +674,13 @@ export default function Home() {
               >
                 <Package className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>{t.inventory}</span>
+              </a>
+              <a
+                href="/market"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Market</span>
               </a>
               <a
                 href="/debug"

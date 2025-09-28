@@ -1,0 +1,32 @@
+{
+  "14300": [
+    {
+      "cardId": 14300,
+      "price": 80,
+      "currency": "HKD",
+      "condition": "Near Mint",
+      "date": "2025-09-28T07:33:47.418Z",
+      "updatedAt": "2025-09-28T07:33:47.418Z"
+    }
+  ],
+  "14396": [
+    {
+      "cardId": 14396,
+      "price": 75,
+      "currency": "HKD",
+      "condition": "Near Mint",
+      "date": "2025-09-28T07:25:45.097Z",
+      "updatedAt": "2025-09-28T07:25:45.097Z"
+    }
+  ],
+  "14456": [
+    {
+      "cardId": 14456,
+      "price": 120,
+      "currency": "HKD",
+      "condition": "Near Mint",
+      "date": "2025-09-28T07:33:56.242Z",
+      "updatedAt": "2025-09-28T07:33:56.242Z"
+    }
+  ]
+}

@@ -53,7 +53,7 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
     setIsEditing(`${item.CardID}-${item.condition}`);
     setEditQuantity(item.quantity);
     setEditCondition(item.condition);
-    setEditNotes(item.notes);
+    setEditNotes(item.notes || '');
     setEditPurchaseCost(item.purchaseCost);
     setEditMarketPrice(item.marketPrice);
   };

@@ -66,7 +66,7 @@ export default function DeckBuilderPage() {
       <DeckBuilder 
         initialCards={cards} 
         onClose={handleCloseDeckBuilder}
-        initialDeck={editingDeck}
+        initialDeck={editingDeck || undefined}
       />
     );
   }

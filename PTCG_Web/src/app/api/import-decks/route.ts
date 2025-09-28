@@ -17,19 +17,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const decksData = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+    const decksData: any[] = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
     
     // Get existing decks from localStorage simulation (in a real app, this would be from a database)
     const existingDecksPath = path.join(process.cwd(), 'data', 'imported_decks.json');
-    let existingDecks = [];
+    let existingDecks: any[] = [];
     
     if (fs.existsSync(existingDecksPath)) {
       existingDecks = JSON.parse(fs.readFileSync(existingDecksPath, 'utf-8'));
     }
 
     // Process and validate each deck
-    const importedDecks = [];
-    const errors = [];
+    const importedDecks: any[] = [];
+    const errors: string[] = [];
 
     for (const deck of decksData) {
       try {
