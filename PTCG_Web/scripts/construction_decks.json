@@ -23,6 +23,15 @@
         "confidence": 1.1
       },
       {
+        "cardId": 8960,
+        "name": "耿鬼",
+        "quantity": 1,
+        "type": "寶可夢",
+        "expansion": "",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
         "cardId": 14385,
         "name": "超級耿鬼ex",
         "quantity": 2,
@@ -52,7 +61,7 @@
       {
         "cardId": 14388,
         "name": "勾魂眼",
-        "quantity": 3,
+        "quantity": 2,
         "type": "寶可夢",
         "expansion": "",
         "rarity": "normal",
@@ -68,26 +77,8 @@
         "confidence": 1.1
       },
       {
-        "cardId": 14390,
-        "name": "無極汰那",
-        "quantity": 1,
-        "type": "寶可夢",
-        "expansion": "",
-        "rarity": "normal",
-        "confidence": 1.1
-      },
-      {
         "cardId": 14391,
         "name": "桃歹郎ex",
-        "quantity": 2,
-        "type": "寶可夢",
-        "expansion": "",
-        "rarity": "normal",
-        "confidence": 1.1
-      },
-      {
-        "cardId": 14392,
-        "name": "米立龍",
         "quantity": 2,
         "type": "寶可夢",
         "expansion": "",
@@ -133,7 +124,7 @@
       {
         "cardId": 14397,
         "name": "寶可夢交替",
-        "quantity": 3,
+        "quantity": 2,
         "type": "物品卡",
         "expansion": "",
         "rarity": "normal",
@@ -178,7 +169,7 @@
       {
         "cardId": 14402,
         "name": "艾莉絲的鬥志",
-        "quantity": 3,
+        "quantity": 2,
         "type": "支援者卡",
         "expansion": "",
         "rarity": "normal",
@@ -192,6 +183,51 @@
         "expansion": "",
         "rarity": "normal",
         "confidence": 1.1
+      },
+      {
+        "cardId": 4805,
+        "name": "能量轉移",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "cardId": 4806,
+        "name": "粉碎之錘",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "cardId": 4962,
+        "name": "能量回收",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "cardId": 4814,
+        "name": "學習裝置",
+        "quantity": 1,
+        "type": "寶可夢道具",
+        "expansion": "",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "cardId": 14406,
+        "name": "基本【惡】能量",
+        "quantity": 8,
+        "type": "基本能量卡",
+        "expansion": "基本能量",
+        "rarity": "common",
+        "confidence": 1.0
       }
     ],
     "createdAt": "2025-09-28",
@@ -202,8 +238,8 @@
     ],
     "expansionCode": "MBG",
     "matchStats": {
-      "totalCards": 21,
-      "matchedCards": 21,
+      "totalCards": 25,
+      "matchedCards": 25,
       "unmatchedCards": 0
     }
   },
@@ -278,35 +314,8 @@
       {
         "cardId": 14366,
         "name": "小仙奶",
-        "quantity": 3,
-        "type": "寶可夢",
-        "expansion": "",
-        "rarity": "normal",
-        "confidence": 1.1
-      },
-      {
-        "cardId": 14367,
-        "name": "霜奶仙",
         "quantity": 2,
         "type": "寶可夢",
-        "expansion": "",
-        "rarity": "normal",
-        "confidence": 1.1
-      },
-      {
-        "cardId": 14368,
-        "name": "米立龍",
-        "quantity": 2,
-        "type": "寶可夢",
-        "expansion": "",
-        "rarity": "normal",
-        "confidence": 1.1
-      },
-      {
-        "cardId": 14369,
-        "name": "不公印章",
-        "quantity": 2,
-        "type": "物品卡",
         "expansion": "",
         "rarity": "normal",
         "confidence": 1.1
@@ -350,7 +359,7 @@
       {
         "cardId": 4972,
         "name": "寶可夢交替",
-        "quantity": 3,
+        "quantity": 2,
         "type": "物品卡",
         "expansion": "",
         "rarity": "normal",
@@ -377,7 +386,7 @@
       {
         "cardId": 14400,
         "name": "龐克頭盔",
-        "quantity": 1,
+        "quantity": 2,
         "type": "寶可夢道具",
         "expansion": "",
         "rarity": "normal",
@@ -395,7 +404,7 @@
       {
         "cardId": 14377,
         "name": "艾莉絲的鬥志",
-        "quantity": 2,
+        "quantity": 3,
         "type": "支援者卡",
         "expansion": "",
         "rarity": "normal",
@@ -409,6 +418,51 @@
         "expansion": "",
         "rarity": "normal",
         "confidence": 1.1
+      },
+      {
+        "cardId": 4805,
+        "name": "能量轉移",
+        "quantity": 3,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "cardId": 4962,
+        "name": "能量回收",
+        "quantity": 2,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "cardId": 4814,
+        "name": "學習裝置",
+        "quantity": 2,
+        "type": "寶可夢道具",
+        "expansion": "",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "cardId": 4806,
+        "name": "粉碎之錘",
+        "quantity": 1,
+        "type": "物品卡",
+        "expansion": "",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "cardId": 14357,
+        "name": "基本【超】能量",
+        "quantity": 8,
+        "type": "基本能量卡",
+        "expansion": "基本能量",
+        "rarity": "common",
+        "confidence": 1.0
       }
     ],
     "createdAt": "2025-09-28",
@@ -419,8 +473,8 @@
     ],
     "expansionCode": "MBD",
     "matchStats": {
-      "totalCards": 22,
-      "matchedCards": 22,
+      "totalCards": 24,
+      "matchedCards": 24,
       "unmatchedCards": 0
     }
   }

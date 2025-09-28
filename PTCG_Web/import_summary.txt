@@ -5,7 +5,7 @@ Total decks processed: 2
 Total unmatched cards: 0
 
 Deck: 挑戰牌組 超級耿鬼ex
-  Cards: 25/25 matched
+  Cards: 24/24 matched
   Match rate: 100.0%
 
 Deck: 挑戰牌組 超級蒂安希ex

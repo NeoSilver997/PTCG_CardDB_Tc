@@ -95,6 +95,10 @@ class DatabaseCardMatcher:
         best_match = None
         best_score = 0.0
         
+        # Special handling for basic energy cards
+        if "基本" in scraped_name and "能量" in scraped_name:
+            return self.find_energy_card(scraped_name)
+        
         # First try exact match with expansion code preference
         for card in self.cards_data:
             card_name = card.get('Name', '')
@@ -144,6 +148,54 @@ class DatabaseCardMatcher:
                 )
         
         return best_match
+    
+    def find_energy_card(self, energy_name: str) -> Optional[CardMatch]:
+        """Special handler for basic energy cards"""
+        # Map energy names to their types
+        energy_mapping = {
+            "基本超能量": "基本超能量",
+            "基本火能量": "基本火能量", 
+            "基本水能量": "基本水能量",
+            "基本草能量": "基本草能量",
+            "基本雷能量": "基本雷能量",
+            "基本鬥能量": "基本鬥能量",
+            "基本惡能量": "基本惡能量",
+            "基本鋼能量": "基本鋼能量"
+        }
+        
+        # Try to find exact energy match
+        normalized_name = energy_name.strip()
+        if normalized_name in energy_mapping:
+            # Look for the energy card in database
+            for card in self.cards_data:
+                card_name = card.get('Name', '').strip()
+                if card_name == energy_mapping[normalized_name]:
+                    # For energy cards, use a special ID system (negative numbers)
+                    energy_id = self.get_energy_card_id(normalized_name)
+                    return CardMatch(
+                        card_id=energy_id,
+                        name=card_name,
+                        card_type="基本能量卡",
+                        expansion="基本能量",
+                        rarity="common",
+                        confidence=1.0
+                    )
+        
+        return None
+    
+    def get_energy_card_id(self, energy_name: str) -> int:
+        """Generate consistent IDs for basic energy cards"""
+        energy_ids = {
+            "基本超能量": 99001,  # Psychic
+            "基本火能量": 99002,   # Fire
+            "基本水能量": 99003,   # Water
+            "基本草能量": 99004,   # Grass
+            "基本雷能量": 99005,   # Electric
+            "基本鬥能量": 99006,   # Fighting
+            "基本惡能量": 99007,   # Dark
+            "基本鋼能量": 99008    # Metal
+        }
+        return energy_ids.get(energy_name, 99000)
 
 class EnhancedPokemonDeckScraper:
     """Enhanced scraper with database integration"""
@@ -162,11 +214,74 @@ class EnhancedPokemonDeckScraper:
         self.scraped_decks = []
         self.unmatched_cards = []
     
+    def reprocess_existing_decks(self) -> List[Dict]:
+        """Reprocess existing construction decks from imported_decks.json"""
+        imported_decks_path = "../data/imported_decks.json"
+        if not os.path.exists(imported_decks_path):
+            print(f"No existing imported decks found at: {imported_decks_path}")
+            return self.scrape_construction_decks()
+        
+        print("Reprocessing existing construction decks with enhanced matching...")
+        
+        try:
+            with open(imported_decks_path, 'r', encoding='utf-8') as f:
+                existing_decks = json.load(f)
+            
+            for existing_deck in existing_decks:
+                deck_name = existing_deck.get('name', '')
+                description = existing_deck.get('description', '')
+                
+                print(f"Reprocessing deck: {deck_name}")
+                
+                # Extract cards from existing deck
+                cards_list = []
+                for card in existing_deck.get('cards', []):
+                    card_name = card.get('name', '')
+                    quantity = card.get('quantity', 1)
+                    if card_name:
+                        cards_list.append((card_name, quantity))
+                
+                # Add missing energy cards based on deck type
+                if "超級耿鬼ex" in deck_name:
+                    cards_list.extend([
+                        ("基本超能量", 8),
+                        ("能量轉移", 2),
+                        ("粉碎之錘", 2),
+                        ("能量回收", 2),
+                    ])
+                elif "超級蒂安希ex" in deck_name:
+                    cards_list.extend([
+                        ("基本超能量", 8),
+                        ("能量轉移", 4),
+                        ("能量回收", 2),
+                        ("學習裝置", 2),
+                    ])
+                
+                # Reprocess with enhanced matching
+                deck_info = {
+                    "name": deck_name,
+                    "description": description,
+                    "expansionCode": existing_deck.get('expansionCode', ''),
+                    "cards": cards_list
+                }
+                
+                processed_deck = self.process_deck(deck_info)
+                if processed_deck:
+                    self.scraped_decks.append(processed_deck)
+            
+            print(f"Reprocessed {len(self.scraped_decks)} construction decks")
+            return self.scraped_decks
+            
+        except Exception as e:
+            print(f"Error reprocessing existing decks: {e}")
+            return self.scrape_construction_decks()
+
     def scrape_construction_decks(self) -> List[Dict]:
         """Main scraping function"""
         print("Starting enhanced deck scraping with database matching...")
         
-        # Construction deck data based on actual cards from expansion sets
+        # Construction deck data based on official Pokemon Card website
+        # Source: https://asia.pokemon-card.com/hk/archives/8009/
         # MBG = 挑戰牌組「超級耿鬼ex」, MBD = 挑戰牌組「超級蒂安希ex」
         construction_decks = [
             {
@@ -174,27 +289,35 @@ class EnhancedPokemonDeckScraper:
                 "description": "Challenge Deck featuring Super Gengar ex with Ghost-type synergy",
                 "expansionCode": "MBG",
                 "cards": [
-                    ("鬼斯", 4),           # 00014383
-                    ("鬼斯通", 2),         # 00014384
-                    ("超級耿鬼ex", 2),     # 00014385
-                    ("黑暗鴉", 3),         # 00014386
-                    ("烏鴉頭頭", 2),       # 00014387
-                    ("勾魂眼", 3),         # 00014388
-                    ("阿勃梭魯", 2),       # 00014389
-                    ("無極汰那", 1),       # 00014390
-                    ("桃歹郎ex", 2),       # 00014391
-                    ("米立龍", 2),         # 00014392
-                    ("好友寶芬", 3),       # 00014393
-                    ("高級球", 4),         # 00014394
-                    ("神奇糖果", 2),       # 00014395
-                    ("頂尖捕捉器", 2),     # 00014396
-                    ("寶可夢交替", 3),     # 00014397
-                    ("超級信號", 2),       # 00014398
-                    ("夜間擔架", 2),       # 00014399
-                    ("龐克頭盔", 2),       # 00014400
-                    ("氣球", 2),           # 00014401
-                    ("艾莉絲的鬥志", 3),   # 00014402
-                    ("老大的指令", 2),     # 00014403
+                    # Pokemon Cards (18 cards total)
+                    ("鬼斯", 4),                    # Gastly
+                    ("鬼斯通", 2),                  # Haunter (regular)
+                    ("鬼斯通", 1),                  # Haunter (full art illustration)
+                    ("超級耿鬼ex", 2),              # Mega Gengar ex
+                    ("黑暗鴉", 2),                  # Murkrow
+                    ("烏鴉頭頭", 1),                # Honchkrow
+                    ("勾魂眼", 2),                  # Sableye
+                    ("阿勃梭魯", 1),                # Absol
+                    ("無極汰那", 1),                # Eternatus
+                    ("桃歹郎ex", 1),                # Pecharunt ex
+                    ("米立龍", 1),                  # Goomy
+                    
+                    # Trainer Cards (28 cards total)
+                    ("好友寶芬", 3),                # Professor Sada's Vitality
+                    ("高級球", 4),                  # Ultra Ball
+                    ("神奇糖果", 3),                # Rare Candy
+                    ("頂尖捕捉器", 1),              # Prime Catcher
+                    ("寶可夢交替", 1),              # Pokemon Switch
+                    ("超級信號", 1),                # Super Rod
+                    ("夜間擔架", 1),                # Night Stretcher
+                    ("氣球", 2),                    # Air Balloon
+                    ("龐克頭盔", 2),                # Punk Helmet
+                    ("艾莉絲的鬥志", 4),            # Iris's Fighting Spirit
+                    ("老大的指令", 2),              # Boss's Orders
+                    ("莉莉艾的決意", 4),            # Lillie's Full Force
+                    
+                    # Energy Cards (14 cards total)
+                    ("基本惡能量", 14),             # Basic Dark Energy
                 ]
             },
             {
@@ -202,28 +325,35 @@ class EnhancedPokemonDeckScraper:
                 "description": "Challenge Deck featuring Super Diancie ex with Fairy-type focus",
                 "expansionCode": "MBD",
                 "cards": [
-                    ("布魯", 3),           # 00014359
-                    ("布魯皇", 2),         # 00014360
-                    ("拉帝亞斯ex", 2),     # 00014361
-                    ("克雷色利亞", 2),     # 00014362
-                    ("美洛耶塔", 2),       # 00014363
-                    ("超級蒂安希ex", 2),   # 00014364
-                    ("謎擬Q", 3),          # 00014365
-                    ("小仙奶", 3),         # 00014366
-                    ("霜奶仙", 2),         # 00014367
-                    ("米立龍", 2),         # 00014368
-                    ("不公印章", 2),       # 00014369
-                    ("好友寶芬", 3),       # 00014370
-                    ("高級球", 4),         # 00014372
-                    ("神奇糖果", 2),       # 00014373
-                    ("頂尖捕捉器", 2),     # 00014374
-                    ("寶可夢交替", 3),     # 00014375
-                    ("超級信號", 2),       # 00014376
-                    ("夜間擔架", 2),       # 00014377
-                    ("龐克頭盔", 1),       # 00014378
-                    ("氣球", 2),           # 00014379
-                    ("艾莉絲的鬥志", 2),   # 00014380
-                    ("老大的指令", 2),     # 00014381
+                    # Pokemon Cards (17 cards total)
+                    ("布魯", 2),                    # Popplio
+                    ("布魯皇", 1),                  # Primarina
+                    ("克雷色利亞", 1),              # Cresselia
+                    ("美洛耶塔", 1),                # Meloetta (regular)
+                    ("美洛耶塔", 1),                # Meloetta (full art illustration)
+                    ("超級蒂安希ex", 2),            # Mega Diancie ex
+                    ("謎擬Q", 1),                   # Mimikyu
+                    ("小仙奶", 3),                  # Milcery
+                    ("霜奶仙", 3),                  # Alcremie
+                    ("拉帝亞斯ex", 1),              # Latias ex
+                    ("米立龍", 1),                  # Goomy
+                    
+                    # Trainer Cards (29 cards total)
+                    ("能量回收器", 1),              # Energy Retrieval
+                    ("好友寶芬", 3),                # Professor Sada's Vitality
+                    ("高級球", 4),                  # Ultra Ball
+                    ("超級信號", 1),                # Super Rod
+                    ("夜間擔架", 1),                # Night Stretcher
+                    ("奇跡修正檔", 4),              # Miracle Archive
+                    ("不公印章", 1),                # Unfair Stamp
+                    ("氣球", 2),                    # Air Balloon
+                    ("艾莉絲的鬥志", 4),            # Iris's Fighting Spirit
+                    ("老大的指令", 2),              # Boss's Orders
+                    ("莉莉艾的決意", 4),            # Lillie's Full Force
+                    ("神秘花園", 2),                # Mystery Garden
+                    
+                    # Energy Cards (14 cards total)
+                    ("基本超能量", 14),             # Basic Psychic Energy
                 ]
             }
         ]
@@ -337,7 +467,7 @@ def main():
     print("=" * 50)
     
     # Path to your card database CSV
-    cards_csv_path = "../data/pokemon_cards.csv"  # Adjust path as needed
+    cards_csv_path = "source/cards_output_all_mega.csv"  # Updated path
     
     if not os.path.exists(cards_csv_path):
         print(f"Card database not found at: {cards_csv_path}")
@@ -347,8 +477,14 @@ def main():
     # Initialize scraper
     scraper = EnhancedPokemonDeckScraper(cards_csv_path)
     
-    # Scrape and process decks
-    decks = scraper.scrape_construction_decks()
+    # Check if user wants to reprocess existing decks
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "--reprocess":
+        print("Reprocessing existing decks with energy cards...")
+        decks = scraper.reprocess_existing_decks()
+    else:
+        print("Creating new deck data...")
+        decks = scraper.scrape_construction_decks()
     
     # Export results
     scraper.export_results()
@@ -357,6 +493,8 @@ def main():
     print("- construction_decks.json (ready for import)")
     print("- unmatched_cards.csv (for manual review)")
     print("- import_summary.txt (process summary)")
+    print("\nTo use in your web app, copy construction_decks.json to ../data/imported_decks.json")
+    print("\nTo reprocess existing decks with energy cards, run: python enhanced_deck_importer.py --reprocess")
 
 if __name__ == "__main__":
     main()
