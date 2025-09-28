@@ -50,6 +50,9 @@ export default function CardDetailModal({
   const [latestMarketPrice, setLatestMarketPrice] = useState<{price: number, currency: string} | null>(null);
   const [inventoryQty, setInventoryQty] = useState<number>(0);
   
+  // Card-only view state
+  const [cardOnlyView, setCardOnlyView] = useState(false);
+  
   const versionsPerPage = 8;
 
   // Inventory functionality
@@ -431,53 +434,91 @@ export default function CardDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-6 z-50">
       <div className="bg-white rounded-xl max-w-7xl w-full max-h-[95vh] overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-8 border-b">
-          <div className="flex items-center space-x-4">
-            <h2 className="text-3xl font-bold text-gray-900">{card.Name}</h2>
+        <div className="flex items-center justify-between p-3 sm:p-6 lg:p-8 border-b">
+          <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">{card.Name}</h2>
             {card.Type && (
-              <span className="text-3xl" title={card.Type}>
+              <span className="text-xl sm:text-2xl lg:text-3xl flex-shrink-0" title={card.Type}>
                 {renderEnergyCost(card.Type)}
               </span>
             )}
-            {card.Skill1Energy && renderEnergyCost(card.Skill1Energy)}
+            {card.Skill1Energy && (
+              <span className="hidden sm:inline flex-shrink-0">
+                {renderEnergyCost(card.Skill1Energy)}
+              </span>
+            )}
             {card.Tier && (
-              <span className={`px-4 py-2 rounded-full text-base font-semibold ${getTierColor(card.Tier)}`}>
+              <span className={`px-2 sm:px-3 lg:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm lg:text-base font-semibold flex-shrink-0 ${getTierColor(card.Tier)}`}>
                 {card.Tier}
               </span>
             )}
             {/* Market Price Display */}
             {latestMarketPrice && (
-              <div className="flex items-center space-x-2 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
-                <DollarSign className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-semibold text-green-800">
+              <div className="hidden sm:flex items-center space-x-2 bg-green-50 px-2 lg:px-3 py-1 lg:py-2 rounded-lg border border-green-200 flex-shrink-0">
+                <DollarSign className="h-3 w-3 lg:h-4 lg:w-4 text-green-600" />
+                <span className="text-xs lg:text-sm font-semibold text-green-800">
                   {getCurrencySymbol(latestMarketPrice.currency)}{latestMarketPrice.price.toLocaleString()}
                 </span>
               </div>
             )}
             {/* Inventory Quantity Display */}
             {inventoryQty > 0 && (
-              <div className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-                <Package className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-semibold text-blue-800">
+              <div className="hidden sm:flex items-center space-x-2 bg-blue-50 px-2 lg:px-3 py-1 lg:py-2 rounded-lg border border-blue-200 flex-shrink-0">
+                <Package className="h-3 w-3 lg:h-4 lg:w-4 text-blue-600" />
+                <span className="text-xs lg:text-sm font-semibold text-blue-800">
                   {inventoryQty} {inventoryQty === 1 ? 'card' : 'cards'}
                 </span>
               </div>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="p-3 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <X className="h-7 w-7" />
-          </button>
+          {/* Mobile Market Price and Inventory (stacked below on mobile) */}
+          <div className="flex sm:hidden items-center space-x-2 mt-2">
+            {latestMarketPrice && (
+              <div className="flex items-center space-x-1 bg-green-50 px-2 py-1 rounded border border-green-200">
+                <DollarSign className="h-3 w-3 text-green-600" />
+                <span className="text-xs font-semibold text-green-800">
+                  {getCurrencySymbol(latestMarketPrice.currency)}{latestMarketPrice.price.toLocaleString()}
+                </span>
+              </div>
+            )}
+            {inventoryQty > 0 && (
+              <div className="flex items-center space-x-1 bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                <Package className="h-3 w-3 text-blue-600" />
+                <span className="text-xs font-semibold text-blue-800">
+                  {inventoryQty}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            <button
+              onClick={() => setCardOnlyView(!cardOnlyView)}
+              className="px-3 py-1 text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors font-medium"
+              title={cardOnlyView ? "Show Full Details" : "Card Only View"}
+            >
+              {cardOnlyView ? "Full" : "Card Only"}
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 sm:p-3 hover:bg-gray-100 rounded-full transition-colors ml-2"
+            >
+              <X className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex flex-col xl:flex-row max-h-[calc(95vh-120px)] overflow-y-auto">
+        <div className={`flex flex-col xl:flex-row max-h-[calc(95vh-120px)] overflow-y-auto ${
+          cardOnlyView ? 'justify-center items-center' : ''
+        }`}>
           {/* Card Image and Basic Info */}
-          <div className="xl:w-2/5 p-8">
+          <div className={`${
+            cardOnlyView 
+              ? 'w-full max-w-md mx-auto p-4 flex justify-center' 
+              : 'xl:w-2/5 p-8'
+          }`}>
             <div className="aspect-[5/7] bg-gray-100 rounded-xl overflow-hidden mb-6 shadow-lg">
               {selectedVersion.ImageURL ? (
                 <img

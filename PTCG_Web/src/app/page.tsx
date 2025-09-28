@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Filter, Zap, Shield, Sword, Gamepad2, Package, DollarSign, ChevronRight } from 'lucide-react';
 import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
 import CardGrid from '../components/CardGrid';
@@ -38,7 +38,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<'name' | 'id' | 'rarity' | 'tier' | 'description'>('name');
   const [viewSize, setViewSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [filtersVisible, setFiltersVisible] = useState(true);
-  const [filterHideTimer, setFilterHideTimer] = useState<NodeJS.Timeout | null>(null);
+  const filterHideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const isPokemonCard = (card: PTCGCard) => {
     return card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon');
@@ -75,18 +75,18 @@ export default function Home() {
   // Auto-hide filters after 5 seconds of inactivity
   useEffect(() => {
     const startHideTimer = () => {
-      if (filterHideTimer) {
-        clearTimeout(filterHideTimer);
+      if (filterHideTimerRef.current) {
+        clearTimeout(filterHideTimerRef.current);
       }
       const timer = setTimeout(() => {
         setFiltersVisible(false);
       }, 5000);
-      setFilterHideTimer(timer);
+      filterHideTimerRef.current = timer;
     };
 
     const resetHideTimer = () => {
-      if (filterHideTimer) {
-        clearTimeout(filterHideTimer);
+      if (filterHideTimerRef.current) {
+        clearTimeout(filterHideTimerRef.current);
       }
       setFiltersVisible(true);
       startHideTimer();
@@ -105,14 +105,14 @@ export default function Home() {
     document.addEventListener('click', handleUserActivity);
 
     return () => {
-      if (filterHideTimer) {
-        clearTimeout(filterHideTimer);
+      if (filterHideTimerRef.current) {
+        clearTimeout(filterHideTimerRef.current);
       }
       document.removeEventListener('mousemove', handleUserActivity);
       document.removeEventListener('keypress', handleUserActivity);
       document.removeEventListener('click', handleUserActivity);
     };
-  }, [filterHideTimer]);
+  }, []); // Empty dependency array to run only once
 
   const extractFilterOptions = (cardData: PTCGCard[]) => {
     // Extract unique abilities
@@ -851,28 +851,30 @@ export default function Home() {
 
         <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
           {/* Filters Sidebar - Auto-hide and Compact */}
-          <div className={`w-full lg:w-64 lg:flex-shrink-0 transition-all duration-300 ${
-            filtersVisible ? 'opacity-100 translate-x-0' : 'opacity-50 -translate-x-2 lg:translate-x-0'
+          <div className={`lg:flex-shrink-0 transition-all duration-300 ${
+            filtersVisible 
+              ? 'lg:w-64 w-full opacity-100 translate-x-0' 
+              : 'lg:w-12 w-0 opacity-0 -translate-x-full lg:translate-x-0'
           }`}>
-            <div className="lg:sticky lg:top-6">
+            <div className="lg:sticky lg:top-6 relative">
+              {!filtersVisible && (
+                <button
+                  onClick={() => setFiltersVisible(true)}
+                  className="absolute left-2 top-4 z-10 bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+                  title="Show Filters"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
               <div 
-                className="relative"
+                className={`transition-all duration-300 ${filtersVisible ? 'block' : 'hidden'}`}
                 onMouseEnter={() => {
-                  if (filterHideTimer) {
-                    clearTimeout(filterHideTimer);
+                  if (filterHideTimerRef.current) {
+                    clearTimeout(filterHideTimerRef.current);
                   }
                   setFiltersVisible(true);
                 }}
               >
-                {!filtersVisible && (
-                  <button
-                    onClick={() => setFiltersVisible(true)}
-                    className="absolute -right-2 top-4 z-10 bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
-                    title="Show Filters"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                )}
                 <SearchFiltersComponent
                   filters={filters}
                   onFiltersChange={setFilters}
