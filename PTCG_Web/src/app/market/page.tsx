@@ -32,13 +32,25 @@ export default function MarketPage() {
   });
 
   useEffect(() => {
-    loadCards();
-    fetchMarketPrices();
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([
+          loadCards(),
+          fetchMarketPrices()
+        ]);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
   const loadCards = async () => {
     try {
-      const response = await fetch('/api/cards');
+      const response = await fetch('/api/cards?details=true');
       if (response.ok) {
         const data = await response.json();
         setCards(data);
@@ -57,8 +69,6 @@ export default function MarketPage() {
       }
     } catch (error) {
       console.error('Error fetching market prices:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -95,11 +105,27 @@ export default function MarketPage() {
   };
 
   const filteredMarketCards = useMemo(() => {
+    // Debug logging
+    console.log('Debug: cards loaded:', cards.length);
+    console.log('Debug: marketPrices loaded:', marketPrices.length);
+    if (marketPrices.length > 0) {
+      console.log('Debug: first market price:', marketPrices[0]);
+    }
+    if (cards.length > 0) {
+      console.log('Debug: first card:', { CardID: cards[0].CardID, Name: cards[0].Name });
+    }
+
     // Combine cards with their market prices
     const cardsWithPrices = cards.filter(card => {
       const cardPrices = marketPrices.filter(mp => mp.cardId === card.CardID);
-      return cardPrices.length > 0; // Only show cards that have market prices
+      const hasPrices = cardPrices.length > 0;
+      if (hasPrices && card.CardID <= 13000) { // Only log for our test cards
+        console.log('Debug: Card', card.CardID, card.Name, 'has', cardPrices.length, 'prices');
+      }
+      return hasPrices; // Only show cards that have market prices
     });
+
+    console.log('Debug: cards with prices:', cardsWithPrices.length);
 
     // Filter by search term
     const filteredCards = cardsWithPrices.filter(card =>

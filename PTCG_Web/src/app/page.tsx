@@ -57,7 +57,7 @@ export default function Home() {
 
   const loadMarketPrices = useCallback(async () => {
     try {
-      const response = await fetch('/api/market-prices');
+      const response = await fetch('/api/market-prices?format=raw');
       const data = await response.json();
       setMarketPrices(data);
     } catch (error) {

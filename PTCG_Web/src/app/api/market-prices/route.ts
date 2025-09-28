@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const cardId = searchParams.get('cardId');
+    const format = searchParams.get('format');
     const marketPricesData = loadMarketPrices();
 
     // If cardId is provided, return prices for that specific card
@@ -63,7 +64,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Otherwise return all market prices
+    // If format=raw is requested, return the raw data structure
+    if (format === 'raw') {
+      return NextResponse.json(marketPricesData);
+    }
+
+    // Otherwise return all market prices in transformed format
     
     // Transform the data to include card IDs and calculate averages
     const marketCards = Object.entries(marketPricesData).map(([cardIdStr, prices]) => {
