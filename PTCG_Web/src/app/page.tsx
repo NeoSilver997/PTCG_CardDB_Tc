@@ -35,6 +35,8 @@ export default function Home() {
   const [abilities, setAbilities] = useState<AbilityOption[]>([]);
   const [effectTypes, setEffectTypes] = useState<EffectTypeOption[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'name' | 'id' | 'rarity' | 'tier' | 'description'>('name');
+  const [viewSize, setViewSize] = useState<'small' | 'medium' | 'large'>('medium');
 
   const isPokemonCard = (card: PTCGCard) => {
     return card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon');
@@ -229,8 +231,28 @@ export default function Home() {
       );
     }
 
-    setFilteredCards(filtered);
-  }, [cards, searchTerm, filters]);
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.Name.localeCompare(b.Name);
+        case 'id':
+          return parseInt(String(a.CardID)) - parseInt(String(b.CardID));
+        case 'rarity':
+          return a.Rarity.localeCompare(b.Rarity);
+        case 'tier':
+          return a.Tier.localeCompare(b.Tier);
+        case 'description':
+          const aDesc = [a.Skill1Effect, a.Skill2Effect, a.AbilityEffect].filter(Boolean).join(' ');
+          const bDesc = [b.Skill1Effect, b.Skill2Effect, b.AbilityEffect].filter(Boolean).join(' ');
+          return aDesc.localeCompare(bDesc);
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredCards(sorted);
+  }, [cards, searchTerm, filters, sortBy]);
 
   useEffect(() => {
     loadCardData();
@@ -652,6 +674,14 @@ export default function Home() {
                 <Package className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>{t.inventory}</span>
               </a>
+              <a
+                href="/debug"
+                className="flex items-center justify-center space-x-2 px-3 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors text-xs font-medium opacity-75 hover:opacity-100"
+                title="Debug Console - All Routes & API Endpoints"
+              >
+                <span>🐛</span>
+                <span>Debug</span>
+              </a>
               <div className="text-sm sm:text-base text-gray-500">
                 {filteredCards.length} {t.results}
               </div>
@@ -675,9 +705,64 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-12">
-          {/* Filters Sidebar - Mobile Optimized */}
-          <div className="w-full lg:w-96 lg:flex-shrink-0">
+        {/* Sort and View Controls */}
+        <div className="mb-6 bg-white rounded-lg shadow-sm border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Sort by:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="name">Name</option>
+                <option value="id">Card ID</option>
+                <option value="rarity">Rarity</option>
+                <option value="tier">Tier</option>
+                <option value="description">Description</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">View size:</label>
+              <div className="flex space-x-1">
+                <button
+                  onClick={() => setViewSize('small')}
+                  className={`px-3 py-1 text-xs rounded ${
+                    viewSize === 'small' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Small
+                </button>
+                <button
+                  onClick={() => setViewSize('medium')}
+                  className={`px-3 py-1 text-xs rounded ${
+                    viewSize === 'medium' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Medium
+                </button>
+                <button
+                  onClick={() => setViewSize('large')}
+                  className={`px-3 py-1 text-xs rounded ${
+                    viewSize === 'large' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Large
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
+          {/* Filters Sidebar - Made Smaller */}
+          <div className="w-full lg:w-72 lg:flex-shrink-0">
             <div className="lg:sticky lg:top-6">
               <SearchFiltersComponent
                 filters={filters}
@@ -694,6 +779,7 @@ export default function Home() {
             <CardGrid
               cards={filteredCards}
               onCardClick={handleCardClick}
+              viewSize={viewSize}
             />
           </div>
         </div>
