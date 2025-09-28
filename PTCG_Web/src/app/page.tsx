@@ -198,9 +198,18 @@ export default function Home() {
 
     // Apply expansion filter
     if (filters.expansion) {
-      filtered = filtered.filter(card =>
-         (card.ExpansionCode === filters.expansion || card.ExpansionName === filters.expansion)
-      );
+      filtered = filtered.filter(card => {
+        // Handle composite key format: "ExpansionName|ExpansionCode"
+        if (filters.expansion.includes('|')) {
+          const [filterName, filterCode] = filters.expansion.split('|');
+          return (
+            (filterName && card.ExpansionName === filterName) ||
+            (filterCode && card.ExpansionCode === filterCode)
+          );
+        }
+        // Fallback for simple values (backward compatibility)
+        return (card.ExpansionCode === filters.expansion || card.ExpansionName === filters.expansion);
+      });
     }
 
     // Apply no retreat filter (only for Pokemon cards)

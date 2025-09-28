@@ -72,20 +72,65 @@ export default function SearchFiltersComponent({
   const attributeOptions = createFilterOptions('Type');
   const regulationOptions = createFilterOptions('RegulationMark');
   
-  // Handle expansions (combine ExpansionName and ExpansionCode, remove duplicates)
-  const expansionNameOptions = createFilterOptions('ExpansionName');
-  const expansionCodeOptions = createFilterOptions('ExpansionCode');
-  const expansionOptions = [...expansionNameOptions, ...expansionCodeOptions]
-    .reduce((acc, option) => {
-      const existing = acc.find(item => item.value === option.value);
-      if (existing) {
-        existing.count += option.count;
-      } else {
-        acc.push({ ...option });
+  // Handle expansions (combine ExpansionName and ExpansionCode, sort by CardID)
+  const createExpansionOptions = () => {
+    const expansionMap = new Map<string, { count: number; minCardId: number; displayName: string; code: string; name: string }>();
+    
+    cards.forEach(card => {
+      if (card.CardType.includes('能量')) return;
+      
+      const expansionName = card.ExpansionName?.trim();
+      const expansionCode = card.ExpansionCode?.trim();
+      
+      if (expansionName && expansionName !== '' && expansionCode && expansionCode !== '') {
+        // Create combined display format: "Name (Code)"
+        const displayName = `${expansionName} (${expansionCode})`;
+        const key = `${expansionName}|${expansionCode}`; // Use unique key for mapping
+        
+        const existing = expansionMap.get(key);
+        expansionMap.set(key, {
+          count: (existing?.count || 0) + 1,
+          minCardId: existing ? Math.min(existing.minCardId, card.CardID) : card.CardID,
+          displayName: displayName,
+          code: expansionCode,
+          name: expansionName
+        });
+      } else if (expansionName && expansionName !== '') {
+        // If only name exists, use just the name
+        const key = `${expansionName}|`;
+        const existing = expansionMap.get(key);
+        expansionMap.set(key, {
+          count: (existing?.count || 0) + 1,
+          minCardId: existing ? Math.min(existing.minCardId, card.CardID) : card.CardID,
+          displayName: expansionName,
+          code: '',
+          name: expansionName
+        });
+      } else if (expansionCode && expansionCode !== '') {
+        // If only code exists, use just the code
+        const key = `|${expansionCode}`;
+        const existing = expansionMap.get(key);
+        expansionMap.set(key, {
+          count: (existing?.count || 0) + 1,
+          minCardId: existing ? Math.min(existing.minCardId, card.CardID) : card.CardID,
+          displayName: expansionCode,
+          code: expansionCode,
+          name: ''
+        });
       }
-      return acc;
-    }, [] as { value: string; count: number }[])
-    .sort((a, b) => b.count - a.count);
+    });
+    
+    return Array.from(expansionMap.entries())
+      .map(([key, data]) => ({ 
+        value: key, // Use the key for filtering
+        displayName: data.displayName,
+        count: data.count, 
+        minCardId: data.minCardId 
+      }))
+      .sort((a, b) => b.minCardId - a.minCardId); // Sort by minimum CardID ascending
+  };
+  
+  const expansionOptions = createExpansionOptions();
     
   const weaknessTypeOptions = createFilterOptions('WeaknessType');
   const resistanceTypeOptions = createFilterOptions('ResistanceType');
@@ -297,7 +342,7 @@ export default function SearchFiltersComponent({
             <option value="">{t.allExpansions}</option>
             {expansionOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.value} ({option.count})
+                {option.displayName} ({option.count})
               </option>
             ))}
           </select>
