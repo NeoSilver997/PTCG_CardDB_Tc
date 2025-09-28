@@ -1,0 +1,716 @@
+{
+  "MBG - 挑戰牌組 超級耿鬼ex": {
+    "name": "MBG - 挑戰牌組 超級耿鬼ex",
+    "description": "Official construction deck featuring Super Gengar ex",
+    "cards": [
+      {
+        "name": "px鬼斯tdtd",
+        "quantity": 4,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px鬼斯tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px鬼斯通tdtd",
+        "quantity": 2,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px鬼斯通tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px鬼斯通（全圖插畫）tdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px鬼斯通（全圖插畫）tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px超級耿鬼bigexbigtdtd",
+        "quantity": 2,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px超級耿鬼bigexbigtdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px黑暗鴉tdtd",
+        "quantity": 2,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px黑暗鴉tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px烏鴉頭頭tdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px烏鴉頭頭tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px勾魂眼tdtd",
+        "quantity": 2,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px勾魂眼tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px阿勃梭魯tdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px阿勃梭魯tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px無極汰那tdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px無極汰那tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px桃歹郎bigexbigtdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px桃歹郎bigexbigtdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px米立龍tdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px米立龍tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px好友寶芬tdtd",
+        "quantity": 3,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px好友寶芬tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px高級球tdtd",
+        "quantity": 4,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px高級球tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px神奇糖果tdtd",
+        "quantity": 3,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px神奇糖果tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px頂尖捕捉器tdtd",
+        "quantity": 1,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px頂尖捕捉器tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px寶可夢交替tdtd",
+        "quantity": 1,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px寶可夢交替tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px超級信號tdtd",
+        "quantity": 1,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px超級信號tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px夜間擔架tdtd",
+        "quantity": 1,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px夜間擔架tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px氣球tdtd",
+        "quantity": 2,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px氣球tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px龐克頭盔tdtd",
+        "quantity": 2,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px龐克頭盔tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px艾莉絲的鬥志tdtd",
+        "quantity": 4,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px艾莉絲的鬥志tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px老大的指令tdtd",
+        "quantity": 2,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px老大的指令tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "px莉莉艾的決意tdtd",
+        "quantity": 4,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px莉莉艾的決意tdtd",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "tdtrtbodytabledivdivliulsectionsectionclassSectionh",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "tdtrtbodytabledivdivliulsectionsectionclassSectionh",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "classHeading",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "classHeading",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "ids",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "ids",
+        "expansion_code": "MBG"
+      }
+    ],
+    "source": "Official Pokemon Card Website",
+    "url": "https://asia.pokemon-card.com/hk/archives/8009/",
+    "scraped_at": "2025-09-28T11:28:35.687597"
+  },
+  "MBD - 挑戰牌組 超級蒂安希ex": {
+    "name": "MBD - 挑戰牌組 超級蒂安希ex",
+    "description": "Official construction deck featuring Super Diancie ex",
+    "cards": [
+      {
+        "name": "px鬼斯tdtd",
+        "quantity": 4,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px鬼斯tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px鬼斯通tdtd",
+        "quantity": 2,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px鬼斯通tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px鬼斯通（全圖插畫）tdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px鬼斯通（全圖插畫）tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px超級耿鬼bigexbigtdtd",
+        "quantity": 2,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px超級耿鬼bigexbigtdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px黑暗鴉tdtd",
+        "quantity": 2,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px黑暗鴉tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px烏鴉頭頭tdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px烏鴉頭頭tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px勾魂眼tdtd",
+        "quantity": 2,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px勾魂眼tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px阿勃梭魯tdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px阿勃梭魯tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px無極汰那tdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px無極汰那tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px桃歹郎bigexbigtdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px桃歹郎bigexbigtdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px米立龍tdtd",
+        "quantity": 1,
+        "type": "Pokemon",
+        "card_id": null,
+        "original_name": "px米立龍tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px好友寶芬tdtd",
+        "quantity": 3,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px好友寶芬tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px高級球tdtd",
+        "quantity": 4,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px高級球tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px神奇糖果tdtd",
+        "quantity": 3,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px神奇糖果tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px頂尖捕捉器tdtd",
+        "quantity": 1,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px頂尖捕捉器tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px寶可夢交替tdtd",
+        "quantity": 1,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px寶可夢交替tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px超級信號tdtd",
+        "quantity": 1,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px超級信號tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px夜間擔架tdtd",
+        "quantity": 1,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px夜間擔架tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px氣球tdtd",
+        "quantity": 2,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px氣球tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px龐克頭盔tdtd",
+        "quantity": 2,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px龐克頭盔tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px艾莉絲的鬥志tdtd",
+        "quantity": 4,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px艾莉絲的鬥志tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px老大的指令tdtd",
+        "quantity": 2,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px老大的指令tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px莉莉艾的決意tdtd",
+        "quantity": 4,
+        "type": "Trainer",
+        "card_id": null,
+        "original_name": "px莉莉艾的決意tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "tdtrtbodytabledivdivliulsectionsectionclassSectionh",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "tdtrtbodytabledivdivliulsectionsectionclassSectionh",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "classHeading",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "classHeading",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "ids",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "ids",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "styledisplayblock挑戰牌組超級蒂安希spanstylefontsizelargerexspanh",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "styledisplayblock挑戰牌組超級蒂安希spanstylefontsizelargerexspanh",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "pngdivdivdivdivclassRightBoxdivclassRightinnerpstrong超級蒂安希bigexbigstrongpp招式花冠射線可以將最多",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "pngdivdivdivdivclassRightBoxdivclassRightinnerpstrong超級蒂安希bigexbigstrongpp招式花冠射線可以將最多",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "點傷害br儘管為基礎寶可夢但僅需",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "點傷害br儘管為基礎寶可夢但僅需",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "a_shinka",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "a_shinka",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "pngdivdivdivdivclassRightBoxdivclassRightinnerpstrong美洛耶塔strongpp招式治癒旋律可以將自己的備戰區的",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "pngdivdivdivdivclassRightBoxdivclassRightinnerpstrong美洛耶塔strongpp招式治癒旋律可以將自己的備戰區的",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "hk_news_MBD_",
+        "quantity": 3,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "hk_news_MBD_",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "pngdivdivdivdivclassRightBoxdivclassRightinnerpstrong奇跡修正檔strongpp可以從自己的棄牌區選擇",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "pngdivdivdivdivclassRightBoxdivclassRightinnerpstrong奇跡修正檔strongpp可以從自己的棄牌區選擇",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "張對手抽出",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "張對手抽出",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "pngdivdivdivdivclassRightBoxdivclassRightinnerpstrong美洛耶塔strongpp收錄了全圖插畫的美洛耶塔br描繪了在和煦的陽光灑落之中被鮮豔多彩的花朵包圍的美洛耶塔以及花草閃耀的光輝pdivdivdivh",
+        "quantity": 3,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "pngdivdivdivdivclassRightBoxdivclassRightinnerpstrong美洛耶塔strongpp收錄了全圖插畫的美洛耶塔br描繪了在和煦的陽光灑落之中被鮮豔多彩的花朵包圍的美洛耶塔以及花草閃耀的光輝pdivdivdivh",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "u牌組清單uh",
+        "quantity": 3,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "u牌組清單uh",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px布魯tdtd",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px布魯tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px布魯皇tdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px布魯皇tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px克雷色利亞tdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px克雷色利亞tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px美洛耶塔tdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px美洛耶塔tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px美洛耶塔（全圖插畫）tdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px美洛耶塔（全圖插畫）tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px超級蒂安希bigexbigtdtd",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px超級蒂安希bigexbigtdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px謎擬Qtdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px謎擬Qtdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px小仙奶tdtd",
+        "quantity": 3,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px小仙奶tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px霜奶仙tdtd",
+        "quantity": 3,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px霜奶仙tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px拉帝亞斯bigexbigtdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px拉帝亞斯bigexbigtdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px米立龍tdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px米立龍tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px能量回收器tdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px能量回收器tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px好友寶芬tdtd",
+        "quantity": 3,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px好友寶芬tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px高級球tdtd",
+        "quantity": 4,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px高級球tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px超級信號tdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px超級信號tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px夜間擔架tdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px夜間擔架tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px奇跡修正檔tdtd",
+        "quantity": 4,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px奇跡修正檔tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px不公印章tdtd",
+        "quantity": 1,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px不公印章tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px氣球tdtd",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px氣球tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px艾莉絲的鬥志tdtd",
+        "quantity": 4,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px艾莉絲的鬥志tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px老大的指令tdtd",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px老大的指令tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px莉莉艾的決意tdtd",
+        "quantity": 4,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px莉莉艾的決意tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "px神秘花園tdtd",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "px神秘花園tdtd",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "tdtrtbodytabledivdivliulsectionh",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "tdtrtbodytabledivdivliulsectionh",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "classSubHeading",
+        "quantity": 2,
+        "type": "Energy",
+        "card_id": null,
+        "original_name": "classSubHeading",
+        "expansion_code": "MBD"
+      }
+    ],
+    "source": "Official Pokemon Card Website",
+    "url": "https://asia.pokemon-card.com/hk/archives/8009/",
+    "scraped_at": "2025-09-28T11:28:35.687597"
+  }
+}

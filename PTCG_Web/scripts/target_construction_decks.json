@@ -1,0 +1,605 @@
+{
+  "挑戰牌組 瑪俐的莫魯貝可&長毛巨魔ex": {
+    "name": "挑戰牌組 瑪俐的莫魯貝可&長毛巨魔ex",
+    "description": "Challenge Deck featuring Marie's Morpeko & Grimmsnarl ex",
+    "cards": [
+      {
+        "name": "莫魯貝可",
+        "quantity": 4,
+        "card_id": 10009.0,
+        "original_name": "莫魯貝可"
+      },
+      {
+        "name": "莫魯貝可VMAX",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "莫魯貝可VMAX"
+      },
+      {
+        "name": "長毛巨魔",
+        "quantity": 2,
+        "card_id": 11857.0,
+        "original_name": "長毛巨魔"
+      },
+      {
+        "name": "<瑪俐的>長毛巨魔ex",
+        "quantity": 2,
+        "card_id": 13153.0,
+        "original_name": "長毛巨魔ex"
+      },
+      {
+        "name": "搗蛋小妖",
+        "quantity": 3,
+        "card_id": 11855.0,
+        "original_name": "搗蛋小妖"
+      },
+      {
+        "name": "詐唬魔",
+        "quantity": 2,
+        "card_id": 11856.0,
+        "original_name": "詐唬魔"
+      },
+      {
+        "name": "皮卡丘",
+        "quantity": 2,
+        "card_id": 8522.0,
+        "original_name": "皮卡丘"
+      },
+      {
+        "name": "雷丘",
+        "quantity": 1,
+        "card_id": 8892.0,
+        "original_name": "雷丘"
+      },
+      {
+        "name": "<瑪俐的>扒手貓",
+        "quantity": 4,
+        "card_id": 13147.0,
+        "original_name": "瑪俐"
+      },
+      {
+        "name": "博士的研究",
+        "quantity": 4,
+        "card_id": 12012.0,
+        "original_name": "博士的研究"
+      },
+      {
+        "name": "高級球",
+        "quantity": 4,
+        "card_id": 4649.0,
+        "original_name": "高級球"
+      },
+      {
+        "name": "能量回收器",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "能量回收器"
+      },
+      {
+        "name": "寶可夢交換",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "寶可夢交換"
+      },
+      {
+        "name": "氣球",
+        "quantity": 2,
+        "card_id": 14456.0,
+        "original_name": "氣球"
+      },
+      {
+        "name": "回收球",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "回收球"
+      },
+      {
+        "name": "快速球",
+        "quantity": 4,
+        "card_id": null,
+        "original_name": "快速球"
+      },
+      {
+        "name": "訓練場",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "訓練場"
+      },
+      {
+        "name": "基本【電】能量",
+        "quantity": 8,
+        "card_id": 14404,
+        "original_name": "基本【電】能量"
+      },
+      {
+        "name": "基本【惡】能量",
+        "quantity": 4,
+        "card_id": 14406,
+        "original_name": "基本【惡】能量"
+      }
+    ],
+    "source": "Official Pokemon Card Website",
+    "url": "https://asia.pokemon-card.com/hk/archives/7070/",
+    "scraped_at": "2025-09-28T11:52:49.060396"
+  },
+  "ex初階牌組 皮卡丘": {
+    "name": "ex初階牌組 皮卡丘",
+    "description": "ex Starter Deck featuring Pikachu ex",
+    "cards": [
+      {
+        "name": "皮卡丘ex",
+        "quantity": 2,
+        "card_id": 12792.0,
+        "original_name": "皮卡丘ex"
+      },
+      {
+        "name": "皮卡丘",
+        "quantity": 4,
+        "card_id": 8522.0,
+        "original_name": "皮卡丘"
+      },
+      {
+        "name": "雷丘",
+        "quantity": 2,
+        "card_id": 8892.0,
+        "original_name": "雷丘"
+      },
+      {
+        "name": "帕奇利茲",
+        "quantity": 2,
+        "card_id": 14299.0,
+        "original_name": "帕奇利茲"
+      },
+      {
+        "name": "電飛鼠",
+        "quantity": 2,
+        "card_id": 14053.0,
+        "original_name": "電飛鼠"
+      },
+      {
+        "name": "雷電球",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "雷電球"
+      },
+      {
+        "name": "頑皮雷彈",
+        "quantity": 2,
+        "card_id": 8967.0,
+        "original_name": "頑皮雷彈"
+      },
+      {
+        "name": "麻麻小魚",
+        "quantity": 2,
+        "card_id": 14054.0,
+        "original_name": "麻麻小魚"
+      },
+      {
+        "name": "麻麻鰻",
+        "quantity": 1,
+        "card_id": 14055.0,
+        "original_name": "麻麻鰻"
+      },
+      {
+        "name": "麻麻鰻魚王",
+        "quantity": 1,
+        "card_id": 14056.0,
+        "original_name": "麻麻鰻魚王"
+      },
+      {
+        "name": "博士的研究",
+        "quantity": 4,
+        "card_id": 12012.0,
+        "original_name": "博士的研究"
+      },
+      {
+        "name": "<瑪俐的>扒手貓",
+        "quantity": 3,
+        "card_id": 13147.0,
+        "original_name": "瑪俐"
+      },
+      {
+        "name": "高級球",
+        "quantity": 4,
+        "card_id": 4649.0,
+        "original_name": "高級球"
+      },
+      {
+        "name": "快速球",
+        "quantity": 4,
+        "card_id": null,
+        "original_name": "快速球"
+      },
+      {
+        "name": "能量回收器",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "能量回收器"
+      },
+      {
+        "name": "氣球",
+        "quantity": 2,
+        "card_id": 14456.0,
+        "original_name": "氣球"
+      },
+      {
+        "name": "寶可夢中心女士",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "寶可夢中心女士"
+      },
+      {
+        "name": "普通棒",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "普通棒"
+      },
+      {
+        "name": "基本【電】能量",
+        "quantity": 12,
+        "card_id": 14404,
+        "original_name": "基本【電】能量"
+      }
+    ],
+    "source": "Official Pokemon Card Website",
+    "url": "https://asia.pokemon-card.com/hk/archives/7610/",
+    "scraped_at": "2025-09-28T11:52:51.086472"
+  },
+  "戰術牌組 魔幻假面喵ex": {
+    "name": "戰術牌組 魔幻假面喵ex",
+    "description": "Tactical Deck featuring Meowscarada ex",
+    "cards": [
+      {
+        "name": "魔幻假面喵ex",
+        "quantity": 2,
+        "card_id": 8596.0,
+        "original_name": "魔幻假面喵ex"
+      },
+      {
+        "name": "魔幻假面喵",
+        "quantity": 2,
+        "card_id": 13006.0,
+        "original_name": "魔幻假面喵"
+      },
+      {
+        "name": "花葉喵",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "花葉喵"
+      },
+      {
+        "name": "新葉喵",
+        "quantity": 4,
+        "card_id": 8523.0,
+        "original_name": "新葉喵"
+      },
+      {
+        "name": "勒克貓",
+        "quantity": 2,
+        "card_id": 8753.0,
+        "original_name": "勒克貓"
+      },
+      {
+        "name": "豪力",
+        "quantity": 1,
+        "card_id": 8933.0,
+        "original_name": "豪力"
+      },
+      {
+        "name": "腕力",
+        "quantity": 2,
+        "card_id": 8932.0,
+        "original_name": "腕力"
+      },
+      {
+        "name": "怪力",
+        "quantity": 1,
+        "card_id": 8934.0,
+        "original_name": "怪力"
+      },
+      {
+        "name": "土居忍士",
+        "quantity": 2,
+        "card_id": 14273.0,
+        "original_name": "土居忍士"
+      },
+      {
+        "name": "鐵面忍者",
+        "quantity": 2,
+        "card_id": 14274.0,
+        "original_name": "鐵面忍者"
+      },
+      {
+        "name": "博士的研究",
+        "quantity": 4,
+        "card_id": 12012.0,
+        "original_name": "博士的研究"
+      },
+      {
+        "name": "納莉",
+        "quantity": 4,
+        "card_id": 12594.0,
+        "original_name": "納莉"
+      },
+      {
+        "name": "高級球",
+        "quantity": 4,
+        "card_id": 4649.0,
+        "original_name": "高級球"
+      },
+      {
+        "name": "尋寶手套",
+        "quantity": 4,
+        "card_id": null,
+        "original_name": "尋寶手套"
+      },
+      {
+        "name": "能量回收器",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "能量回收器"
+      },
+      {
+        "name": "巢穴球",
+        "quantity": 4,
+        "card_id": 4809.0,
+        "original_name": "巢穴球"
+      },
+      {
+        "name": "進化香",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "進化香"
+      },
+      {
+        "name": "氣球",
+        "quantity": 2,
+        "card_id": 14456.0,
+        "original_name": "氣球"
+      },
+      {
+        "name": "基本【草】能量",
+        "quantity": 12,
+        "card_id": 14405,
+        "original_name": "基本【草】能量"
+      }
+    ],
+    "source": "Official Pokemon Card Website",
+    "url": "https://asia.pokemon-card.com/hk/archive/special/card/svt/",
+    "scraped_at": "2025-09-28T11:52:53.121915"
+  },
+  "戰術牌組 沙奈朵ex": {
+    "name": "戰術牌組 沙奈朵ex",
+    "description": "Tactical Deck featuring Gardevoir ex",
+    "cards": [
+      {
+        "name": "沙奈朵ex",
+        "quantity": 2,
+        "card_id": 8320.0,
+        "original_name": "沙奈朵ex"
+      },
+      {
+        "name": "超級沙奈朵ex",
+        "quantity": 1,
+        "card_id": 14308.0,
+        "original_name": "沙奈朵"
+      },
+      {
+        "name": "奇魯莉安",
+        "quantity": 3,
+        "card_id": 14350.0,
+        "original_name": "奇魯莉安"
+      },
+      {
+        "name": "拉魯拉絲",
+        "quantity": 4,
+        "card_id": 14349.0,
+        "original_name": "拉魯拉絲"
+      },
+      {
+        "name": "克雷色利亞",
+        "quantity": 1,
+        "card_id": 14362.0,
+        "original_name": "克雷色利亞"
+      },
+      {
+        "name": "胡帕ex",
+        "quantity": 1,
+        "card_id": 9874.0,
+        "original_name": "胡帕"
+      },
+      {
+        "name": "美洛耶塔",
+        "quantity": 1,
+        "card_id": 14363.0,
+        "original_name": "美洛耶塔"
+      },
+      {
+        "name": "太陽伊布",
+        "quantity": 2,
+        "card_id": 9557.0,
+        "original_name": "太陽伊布"
+      },
+      {
+        "name": "伊布",
+        "quantity": 3,
+        "card_id": 8864.0,
+        "original_name": "伊布"
+      },
+      {
+        "name": "博士的研究",
+        "quantity": 4,
+        "card_id": 12012.0,
+        "original_name": "博士的研究"
+      },
+      {
+        "name": "<瑪俐的>扒手貓",
+        "quantity": 3,
+        "card_id": 13147.0,
+        "original_name": "瑪俐"
+      },
+      {
+        "name": "高級球",
+        "quantity": 4,
+        "card_id": 4649.0,
+        "original_name": "高級球"
+      },
+      {
+        "name": "霧結晶",
+        "quantity": 4,
+        "card_id": null,
+        "original_name": "霧結晶"
+      },
+      {
+        "name": "進化香",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "進化香"
+      },
+      {
+        "name": "巢穴球",
+        "quantity": 2,
+        "card_id": 4809.0,
+        "original_name": "巢穴球"
+      },
+      {
+        "name": "氣球",
+        "quantity": 2,
+        "card_id": 14456.0,
+        "original_name": "氣球"
+      },
+      {
+        "name": "迷幻之森",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "迷幻之森"
+      },
+      {
+        "name": "基本【超】能量",
+        "quantity": 12,
+        "card_id": 14382,
+        "original_name": "基本【超】能量"
+      }
+    ],
+    "source": "Official Pokemon Card Website",
+    "url": "https://asia.pokemon-card.com/hk/archive/special/card/svt/",
+    "scraped_at": "2025-09-28T11:52:53.128310"
+  },
+  "起始組合 未來密勒頓ex": {
+    "name": "起始組合 未來密勒頓ex",
+    "description": "Starting Set featuring Future Miraidon ex",
+    "cards": [
+      {
+        "name": "未來密勒頓ex",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "未來密勒頓ex"
+      },
+      {
+        "name": "密勒頓",
+        "quantity": 1,
+        "card_id": 8529.0,
+        "original_name": "密勒頓"
+      },
+      {
+        "name": "雷電龍",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "雷電龍"
+      },
+      {
+        "name": "電海燕",
+        "quantity": 3,
+        "card_id": 8620.0,
+        "original_name": "電海燕"
+      },
+      {
+        "name": "大電海燕",
+        "quantity": 2,
+        "card_id": 8622.0,
+        "original_name": "大電海燕"
+      },
+      {
+        "name": "太晶皮卡丘ex",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "太晶皮卡丘ex"
+      },
+      {
+        "name": "皮卡丘",
+        "quantity": 2,
+        "card_id": 8522.0,
+        "original_name": "皮卡丘"
+      },
+      {
+        "name": "雷丘",
+        "quantity": 1,
+        "card_id": 8892.0,
+        "original_name": "雷丘"
+      },
+      {
+        "name": "羅托姆",
+        "quantity": 2,
+        "card_id": null,
+        "original_name": "羅托姆"
+      },
+      {
+        "name": "電飛鼠",
+        "quantity": 1,
+        "card_id": 14053.0,
+        "original_name": "電飛鼠"
+      },
+      {
+        "name": "博士的研究",
+        "quantity": 4,
+        "card_id": 12012.0,
+        "original_name": "博士的研究"
+      },
+      {
+        "name": "納莉",
+        "quantity": 4,
+        "card_id": 12594.0,
+        "original_name": "納莉"
+      },
+      {
+        "name": "高級球",
+        "quantity": 4,
+        "card_id": 4649.0,
+        "original_name": "高級球"
+      },
+      {
+        "name": "尋寶手套",
+        "quantity": 4,
+        "card_id": null,
+        "original_name": "尋寶手套"
+      },
+      {
+        "name": "能量發電機",
+        "quantity": 4,
+        "card_id": null,
+        "original_name": "能量發電機"
+      },
+      {
+        "name": "巢穴球",
+        "quantity": 2,
+        "card_id": 4809.0,
+        "original_name": "巢穴球"
+      },
+      {
+        "name": "氣球",
+        "quantity": 2,
+        "card_id": 14456.0,
+        "original_name": "氣球"
+      },
+      {
+        "name": "基本【電】能量",
+        "quantity": 12,
+        "card_id": 14404,
+        "original_name": "基本【電】能量"
+      }
+    ],
+    "source": "Official Pokemon Card Website",
+    "url": "https://asia.pokemon-card.com/hk/products/",
+    "scraped_at": "2025-09-28T11:52:53.135997"
+  }
+}

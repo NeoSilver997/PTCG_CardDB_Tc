@@ -1,0 +1,356 @@
+{
+  "MBG - 挑戰牌組 超級耿鬼ex": {
+    "name": "MBG - 挑戰牌組 超級耿鬼ex",
+    "description": "Official construction deck featuring Super Gengar ex",
+    "cards": [
+      {
+        "name": "鬼斯",
+        "quantity": 4,
+        "card_id": 14383.0,
+        "original_name": "鬼斯",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "鬼斯通",
+        "quantity": 2,
+        "card_id": 14384.0,
+        "original_name": "鬼斯通",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "鬼斯通（全圖插畫）",
+        "quantity": 1,
+        "card_id": null,
+        "original_name": "鬼斯通（全圖插畫）",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "超級耿鬼ex",
+        "quantity": 2,
+        "card_id": 14385.0,
+        "original_name": "超級耿鬼ex",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "黑暗鴉",
+        "quantity": 2,
+        "card_id": 14386.0,
+        "original_name": "黑暗鴉",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "烏鴉頭頭",
+        "quantity": 1,
+        "card_id": 14387.0,
+        "original_name": "烏鴉頭頭",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "勾魂眼",
+        "quantity": 2,
+        "card_id": 14388.0,
+        "original_name": "勾魂眼",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "阿勃梭魯",
+        "quantity": 1,
+        "card_id": 14389.0,
+        "original_name": "阿勃梭魯",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "無極汰那",
+        "quantity": 1,
+        "card_id": 14390.0,
+        "original_name": "無極汰那",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "桃歹郎ex",
+        "quantity": 1,
+        "card_id": 14391.0,
+        "original_name": "桃歹郎ex",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "米立龍",
+        "quantity": 1,
+        "card_id": 14368.0,
+        "original_name": "米立龍",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "好友寶芬",
+        "quantity": 3,
+        "card_id": 14424.0,
+        "original_name": "好友寶芬",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "高級球",
+        "quantity": 4,
+        "card_id": 4649.0,
+        "original_name": "高級球",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "神奇糖果",
+        "quantity": 3,
+        "card_id": 4812.0,
+        "original_name": "神奇糖果",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "頂尖捕捉器",
+        "quantity": 1,
+        "card_id": 14396.0,
+        "original_name": "頂尖捕捉器",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "寶可夢交替",
+        "quantity": 1,
+        "card_id": 4972.0,
+        "original_name": "寶可夢交替",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "超級信號",
+        "quantity": 1,
+        "card_id": 14324.0,
+        "original_name": "超級信號",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "夜間擔架",
+        "quantity": 1,
+        "card_id": 14455.0,
+        "original_name": "夜間擔架",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "氣球",
+        "quantity": 2,
+        "card_id": 14456.0,
+        "original_name": "氣球",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "龐克頭盔",
+        "quantity": 2,
+        "card_id": 14400.0,
+        "original_name": "龐克頭盔",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "艾莉絲的鬥志",
+        "quantity": 4,
+        "card_id": 14377.0,
+        "original_name": "艾莉絲的鬥志",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "老大的指令",
+        "quantity": 2,
+        "card_id": 14378.0,
+        "original_name": "老大的指令",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "莉莉艾的決意",
+        "quantity": 4,
+        "card_id": 14355.0,
+        "original_name": "莉莉艾的決意",
+        "expansion_code": "MBG"
+      },
+      {
+        "name": "基本【惡】能量",
+        "quantity": 14,
+        "card_id": 14406,
+        "original_name": "基本【惡】能量",
+        "expansion_code": "MBG"
+      }
+    ],
+    "source": "Official Pokemon Card Website",
+    "url": "https://asia.pokemon-card.com/hk/archives/8009/",
+    "scraped_at": "2025-09-28T11:30:17.832089"
+  },
+  "MBD - 挑戰牌組 超級蒂安希ex": {
+    "name": "MBD - 挑戰牌組 超級蒂安希ex",
+    "description": "Official construction deck featuring Super Diancie ex",
+    "cards": [
+      {
+        "name": "布魯",
+        "quantity": 2,
+        "card_id": 14359.0,
+        "original_name": "布魯",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "布魯皇",
+        "quantity": 1,
+        "card_id": 14360.0,
+        "original_name": "布魯皇",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "克雷色利亞",
+        "quantity": 1,
+        "card_id": 14362.0,
+        "original_name": "克雷色利亞",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "美洛耶塔",
+        "quantity": 1,
+        "card_id": 14363.0,
+        "original_name": "美洛耶塔",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "美洛耶塔（全圖插畫）",
+        "quantity": 1,
+        "card_id": null,
+        "original_name": "美洛耶塔（全圖插畫）",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "超級蒂安希ex",
+        "quantity": 2,
+        "card_id": 14364.0,
+        "original_name": "超級蒂安希ex",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "謎擬Q",
+        "quantity": 1,
+        "card_id": 14365.0,
+        "original_name": "謎擬Q",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "小仙奶",
+        "quantity": 3,
+        "card_id": 14366.0,
+        "original_name": "小仙奶",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "霜奶仙",
+        "quantity": 3,
+        "card_id": 14367.0,
+        "original_name": "霜奶仙",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "拉帝亞斯ex",
+        "quantity": 1,
+        "card_id": 14361.0,
+        "original_name": "拉帝亞斯ex",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "米立龍",
+        "quantity": 1,
+        "card_id": 14368.0,
+        "original_name": "米立龍",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "能量回收器",
+        "quantity": 1,
+        "card_id": null,
+        "original_name": "能量回收器",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "好友寶芬",
+        "quantity": 3,
+        "card_id": 14424.0,
+        "original_name": "好友寶芬",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "高級球",
+        "quantity": 4,
+        "card_id": 4649.0,
+        "original_name": "高級球",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "超級信號",
+        "quantity": 1,
+        "card_id": 14324.0,
+        "original_name": "超級信號",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "夜間擔架",
+        "quantity": 1,
+        "card_id": 14455.0,
+        "original_name": "夜間擔架",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "奇跡修正檔",
+        "quantity": 4,
+        "card_id": 14375.0,
+        "original_name": "奇跡修正檔",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "不公印章",
+        "quantity": 1,
+        "card_id": 14369.0,
+        "original_name": "不公印章",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "氣球",
+        "quantity": 2,
+        "card_id": 14456.0,
+        "original_name": "氣球",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "艾莉絲的鬥志",
+        "quantity": 4,
+        "card_id": 14377.0,
+        "original_name": "艾莉絲的鬥志",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "老大的指令",
+        "quantity": 2,
+        "card_id": 14378.0,
+        "original_name": "老大的指令",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "莉莉艾的決意",
+        "quantity": 4,
+        "card_id": 14355.0,
+        "original_name": "莉莉艾的決意",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "神秘花園",
+        "quantity": 2,
+        "card_id": 14329.0,
+        "original_name": "神秘花園",
+        "expansion_code": "MBD"
+      },
+      {
+        "name": "基本【超】能量",
+        "quantity": 14,
+        "card_id": 14382,
+        "original_name": "基本【超】能量",
+        "expansion_code": "MBD"
+      }
+    ],
+    "source": "Official Pokemon Card Website",
+    "url": "https://asia.pokemon-card.com/hk/archives/8009/",
+    "scraped_at": "2025-09-28T11:30:17.832089"
+  }
+}
