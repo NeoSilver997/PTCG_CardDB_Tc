@@ -212,11 +212,11 @@
         "confidence": 1.1
       },
       {
-        "cardId": 99007,
-        "name": "基本惡能量",
+        "cardId": 14406,
+        "name": "基本【惡】能量",
         "quantity": 14,
         "type": "基本能量卡",
-        "expansion": "基本能量",
+        "expansion": "挑戰牌組「超級耿鬼ex」",
         "rarity": "common",
         "confidence": 1.0
       }
@@ -447,11 +447,11 @@
         "confidence": 1.1
       },
       {
-        "cardId": 99001,
-        "name": "基本超能量",
+        "cardId": 14382,
+        "name": "基本【超】能量",
         "quantity": 14,
         "type": "基本能量卡",
-        "expansion": "基本能量",
+        "expansion": "挑戰牌組「超級蒂安希ex」",
         "rarity": "common",
         "confidence": 1.0
       }

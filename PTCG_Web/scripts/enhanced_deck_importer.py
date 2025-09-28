@@ -151,51 +151,91 @@ class DatabaseCardMatcher:
     
     def find_energy_card(self, energy_name: str) -> Optional[CardMatch]:
         """Special handler for basic energy cards"""
-        # Map energy names to their types
+        # Map energy names to their types (handle both bracketed and non-bracketed versions)
         energy_mapping = {
             "基本超能量": "基本超能量",
-            "基本火能量": "基本火能量", 
+            "基本【超】能量": "基本超能量",
+            "基本火能量": "基本火能量",
+            "基本【火】能量": "基本火能量", 
             "基本水能量": "基本水能量",
+            "基本【水】能量": "基本水能量",
             "基本草能量": "基本草能量",
+            "基本【草】能量": "基本草能量",
             "基本雷能量": "基本雷能量",
+            "基本【雷】能量": "基本雷能量",
             "基本鬥能量": "基本鬥能量",
+            "基本【鬥】能量": "基本鬥能量",
             "基本惡能量": "基本惡能量",
-            "基本鋼能量": "基本鋼能量"
+            "基本【惡】能量": "基本惡能量",
+            "基本鋼能量": "基本鋼能量",
+            "基本【鋼】能量": "基本鋼能量"
         }
         
-        # Try to find exact energy match
+        # Normalize energy name by extracting the type between brackets
         normalized_name = energy_name.strip()
+        
+        # Extract energy type: 基本【惡】能量 -> 基本惡能量
+        if '【' in normalized_name and '】' in normalized_name:
+            # Extract the character between brackets
+            bracket_content = re.search(r'【(.)】', normalized_name)
+            if bracket_content:
+                energy_type = bracket_content.group(1)
+                search_name = f"基本{energy_type}能量"
+            else:
+                search_name = normalized_name
+        else:
+            search_name = normalized_name
+        
+        # Try to find exact energy match
         if normalized_name in energy_mapping:
-            # Look for the energy card in database
-            for card in self.cards_data:
-                card_name = card.get('Name', '').strip()
-                if card_name == energy_mapping[normalized_name]:
-                    # For energy cards, use a special ID system (negative numbers)
-                    energy_id = self.get_energy_card_id(normalized_name)
-                    return CardMatch(
-                        card_id=energy_id,
-                        name=card_name,
-                        card_type="基本能量卡",
-                        expansion="基本能量",
-                        rarity="common",
-                        confidence=1.0
-                    )
+            target_name = energy_mapping[normalized_name]
+        elif search_name in energy_mapping:
+            target_name = energy_mapping[search_name]
+        else:
+            return None
+            
+        # Look for the energy card in database with the specific ID we need
+        energy_id = self.get_energy_card_id(search_name)
+        
+        for card in self.cards_data:
+            card_id = int(card.get('CardID', 0) or card.get('WebCardID', '0'))
+            card_name = card.get('Name', '').strip()
+            
+            # Match by the specific energy card ID we want
+            if card_id == energy_id:
+                expansion_name = "挑戰牌組「超級蒂安希ex」" if search_name == "基本超能量" else "挑戰牌組「超級耿鬼ex」" if search_name == "基本惡能量" else "基本能量"
+                return CardMatch(
+                    card_id=energy_id,
+                    name=card_name,  # Use the actual database name (with or without brackets)
+                    card_type="基本能量卡",
+                    expansion=expansion_name,
+                    rarity="common",
+                    confidence=1.0
+                )
         
         return None
     
     def get_energy_card_id(self, energy_name: str) -> int:
         """Generate consistent IDs for basic energy cards"""
+        # Extract energy type: 基本【惡】能量 -> 基本惡能量
+        clean_name = energy_name.strip()
+        if '【' in clean_name and '】' in clean_name:
+            bracket_content = re.search(r'【(.)】', clean_name)
+            if bracket_content:
+                energy_type = bracket_content.group(1)
+                clean_name = f"基本{energy_type}能量"
+        
         energy_ids = {
-            "基本超能量": 99001,  # Psychic
+            "基本超能量": 14382,   # Psychic - MBD deck
             "基本火能量": 99002,   # Fire
             "基本水能量": 99003,   # Water
             "基本草能量": 99004,   # Grass
             "基本雷能量": 99005,   # Electric
             "基本鬥能量": 99006,   # Fighting
-            "基本惡能量": 99007,   # Dark
+            "基本惡能量": 14406,   # Dark - MBG deck
             "基本鋼能量": 99008    # Metal
         }
-        return energy_ids.get(energy_name, 99000)
+        return energy_ids.get(clean_name, 99000)
 
 class EnhancedPokemonDeckScraper:
     """Enhanced scraper with database integration"""
