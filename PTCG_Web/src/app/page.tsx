@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Zap, Shield, Sword, Gamepad2, Package, DollarSign } from 'lucide-react';
+import { Search, Filter, Zap, Shield, Sword, Gamepad2, Package, DollarSign, ChevronRight } from 'lucide-react';
 import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
 import CardGrid from '../components/CardGrid';
 import SearchFiltersComponent from '../components/SearchFilters';
@@ -37,6 +37,8 @@ export default function Home() {
   const [notification, setNotification] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'id' | 'rarity' | 'tier' | 'description'>('name');
   const [viewSize, setViewSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [filtersVisible, setFiltersVisible] = useState(true);
+  const [filterHideTimer, setFilterHideTimer] = useState<NodeJS.Timeout | null>(null);
 
   const isPokemonCard = (card: PTCGCard) => {
     return card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon');
@@ -70,19 +72,76 @@ export default function Home() {
     }
   }, []);
 
+  // Auto-hide filters after 5 seconds of inactivity
+  useEffect(() => {
+    const startHideTimer = () => {
+      if (filterHideTimer) {
+        clearTimeout(filterHideTimer);
+      }
+      const timer = setTimeout(() => {
+        setFiltersVisible(false);
+      }, 5000);
+      setFilterHideTimer(timer);
+    };
+
+    const resetHideTimer = () => {
+      if (filterHideTimer) {
+        clearTimeout(filterHideTimer);
+      }
+      setFiltersVisible(true);
+      startHideTimer();
+    };
+
+    // Start the timer initially
+    startHideTimer();
+
+    // Show filters on any user interaction
+    const handleUserActivity = () => {
+      resetHideTimer();
+    };
+
+    document.addEventListener('mousemove', handleUserActivity);
+    document.addEventListener('keypress', handleUserActivity);
+    document.addEventListener('click', handleUserActivity);
+
+    return () => {
+      if (filterHideTimer) {
+        clearTimeout(filterHideTimer);
+      }
+      document.removeEventListener('mousemove', handleUserActivity);
+      document.removeEventListener('keypress', handleUserActivity);
+      document.removeEventListener('click', handleUserActivity);
+    };
+  }, [filterHideTimer]);
+
   const extractFilterOptions = (cardData: PTCGCard[]) => {
     // Extract unique abilities
     const abilityMap = new Map<string, number>();
     const effectTypeMap = new Map<string, number>();
 
     cardData.forEach(card => {
-      // Process abilities
+      // Process abilities from both AbilityName and AbilityStats
+      const abilities = new Set<string>();
+      
+      // Add ability name if it exists
+      if (card.AbilityName && card.AbilityName.trim() !== '' && card.AbilityName !== '無') {
+        abilities.add(card.AbilityName.trim());
+      }
+      
+      // Add ability stats if they exist
       if (card.AbilityStats && card.AbilityStats !== '無') {
         const cardAbilities = card.AbilityStats.split(',').map(a => a.trim());
         cardAbilities.forEach(ability => {
-          abilityMap.set(ability, (abilityMap.get(ability) || 0) + 1);
+          if (ability && ability !== '無') {
+            abilities.add(ability);
+          }
         });
       }
+      
+      // Count unique abilities
+      abilities.forEach(ability => {
+        abilityMap.set(ability, (abilityMap.get(ability) || 0) + 1);
+      });
 
       // Process effect types
       if (card.PrimaryEffectType) {
@@ -134,9 +193,17 @@ export default function Home() {
 
     // Apply ability filter
     if (filters.ability) {
-      filtered = filtered.filter(card =>
-        card.AbilityStats && card.AbilityStats.includes(filters.ability)
-      );
+      filtered = filtered.filter(card => {
+        // Check AbilityName
+        if (card.AbilityName && card.AbilityName.includes(filters.ability)) {
+          return true;
+        }
+        // Check AbilityStats
+        if (card.AbilityStats && card.AbilityStats.includes(filters.ability)) {
+          return true;
+        }
+        return false;
+      });
     }
 
     // Apply effect type filter
@@ -628,11 +695,15 @@ export default function Home() {
         return false;
       }
 
-      // Same ability
-      if (card.AbilityStats && c.AbilityStats) {
-        const cardAbilities = card.AbilityStats.split(',').map(a => a.trim());
-        const otherAbilities = c.AbilityStats.split(',').map(a => a.trim());
-        if (cardAbilities.some(a => otherAbilities.includes(a))) return true;
+      // Same ability (check both AbilityName and AbilityStats)
+      if ((card.AbilityName && c.AbilityName && card.AbilityName === c.AbilityName) ||
+          (card.AbilityStats && c.AbilityStats)) {
+        if (card.AbilityName && c.AbilityName && card.AbilityName === c.AbilityName) return true;
+        if (card.AbilityStats && c.AbilityStats) {
+          const cardAbilities = card.AbilityStats.split(',').map(a => a.trim());
+          const otherAbilities = c.AbilityStats.split(',').map(a => a.trim());
+          if (cardAbilities.some(a => otherAbilities.includes(a))) return true;
+        }
       }
 
       // Same effect type
@@ -662,7 +733,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       {/* Header - Mobile Optimized */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-12 py-4 sm:py-6">
+        <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3 sm:space-x-4">
               <Gamepad2 className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
@@ -707,30 +778,18 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-12">
-        {/* Search Bar - Mobile Optimized */}
-        <div className="mb-6 sm:mb-12">
-          <div className="relative">
-            <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 sm:h-6 sm:w-6" />
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 sm:pl-12 pr-4 sm:pr-6 py-3 sm:py-4 text-base sm:text-lg border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm min-h-[48px] sm:min-h-auto"
-            />
-          </div>
-        </div>
+      <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
+        
 
-        {/* Sort and View Controls */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        {/* Sort and View Controls - Compact */}
+        <div className="mb-4 bg-white rounded-lg shadow-sm border p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Sort by:</label>
+              <label className="text-xs font-medium text-gray-700">Sort:</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
+                className="px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-xs"
               >
                 <option value="name">Name</option>
                 <option value="id">Card ID</option>
@@ -740,54 +799,88 @@ export default function Home() {
               </select>
             </div>
             <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">View size:</label>
+              <label className="text-xs font-medium text-gray-700">Size:</label>
               <div className="flex space-x-1">
                 <button
                   onClick={() => setViewSize('small')}
-                  className={`px-3 py-1 text-xs rounded ${
+                  className={`px-2 py-1 text-xs rounded ${
                     viewSize === 'small' 
                       ? 'bg-blue-500 text-white' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
-                  Small
+                  S
                 </button>
                 <button
                   onClick={() => setViewSize('medium')}
-                  className={`px-3 py-1 text-xs rounded ${
+                  className={`px-2 py-1 text-xs rounded ${
                     viewSize === 'medium' 
                       ? 'bg-blue-500 text-white' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
-                  Medium
+                  M
                 </button>
                 <button
                   onClick={() => setViewSize('large')}
-                  className={`px-3 py-1 text-xs rounded ${
+                  className={`px-2 py-1 text-xs rounded ${
                     viewSize === 'large' 
                       ? 'bg-blue-500 text-white' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
-                  Large
+                  L
                 </button>
               </div>
             </div>
           </div>
+          <div className="relative max-w-md mx-auto">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <input
+              type="text"
+              placeholder={t.searchPlaceholder}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+            />
+          </div>
+          <div className="text-xs text-gray-500">
+            {filteredCards.length} {t.results}
+          </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-          {/* Filters Sidebar - Made Smaller */}
-          <div className="w-full lg:w-72 lg:flex-shrink-0">
+        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
+          {/* Filters Sidebar - Auto-hide and Compact */}
+          <div className={`w-full lg:w-64 lg:flex-shrink-0 transition-all duration-300 ${
+            filtersVisible ? 'opacity-100 translate-x-0' : 'opacity-50 -translate-x-2 lg:translate-x-0'
+          }`}>
             <div className="lg:sticky lg:top-6">
-              <SearchFiltersComponent
-                filters={filters}
-                onFiltersChange={setFilters}
-                abilities={abilities}
-                effectTypes={effectTypes}
-                cards={cards}
-              />
+              <div 
+                className="relative"
+                onMouseEnter={() => {
+                  if (filterHideTimer) {
+                    clearTimeout(filterHideTimer);
+                  }
+                  setFiltersVisible(true);
+                }}
+              >
+                {!filtersVisible && (
+                  <button
+                    onClick={() => setFiltersVisible(true)}
+                    className="absolute -right-2 top-4 z-10 bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+                    title="Show Filters"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                )}
+                <SearchFiltersComponent
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  abilities={abilities}
+                  effectTypes={effectTypes}
+                  cards={cards}
+                />
+              </div>
             </div>
           </div>
 

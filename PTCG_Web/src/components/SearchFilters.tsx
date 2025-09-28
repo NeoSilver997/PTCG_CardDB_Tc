@@ -140,33 +140,33 @@ export default function SearchFiltersComponent({
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-md border p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-lg shadow-md border p-3">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
-          <Filter className="h-5 w-5 text-gray-600" />
-          <h2 className="text-lg font-bold text-gray-900">{t.filters}</h2>
+          <Filter className="h-4 w-4 text-gray-600" />
+          <h2 className="text-base font-semibold text-gray-900">{t.filters}</h2>
         </div>
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700 min-h-[32px] min-w-[60px] justify-center"
+            className="flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700 min-h-[28px] min-w-[50px] justify-center"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
             <span className="hidden sm:inline">{t.clear}</span>
           </button>
         )}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Ability Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             {t.ability}
           </label>
           <select
             value={filters.ability}
             onChange={(e) => updateFilter('ability', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
           >
             <option value="">{t.allAbilities}</option>
             {abilities.map((ability) => (
@@ -179,13 +179,13 @@ export default function SearchFiltersComponent({
 
         {/* Effect Type Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             {t.effectType}
           </label>
           <select
             value={filters.effectType}
             onChange={(e) => updateFilter('effectType', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
           >
             <option value="">{t.allEffectTypes}</option>
             {effectTypes.map((effect) => (
@@ -198,13 +198,13 @@ export default function SearchFiltersComponent({
 
         {/* Card Type Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             {t.cardType}
           </label>
           <select
             value={filters.cardType}
             onChange={(e) => updateFilter('cardType', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
           >
             <option value="">{t.allCardTypes}</option>
             {cardTypeOptions.map((option) => (
@@ -217,13 +217,13 @@ export default function SearchFiltersComponent({
 
         {/* Rarity Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             {t.rarity}
           </label>
           <select
             value={filters.rarity}
             onChange={(e) => updateFilter('rarity', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
           >
             <option value="">{t.allRarities}</option>
             {rarityOptions.map((option) => (
@@ -236,13 +236,13 @@ export default function SearchFiltersComponent({
 
         {/* Tier Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             {t.tier}
           </label>
           <select
             value={filters.tier}
             onChange={(e) => updateFilter('tier', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
           >
             <option value="">{t.allTiers}</option>
             {tierOptions.map((option) => (
@@ -255,13 +255,13 @@ export default function SearchFiltersComponent({
 
         {/* Attribute Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             {t.attribute}
           </label>
           <select
             value={filters.attribute}
             onChange={(e) => updateFilter('attribute', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
           >
             <option value="">{t.allAttributes}</option>
             {attributeOptions.map((option) => (
@@ -274,13 +274,13 @@ export default function SearchFiltersComponent({
 
         {/* Weakness Type Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             {t.weaknessType}
           </label>
           <select
             value={filters.weaknessType}
             onChange={(e) => updateFilter('weaknessType', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
           >
             <option value="">{t.allWeaknessTypes}</option>
             {weaknessTypeOptions.map((option) => (
@@ -293,13 +293,13 @@ export default function SearchFiltersComponent({
 
         {/* Resistance Type Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             {t.resistanceType}
           </label>
           <select
             value={filters.resistanceType}
             onChange={(e) => updateFilter('resistanceType', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
           >
             <option value="">{t.allResistanceTypes}</option>
             {resistanceTypeOptions.map((option) => (
@@ -312,13 +312,13 @@ export default function SearchFiltersComponent({
 
         {/* Regulation Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             {t.regulationMark}
           </label>
           <select
             value={filters.regulation}
             onChange={(e) => updateFilter('regulation', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
           >
             <option value="">{t.allRegulations}</option>
             {regulationOptions.map((option) => (
@@ -331,13 +331,13 @@ export default function SearchFiltersComponent({
 
         {/* Expansion Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             {t.expansion}
           </label>
           <select
             value={filters.expansion}
             onChange={(e) => updateFilter('expansion', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
           >
             <option value="">{t.allExpansions}</option>
             {expansionOptions.map((option) => (
@@ -349,49 +349,49 @@ export default function SearchFiltersComponent({
         </div>
 
         {/* Special Filters */}
-        <div className="col-span-full border-t pt-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Special Filters</h3>
-          <div className="space-y-3">
+        <div className="col-span-full border-t pt-3">
+          <h3 className="text-xs font-medium text-gray-700 mb-2">Special Filters</h3>
+          <div className="space-y-2">
             <div className="space-y-2">
               <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
                   checked={filters.noRetreat}
                   onChange={(e) => onFiltersChange({ ...filters, noRetreat: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="text-sm text-gray-700">No Retreat Cost</span>
+                <span className="text-xs text-gray-700">No Retreat Cost</span>
               </label>
               <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
                   checked={filters.noResistance}
                   onChange={(e) => onFiltersChange({ ...filters, noResistance: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="text-sm text-gray-700">No Resistance</span>
+                <span className="text-xs text-gray-700">No Resistance</span>
               </label>
               <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
                   checked={filters.noWeakness}
                   onChange={(e) => onFiltersChange({ ...filters, noWeakness: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="text-sm text-gray-700">No Weakness</span>
+                <span className="text-xs text-gray-700">No Weakness</span>
               </label>
             </div>
 
             {/* Pokemon Type for Special Filters */}
             {(filters.noRetreat || filters.noResistance || filters.noWeakness) && (
-              <div className="border-t pt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="border-t pt-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Pokemon Type (for Special Filters)
                 </label>
                 <select
                   value={filters.specialPokemonType}
                   onChange={(e) => updateFilter('specialPokemonType', e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
                 >
                   <option value="">All Types</option>
                   {attributeOptions.map((option) => (

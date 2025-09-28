@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { PTCGCard } from '../../types/card';
-import CardDetailModal from '../../components/CardDetailModal';
+import { PTCGCard } from '../types/card';
+import CardDetailModal from '../components/CardDetailModal';
 
 // Test card with known data
 const testCard: PTCGCard = {
