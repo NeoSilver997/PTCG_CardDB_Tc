@@ -8,13 +8,29 @@ interface CardGridProps {
   cards: PTCGCard[];
   onCardClick: (card: PTCGCard) => void;
   viewSize?: 'small' | 'medium' | 'large';
+  cardOnlyView?: boolean;
 }
 
-export default function CardGrid({ cards, onCardClick, viewSize = 'medium' }: CardGridProps) {
+export default function CardGrid({ cards, onCardClick, viewSize = 'medium', cardOnlyView = false }: CardGridProps) {
   const { t } = useI18n();
 
-  // Define grid classes based on view size
+  // Define grid classes based on view size and card-only mode
   const getGridClasses = () => {
+    if (cardOnlyView) {
+      // Denser grid for card-only view
+      switch (viewSize) {
+        case 'small':
+          return 'grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2';
+        case 'medium':
+          return 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3';
+        case 'large':
+          return 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4';
+        default:
+          return 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3';
+      }
+    }
+    
+    // Normal grid for full card view
     switch (viewSize) {
       case 'small':
         return 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4';
@@ -44,6 +60,7 @@ export default function CardGrid({ cards, onCardClick, viewSize = 'medium' }: Ca
           card={card}
           onClick={() => onCardClick(card)}
           viewSize={viewSize}
+          cardOnlyView={cardOnlyView}
         />
       ))}
     </div>

@@ -10,9 +10,10 @@ interface CardItemProps {
   card: PTCGCard;
   onClick: () => void;
   viewSize?: 'small' | 'medium' | 'large';
+  cardOnlyView?: boolean;
 }
 
-export default function CardItem({ card, onClick, viewSize = 'medium' }: CardItemProps) {
+export default function CardItem({ card, onClick, viewSize = 'medium', cardOnlyView = false }: CardItemProps) {
   const getTierColor = (tier?: string) => {
     switch (tier) {
       case 'S+': return 'bg-red-100 text-red-800';
@@ -116,6 +117,44 @@ export default function CardItem({ card, onClick, viewSize = 'medium' }: CardIte
       </div>
     );
   };
+
+  // Card-only view: show only image and tier badge
+  if (cardOnlyView) {
+    return (
+      <div
+        onClick={onClick}
+        className="relative cursor-pointer group"
+      >
+        <div className={`aspect-[5/7] bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 ${
+          viewSize === 'small' ? 'min-h-[120px]' : viewSize === 'large' ? 'min-h-[200px]' : 'min-h-[160px]'
+        }`}>
+          {card.ImageURL ? (
+            <img
+              src={card.ImageURL}
+              alt={card.Name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              onError={(e) => {
+                e.currentTarget.src = '/placeholder-card.svg';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <div className={`${viewSize === 'small' ? 'text-lg' : viewSize === 'large' ? 'text-3xl' : 'text-xl'} mb-1`}>🎴</div>
+                <div className="text-xs">No Image</div>
+              </div>
+            </div>
+          )}
+        </div>
+        {/* Tier Badge */}
+        {card.Tier && (
+          <div className={`absolute top-1 right-1 px-2 py-1 rounded-full text-xs font-bold shadow-md ${getTierColor(card.Tier)}`}>
+            {card.Tier}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div

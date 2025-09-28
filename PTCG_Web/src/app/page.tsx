@@ -8,6 +8,7 @@ import SearchFiltersComponent from '../components/SearchFilters';
 import CardDetailModal from '../components/CardDetailModal';
 import LanguageSelector from '../components/LanguageSelector';
 import { useI18n } from '../i18n/context';
+import { useInventory } from '../hooks/useInventory';
 
 export default function Home() {
   const { t } = useI18n();
@@ -36,9 +37,15 @@ export default function Home() {
   const [effectTypes, setEffectTypes] = useState<EffectTypeOption[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'id' | 'rarity' | 'tier' | 'description'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [viewSize, setViewSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [filtersVisible, setFiltersVisible] = useState(true);
   const filterHideTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [cardOnlyView, setCardOnlyView] = useState(false);
+
+  // Inventory management
+  const { addToInventory } = useInventory();
+  const [addingAllToInventory, setAddingAllToInventory] = useState(false);
 
   const isPokemonCard = (card: PTCGCard) => {
     return card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon');
@@ -309,26 +316,81 @@ export default function Home() {
 
     // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
       switch (sortBy) {
         case 'name':
-          return a.Name.localeCompare(b.Name);
+          comparison = a.Name.localeCompare(b.Name);
+          break;
         case 'id':
-          return parseInt(String(a.CardID)) - parseInt(String(b.CardID));
+          comparison = parseInt(String(a.CardID)) - parseInt(String(b.CardID));
+          break;
         case 'rarity':
-          return a.Rarity.localeCompare(b.Rarity);
+          comparison = a.Rarity.localeCompare(b.Rarity);
+          break;
         case 'tier':
-          return (a.Tier || '').localeCompare(b.Tier || '');
+          comparison = (a.Tier || '').localeCompare(b.Tier || '');
+          break;
         case 'description':
           const aDesc = [a.Skill1Effect, a.Skill2Effect, a.AbilityEffect].filter(Boolean).join(' ');
           const bDesc = [b.Skill1Effect, b.Skill2Effect, b.AbilityEffect].filter(Boolean).join(' ');
-          return aDesc.localeCompare(bDesc);
+          comparison = aDesc.localeCompare(bDesc);
+          break;
         default:
-          return 0;
+          comparison = 0;
       }
+      
+      return sortDirection === 'desc' ? -comparison : comparison;
     });
 
     setFilteredCards(sorted);
-  }, [cards, searchTerm, filters, sortBy]);
+  }, [cards, searchTerm, filters, sortBy, sortDirection]);
+
+  const addAllToInventory = useCallback(async () => {
+    if (filteredCards.length === 0) {
+      setNotification('No cards to add to inventory');
+      return;
+    }
+
+    setAddingAllToInventory(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      // Add each card to inventory with default values
+      for (const card of filteredCards) {
+        try {
+          const success = await addToInventory(
+            parseInt(String(card.CardID)),
+            1, // Default quantity of 1
+            'Near Mint', // Default condition
+            undefined, // No notes
+            undefined, // No purchase cost
+            undefined // No market price
+          );
+          if (success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          console.error(`Failed to add card ${card.CardID} to inventory:`, error);
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        setNotification(`Successfully added ${successCount} cards to inventory${errorCount > 0 ? ` (${errorCount} failed)` : ''}`);
+      } else {
+        setNotification('Failed to add any cards to inventory');
+      }
+    } catch (error) {
+      console.error('Error adding cards to inventory:', error);
+      setNotification('Error adding cards to inventory');
+    } finally {
+      setAddingAllToInventory(false);
+    }
+  }, [filteredCards, addToInventory]);
 
   useEffect(() => {
     loadCardData();
@@ -797,6 +859,13 @@ export default function Home() {
                 <option value="tier">Tier</option>
                 <option value="description">Description</option>
               </select>
+              <button
+                onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                className="px-2 py-1 text-xs bg-gray-200 text-gray-700 hover:bg-gray-300 rounded border border-gray-300"
+                title={`Sort ${sortDirection === 'asc' ? 'Descending' : 'Ascending'}`}
+              >
+                {sortDirection === 'asc' ? '↑' : '↓'}
+              </button>
             </div>
             <div className="flex items-center space-x-2">
               <label className="text-xs font-medium text-gray-700">Size:</label>
@@ -832,6 +901,34 @@ export default function Home() {
                   L
                 </button>
               </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCardOnlyView(!cardOnlyView)}
+                className={`px-3 py-1 text-xs rounded transition-colors ${
+                  cardOnlyView 
+                    ? 'bg-purple-500 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                title={cardOnlyView ? "Show Full Cards" : "Card Only View"}
+              >
+                {cardOnlyView ? "Full" : "Card Only"}
+              </button>
+              <button
+                onClick={addAllToInventory}
+                disabled={addingAllToInventory || filteredCards.length === 0}
+                className={`px-3 py-1 text-xs rounded transition-colors flex items-center space-x-1 ${
+                  addingAllToInventory
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    : filteredCards.length === 0
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
+                title={`Add all ${filteredCards.length} search results to inventory`}
+              >
+                <Package className="h-3 w-3" />
+                <span>{addingAllToInventory ? 'Adding...' : 'Add All'}</span>
+              </button>
             </div>
           </div>
           <div className="relative max-w-md mx-auto">
@@ -892,6 +989,7 @@ export default function Home() {
               cards={filteredCards}
               onCardClick={handleCardClick}
               viewSize={viewSize}
+              cardOnlyView={cardOnlyView}
             />
           </div>
         </div>
