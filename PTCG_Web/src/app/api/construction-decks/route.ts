@@ -4,20 +4,23 @@ import * as path from 'path';
 
 export const dynamic = 'force-dynamic';
 
-const CONSTRUCTION_DECKS_FILE = path.join(process.cwd(), 'data', 'imported_decks.json');
+const CONSTRUCTION_DECKS_FILE = path.join(process.cwd(), 'data', 'all_construction_decks.json');
 
 interface ImportedDeck {
-  id: string;
   name: string;
   description: string;
   format: string;
+  source?: string;
+  url?: string;
+  scraped_at?: string;
   cards: Array<{
-    cardId: number;
+    cardId: number | null;
     name: string;
     quantity: number;
     type: string;
     expansion: string;
     rarity: string;
+    confidence: number;
   }>;
 }
 
@@ -45,11 +48,12 @@ export async function GET() {
     const constructionDecks = loadConstructionDecks();
     
     // Transform the construction decks to the expected format
-    const transformedDecks = constructionDecks.map(deck => ({
-      id: deck.id,
+    const transformedDecks = constructionDecks.map((deck, index) => ({
+      id: `deck_${index + 1}`,
       name: deck.name,
-      description: deck.description || `Official construction deck featuring ${deck.name.split(' ')[deck.name.split(' ').length - 1]}`,
+      description: deck.description,
       format: deck.format || 'Standard',
+      source: deck.source || 'Official Pokemon Card Website',
       cards: deck.cards.map(card => ({
         cardId: card.cardId,
         name: card.name,
@@ -60,6 +64,7 @@ export async function GET() {
       }))
     }));
 
+    console.log(`✅ Serving ${transformedDecks.length} construction decks to API`);
     return NextResponse.json(transformedDecks);
   } catch (error) {
     console.error('Error fetching construction decks:', error);

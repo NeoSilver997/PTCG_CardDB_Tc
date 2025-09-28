@@ -27,7 +27,7 @@ import DeckViewer from './DeckViewer';
 import { useI18n } from '../i18n/context';
 
 interface ConstructionDeck {
-  id: string;
+  id?: string;
   name: string;
   description: string;
   format: string;
@@ -92,7 +92,12 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
       const response = await fetch('/api/construction-decks');
       if (response.ok) {
         const data = await response.json();
-        setConstructionDecks(data);
+        // Add IDs to construction decks if they don't have them
+        const decksWithIds = data.map((deck: ConstructionDeck, index: number) => ({
+          ...deck,
+          id: deck.id || `construction_${index}_${deck.name.replace(/[^a-zA-Z0-9]/g, '_')}`
+        }));
+        setConstructionDecks(decksWithIds);
       } else {
         console.error('Failed to load construction decks');
       }
@@ -246,8 +251,8 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
         // Switch to My Decks tab
         setCurrentTab('my-decks');
         const successMessage = deckCards.length === constructionDeck.cards.length 
-          ? `Successfully imported "${constructionDeck.name}" with all ${deckCards.length} cards!`
-          : `Partially imported "${constructionDeck.name}" - ${deckCards.length} of ${constructionDeck.cards.length} cards were found in the database.`;
+          ? `✓ Successfully imported "${constructionDeck.name}" with all ${deckCards.length} cards!\n\nExpansion: ${constructionDeck.cards[0]?.expansion || 'Unknown'}\nFormat: ${constructionDeck.format}\nThe deck has been added to your "My Decks" collection.`
+          : `⚠ Partially imported "${constructionDeck.name}" - ${deckCards.length} of ${constructionDeck.cards.length} cards were found in the database.\n\nSome cards may not be available in the current card collection.`;
         alert(successMessage);
       } else {
         throw new Error('Failed to save imported deck');
@@ -319,6 +324,36 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
         case 'updated':
         default:
           return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      }
+    });
+
+  const filteredConstructionDecks = constructionDecks
+    .filter(deck => {
+      // Search filter for construction decks
+      if (searchTerm && !deck.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          !deck.description.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
+
+      // Format filter for construction decks
+      if (formatFilter !== 'All' && deck.format !== formatFilter) {
+        return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'cards':
+          const totalCardsA = a.cards.reduce((sum, card) => sum + card.quantity, 0);
+          const totalCardsB = b.cards.reduce((sum, card) => sum + card.quantity, 0);
+          return totalCardsB - totalCardsA;
+        case 'created':
+        case 'updated':
+        default:
+          return a.name.localeCompare(b.name); // Sort by name as fallback for construction decks
       }
     });
 
@@ -444,31 +479,54 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading construction decks...</p>
           </div>
-        ) : constructionDecks.length === 0 ? (
+        ) : filteredConstructionDecks.length === 0 ? (
           <div className="text-center py-12">
             <div className="mb-4">
               <BookOpen className="h-16 w-16 text-gray-300 mx-auto" />
             </div>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">No Construction Decks Found</h3>
+            <h3 className="text-xl font-medium text-gray-900 mb-2">
+              {constructionDecks.length === 0 ? 'No Construction Decks Available' : 'No Matching Construction Decks'}
+            </h3>
             <p className="text-gray-600 mb-6">
-              Import construction decks from the admin panel to see them here.
+              {constructionDecks.length === 0 
+                ? 'Construction decks are official prebuilt decks from Pokemon. Check back later or contact admin if decks should be available.'
+                : 'Try adjusting your search terms or filters to find more decks.'
+              }
             </p>
-            <a
-              href="/admin/import-decks"
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors inline-block"
-            >
-              Go to Import Panel
-            </a>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {constructionDecks.map(deck => (
-              <ConstructionDeckCard
-                key={deck.id}
-                deck={deck}
-                onImport={() => importConstructionDeck(deck)}
-              />
-            ))}
+          <div>
+            {/* Construction Decks Info */}
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center space-x-2 mb-2">
+                <BookOpen className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold text-blue-900">Official Construction Decks</h3>
+              </div>
+              <p className="text-blue-800 text-sm mb-2">
+                These are official Pokemon TCG construction decks with standardized expansion codes.
+                Each deck contains carefully selected cards to provide a balanced gameplay experience.
+              </p>
+              <div className="flex items-center justify-between text-sm text-blue-700">
+                <span>
+                  <strong>{filteredConstructionDecks.length}</strong> deck{filteredConstructionDecks.length !== 1 ? 's' : ''} 
+                  {filteredConstructionDecks.length !== constructionDecks.length && ` (${constructionDecks.length} total)`}
+                </span>
+                <span>
+                  Total cards: <strong>{filteredConstructionDecks.reduce((sum, deck) => sum + deck.cards.reduce((cardSum, card) => cardSum + card.quantity, 0), 0)}</strong>
+                </span>
+              </div>
+            </div>
+            
+            {/* Deck Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredConstructionDecks.map(deck => (
+                <ConstructionDeckCard
+                  key={deck.id}
+                  deck={deck}
+                  onImport={() => importConstructionDeck(deck)}
+                />
+              ))}
+            </div>
           </div>
         )
       )}
@@ -624,10 +682,44 @@ function ConstructionDeckCard({ deck, onImport }: ConstructionDeckCardProps) {
   const trainerCount = deck.cards.filter(card => card.type === '物品' || card.type === '支援' || card.type === '場地').reduce((sum, card) => sum + card.quantity, 0);
   const energyCount = deck.cards.filter(card => card.type === '能量').reduce((sum, card) => sum + card.quantity, 0);
 
+  // Extract main expansion code from deck name or cards
+  const getExpansionCode = () => {
+    // Check if deck name starts with expansion code
+    const nameMatch = deck.name.match(/^([A-Z]+)\s*-/);
+    if (nameMatch) return nameMatch[1];
+    
+    // Get most common expansion from cards
+    const expansions = deck.cards.map(card => card.expansion).filter(Boolean);
+    if (expansions.length > 0) {
+      const expansionCounts = expansions.reduce((acc: Record<string, number>, exp) => {
+        acc[exp] = (acc[exp] || 0) + 1;
+        return acc;
+      }, {});
+      return Object.keys(expansionCounts).sort((a, b) => expansionCounts[b] - expansionCounts[a])[0];
+    }
+    
+    return 'Unknown';
+  };
+
+  const expansionCode = getExpansionCode();
+  
   const formatColor = {
     'Standard': 'bg-blue-100 text-blue-800',
     'Expanded': 'bg-green-100 text-green-800',
     'Unlimited': 'bg-purple-100 text-purple-800'
+  };
+
+  // Expansion code colors
+  const expansionColors = {
+    'MBG': 'bg-purple-100 text-purple-800',
+    'MBD': 'bg-pink-100 text-pink-800',
+    'SVOM': 'bg-indigo-100 text-indigo-800',
+    'SVOD': 'bg-cyan-100 text-cyan-800',
+    'SVQP': 'bg-emerald-100 text-emerald-800',
+    'SVD': 'bg-orange-100 text-orange-800',
+    'SVTM': 'bg-red-100 text-red-800',
+    'SVTS': 'bg-slate-100 text-slate-800',
+    'Unknown': 'bg-gray-100 text-gray-800'
   };
 
   return (
@@ -640,6 +732,9 @@ function ConstructionDeckCard({ deck, onImport }: ConstructionDeckCardProps) {
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${formatColor[deck.format]}`}>
               {deck.format}
             </span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${expansionColors[expansionCode] || expansionColors['Unknown']}`}>
+              {expansionCode}
+            </span>
             <div className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
               Official
             </div>
@@ -648,6 +743,13 @@ function ConstructionDeckCard({ deck, onImport }: ConstructionDeckCardProps) {
         {deck.description && (
           <p className="text-gray-600 text-sm line-clamp-2 mb-3">{deck.description}</p>
         )}
+        <div className="flex items-center justify-between text-sm text-gray-500">
+          <span>{totalCards} cards total</span>
+          <div className="flex items-center space-x-1">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span>Ready to Import</span>
+          </div>
+        </div>
       </div>
 
       {/* Deck Composition */}

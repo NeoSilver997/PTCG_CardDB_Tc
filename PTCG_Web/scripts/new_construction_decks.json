@@ -1,0 +1,898 @@
+[
+  {
+    "name": "挑戰牌組 大吾的鐵啞鈴&巨金怪ex",
+    "description": "挑戰牌組系列 - 挑戰牌組 大吾的鐵啞鈴&巨金怪ex",
+    "format": "Standard",
+    "cards": [
+      {
+        "name": "大吾的寶可夢們共同戰鬥的挑戰牌組登場",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "瑪俐的莫魯貝可",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "與瑪俐的長毛巨魔ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "是可以讓戰略範圍變得更廣的寶可夢ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "瑪俐的詐唬魔",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "大吾的小碎鑽",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "擁有可以造成巨大傷害的招式的大吾的巨金怪ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "長毛巨魔ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "大吾的寶可夢",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "大吾的鐵啞鈴",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "描繪了坐在霓虹燈閃爍的街角欄杆上的莫魯貝可",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "大吾的鐵啞鈴的全圖卡牌也同時登場",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "大吾的巨金怪",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "擁有可以造成巨大傷害的招式的大吾的巨金怪",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "瑪俐的長毛巨魔ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "是一隻非常強力的寶可夢ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "瑪俐的搗蛋小妖",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "擁有扭轉局勢特性的瑪俐的長毛巨魔",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "大吾的金屬怪",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "大吾的小碎鑽組合使用",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "大吾的巨金怪ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "瑪俐的寶可夢",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "瑪俐的莫魯貝可的全圖卡牌也同時登場",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "與瑪俐的長毛巨魔",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "描繪了在旅行途中的大吾和鐵啞鈴",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "巨金怪ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "大吾的寶可夢的不容易被打倒吧",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "擁有扭轉局勢特性的瑪俐的長毛巨魔ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "吉雉雞ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "瑪俐的長毛巨魔",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.7
+      },
+      {
+        "name": "基本【鋼】能量",
+        "quantity": 8,
+        "card_id": 14407,
+        "type": "基本能量",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "name": "基本【超】能量",
+        "quantity": 6,
+        "card_id": 14382,
+        "type": "基本能量",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "name": "博士的研究",
+        "quantity": 4,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "ナンジャモ",
+        "quantity": 2,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.8
+      },
+      {
+        "name": "超級球",
+        "quantity": 4,
+        "card_id": null,
+        "type": "物品",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.9
+      }
+    ],
+    "source": "Pokemon Card Website - Challenge Series",
+    "url": "https://asia.pokemon-card.com/hk/archives/7070/",
+    "scraped_at": "2025-09-28T12:07:44.527558"
+  },
+  {
+    "name": "ex初階牌組 噴火龍",
+    "description": "ex初階牌組系列 - ex初階牌組 噴火龍",
+    "format": "Standard",
+    "cards": [
+      {
+        "name": "噴火龍ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVQL",
+        "rarity": "rare",
+        "confidence": 0.9
+      },
+      {
+        "name": "火恐龍",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVQL",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "小火龍",
+        "quantity": 4,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVQL",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "袋獸",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVQL",
+        "rarity": "normal",
+        "confidence": 0.8
+      },
+      {
+        "name": "爆焰龜獸",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVQL",
+        "rarity": "normal",
+        "confidence": 0.8
+      },
+      {
+        "name": "基本【火】能量",
+        "quantity": 14,
+        "card_id": 14401,
+        "type": "基本能量",
+        "expansion": "SVQL",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "name": "博士的研究",
+        "quantity": 4,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVQL",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "梅洛可",
+        "quantity": 2,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVQL",
+        "rarity": "normal",
+        "confidence": 0.8
+      },
+      {
+        "name": "超級球",
+        "quantity": 4,
+        "card_id": null,
+        "type": "物品",
+        "expansion": "SVQL",
+        "rarity": "normal",
+        "confidence": 0.9
+      }
+    ],
+    "source": "Pokemon Card Website - ex Starter Series",
+    "url": "https://asia.pokemon-card.com/hk/archives/7610/",
+    "scraped_at": "2025-09-28T12:07:46.587084"
+  },
+  {
+    "name": "雙ex初階牌組 Generations",
+    "description": "雙ex初階牌組系列 - 包含來自9個地區的寶可夢",
+    "format": "Standard",
+    "cards": [
+      {
+        "name": "皮卡丘ex",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVM",
+        "rarity": "rare",
+        "confidence": 0.9
+      },
+      {
+        "name": "卡比獸ex",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVM",
+        "rarity": "rare",
+        "confidence": 0.9
+      },
+      {
+        "name": "洛奇亞ex",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVM",
+        "rarity": "rare",
+        "confidence": 0.9
+      },
+      {
+        "name": "班基拉斯ex",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVM",
+        "rarity": "rare",
+        "confidence": 0.9
+      },
+      {
+        "name": "蓋歐卡ex",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVM",
+        "rarity": "rare",
+        "confidence": 0.9
+      },
+      {
+        "name": "火焰雞ex",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVM",
+        "rarity": "rare",
+        "confidence": 0.9
+      },
+      {
+        "name": "帝牙盧卡ex",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVM",
+        "rarity": "rare",
+        "confidence": 0.9
+      },
+      {
+        "name": "路卡利歐ex",
+        "quantity": 1,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVM",
+        "rarity": "rare",
+        "confidence": 0.9
+      },
+      {
+        "name": "基本【電】能量",
+        "quantity": 4,
+        "card_id": 14404,
+        "type": "基本能量",
+        "expansion": "SVM",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "name": "基本【水】能量",
+        "quantity": 4,
+        "card_id": 14402,
+        "type": "基本能量",
+        "expansion": "SVM",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "name": "基本【火】能量",
+        "quantity": 4,
+        "card_id": 14401,
+        "type": "基本能量",
+        "expansion": "SVM",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "name": "基本【鬥】能量",
+        "quantity": 4,
+        "card_id": 14403,
+        "type": "基本能量",
+        "expansion": "SVM",
+        "rarity": "normal",
+        "confidence": 1.0
+      },
+      {
+        "name": "博士的研究（大木博士）",
+        "quantity": 1,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVM",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "博士的研究（空木博士）",
+        "quantity": 1,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVM",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "博士的研究（小田卷博士）",
+        "quantity": 1,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVM",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "博士的研究（山梨博士）",
+        "quantity": 1,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVM",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "超級球",
+        "quantity": 4,
+        "card_id": null,
+        "type": "物品",
+        "expansion": "SVM",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "空手道王的演練",
+        "quantity": 4,
+        "card_id": null,
+        "type": "物品",
+        "expansion": "SVM",
+        "rarity": "normal",
+        "confidence": 0.9
+      }
+    ],
+    "source": "Pokemon Card Website - Generations Series",
+    "url": "https://asia.pokemon-card.com/hk/archive/special/card/svm/",
+    "scraped_at": "2025-09-28T12:07:56.775963"
+  },
+  {
+    "name": "挑戰牌組 超級耿鬼ex",
+    "description": "挑戰牌組系列 - 挑戰牌組 超級耿鬼ex",
+    "format": "Standard",
+    "cards": [
+      {
+        "name": "因超級耿鬼ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "拉帝亞斯ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "超級進化寶可夢ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "張超級進化寶可夢ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "透過恢復高耐久力的超級蒂安希ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "超級蒂安希ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "若場上有超級耿鬼ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "並且即使被對手的寶可夢ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "桃歹郎ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "是可以馬上活用因超級蒂安希ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "就能輕鬆將受到傷害的超級蒂安希ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "超級耿鬼ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "寶可夢ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "博士的研究",
+        "quantity": 4,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "ナンジャモ",
+        "quantity": 2,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.8
+      },
+      {
+        "name": "超級球",
+        "quantity": 4,
+        "card_id": null,
+        "type": "物品",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.9
+      }
+    ],
+    "source": "Pokemon Card Website - Challenge Series",
+    "url": "https://asia.pokemon-card.com/hk/archives/8009/",
+    "scraped_at": "2025-09-28T12:07:58.821560"
+  },
+  {
+    "name": "挑戰牌組 超級蒂安希ex",
+    "description": "挑戰牌組系列 - 挑戰牌組 超級蒂安希ex",
+    "format": "Standard",
+    "cards": [
+      {
+        "name": "因超級耿鬼ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "拉帝亞斯ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "超級進化寶可夢ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "張超級進化寶可夢ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "透過恢復高耐久力的超級蒂安希ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "超級蒂安希ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "若場上有超級耿鬼ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "並且即使被對手的寶可夢ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "桃歹郎ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "是可以馬上活用因超級蒂安希ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "就能輕鬆將受到傷害的超級蒂安希ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "超級耿鬼ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "寶可夢ex",
+        "quantity": 2,
+        "card_id": null,
+        "type": "寶可夢",
+        "expansion": "SVOM",
+        "rarity": "rare",
+        "confidence": 0.7
+      },
+      {
+        "name": "博士的研究",
+        "quantity": 4,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.9
+      },
+      {
+        "name": "ナンジャモ",
+        "quantity": 2,
+        "card_id": null,
+        "type": "支援者",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.8
+      },
+      {
+        "name": "超級球",
+        "quantity": 4,
+        "card_id": null,
+        "type": "物品",
+        "expansion": "SVOD",
+        "rarity": "normal",
+        "confidence": 0.9
+      }
+    ],
+    "source": "Pokemon Card Website - Challenge Series",
+    "url": "https://asia.pokemon-card.com/hk/archives/8009/",
+    "scraped_at": "2025-09-28T12:08:00.867526"
+  }
+]
