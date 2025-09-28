@@ -92,6 +92,16 @@ export interface TranslationStrings {
   allExpansions: string;
   allWeaknessTypes: string;
   allResistanceTypes: string;
+  ownershipStatus: string;
+  allCards: string;
+  ownedOnly: string;
+  unownedOnly: string;
+  priceRange: string;
+  allPrices: string;
+  underTen: string;
+  tenToFifty: string;
+  overFifty: string;
+  noPriceData: string;
   
   // Actions
   add: string;

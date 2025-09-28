@@ -54,6 +54,8 @@ export interface SearchFilters {
   noResistance: boolean;
   noWeakness: boolean;
   specialPokemonType: string;
+  owned: string; // 'all', 'owned', 'unowned'
+  priceRange: string; // 'all', 'low', 'medium', 'high', 'no-price'
 }
 
 export interface AbilityOption {

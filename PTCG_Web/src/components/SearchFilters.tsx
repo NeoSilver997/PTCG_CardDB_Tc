@@ -387,34 +387,34 @@ export default function SearchFiltersComponent({
             {/* Owned Filter */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                {t.ownershipStatus}
+                {t.ownershipStatus || 'Ownership Status'}
               </label>
               <select
                 value={filters.owned}
                 onChange={(e) => updateFilter('owned', e.target.value)}
                 className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
               >
-                <option value="all">{t.allCards}</option>
-                <option value="owned">{t.ownedOnly}</option>
-                <option value="unowned">{t.unownedOnly}</option>
+                <option value="all">{t.allCards || 'All Cards'}</option>
+                <option value="owned">{t.ownedOnly || 'Owned Cards Only'}</option>
+                <option value="unowned">{t.unownedOnly || 'Unowned Cards Only'}</option>
               </select>
             </div>
 
             {/* Price Range Filter */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                {t.priceRange}
+                {t.priceRange || 'Price Range'}
               </label>
               <select
                 value={filters.priceRange}
                 onChange={(e) => updateFilter('priceRange', e.target.value)}
                 className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
               >
-                <option value="all">{t.allPrices}</option>
-                <option value="low">{t.underTen}</option>
-                <option value="medium">{t.tenToFifty}</option>
-                <option value="high">{t.overFifty}</option>
-                <option value="no-price">{t.noPriceData}</option>
+                <option value="all">{t.allPrices || 'All Prices'}</option>
+                <option value="low">{t.underTen || 'Under $10'}</option>
+                <option value="medium">{t.tenToFifty || '$10 - $50'}</option>
+                <option value="high">{t.overFifty || 'Over $50'}</option>
+                <option value="no-price">{t.noPriceData || 'No Price Data'}</option>
               </select>
             </div>
 
