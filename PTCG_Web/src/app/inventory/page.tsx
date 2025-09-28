@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PTCGCard } from '../../types/card';
 import { InventoryCard, CARD_CONDITIONS } from '../../types/inventory';
 import { useInventory } from '../../hooks/useInventory';
 import { useI18n } from '../../i18n/context';
+import { getCardImageSrc, PLACEHOLDER_IMAGE_PATH } from '../../utils/imageUtils';
 import InventoryManager from '../../components/InventoryManager';
+import LanguageSelector from '../../components/LanguageSelector';
 import { 
   Package, 
   Search, 
@@ -16,7 +18,12 @@ import {
   Upload,
   DollarSign,
   TrendingUp,
-  X
+  X,
+  Gamepad2,
+  Sword,
+  ChevronRight,
+  Zap,
+  Shield
 } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -35,6 +42,42 @@ export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [conditionFilter, setConditionFilter] = useState('');
   const [showStats, setShowStats] = useState(false);
+  const [sortBy, setSortBy] = useState<'name' | 'id' | 'rarity' | 'tier' | 'quantity' | 'value'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [viewSize, setViewSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [filtersVisible, setFiltersVisible] = useState(true);
+  const [cardOnlyView, setCardOnlyView] = useState(false);
+  const filterHideTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load cards data
+  useEffect(() => {
+    const loadCards = async () => {
+      try {
+        console.log('Loading cards data...');
+        setLoadingCards(true);
+        const response = await fetch('/api/cards');
+        console.log('Cards API response status:', response.status);
+        if (!response.ok) {
+          throw new Error('Failed to load cards');
+        }
+        const cardsData = await response.json();
+        console.log('Loaded cards count:', cardsData.length);
+        setCards(cardsData);
+      } catch (err) {
+        console.error('Error loading cards:', err);
+      } finally {
+        setLoadingCards(false);
+        console.log('Cards loading completed');
+      }
+    };
+
+    loadCards();
+  }, []);
+
+  // Load inventory data
+  useEffect(() => {
+    reloadInventory();
+  }, [reloadInventory]);
 
   // Tier color helper function
   const getTierColor = (tier?: string) => {
@@ -52,20 +95,43 @@ export default function InventoryPage() {
     }
   };
 
-  // Load card data
+  // Auto-hide filters functionality
   useEffect(() => {
-    const loadCards = async () => {
-      try {
-        const response = await fetch('/api/cards');
-        const data = await response.json();
-        setCards(data);
-      } catch (error) {
-        console.error('Failed to load cards:', error);
-      } finally {
-        setLoadingCards(false);
+    const startHideTimer = () => {
+      if (filterHideTimerRef.current) {
+        clearTimeout(filterHideTimerRef.current);
+      }
+      const timer = setTimeout(() => {
+        setFiltersVisible(false);
+      }, 5000);
+      filterHideTimerRef.current = timer;
+    };
+
+    const resetHideTimer = () => {
+      if (filterHideTimerRef.current) {
+        clearTimeout(filterHideTimerRef.current);
+      }
+      setFiltersVisible(true);
+      startHideTimer();
+    };
+
+    // Start the timer initially
+    startHideTimer();
+
+    // Show filters on any user interaction
+    const handleUserActivity = () => resetHideTimer();
+    document.addEventListener('click', handleUserActivity);
+    document.addEventListener('keydown', handleUserActivity);
+    document.addEventListener('scroll', handleUserActivity);
+
+    return () => {
+      document.removeEventListener('click', handleUserActivity);
+      document.removeEventListener('keydown', handleUserActivity);
+      document.removeEventListener('scroll', handleUserActivity);
+      if (filterHideTimerRef.current) {
+        clearTimeout(filterHideTimerRef.current);
       }
     };
-    loadCards();
   }, []);
 
   // Get inventory stats
@@ -88,9 +154,50 @@ export default function InventoryPage() {
     });
   }, [inventory, cards, searchTerm, conditionFilter]);
 
+  // Apply sorting
+  const sortedInventory = useMemo(() => {
+    const sorted = [...filteredInventory].sort((a, b) => {
+      const cardA = cards.find(c => c.CardID === a.CardID);
+      const cardB = cards.find(c => c.CardID === b.CardID);
+      
+      if (!cardA || !cardB) return 0;
+      
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = cardA.Name.localeCompare(cardB.Name);
+          break;
+        case 'id':
+          comparison = cardA.CardID - cardB.CardID;
+          break;
+        case 'rarity':
+          comparison = cardA.Rarity.localeCompare(cardB.Rarity);
+          break;
+        case 'tier':
+          comparison = (cardA.Tier || '').localeCompare(cardB.Tier || '');
+          break;
+        case 'quantity':
+          comparison = a.quantity - b.quantity;
+          break;
+        case 'value':
+          const valueA = a.purchaseCost || a.marketPrice || 0;
+          const valueB = b.purchaseCost || b.marketPrice || 0;
+          comparison = valueA - valueB;
+          break;
+        default:
+          comparison = 0;
+      }
+      
+      return sortDirection === 'desc' ? -comparison : comparison;
+    });
+    
+    return sorted;
+  }, [filteredInventory, cards, sortBy, sortDirection]);
+
   // Group inventory by card
   const groupedInventory = useMemo(() => {
-    const grouped = filteredInventory.reduce((acc, item) => {
+    const grouped = sortedInventory.reduce((acc, item) => {
       if (!acc[item.CardID]) {
         acc[item.CardID] = [];
       }
@@ -99,7 +206,7 @@ export default function InventoryPage() {
     }, {} as Record<number, InventoryCard[]>);
 
     return grouped;
-  }, [filteredInventory]);
+  }, [sortedInventory]);
 
   const exportInventory = () => {
     const exportData = inventory.map(item => {
@@ -140,41 +247,244 @@ export default function InventoryPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <X className="h-12 w-12 mx-auto" />
+          </div>
+          <p className="text-gray-600 mb-4">Error loading inventory: {error}</p>
+          <button
+            onClick={reloadInventory}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Header - Mobile Optimized */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <Package className="w-8 h-8 text-blue-600" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{t.cardLibrary}</h1>
-                <p className="text-gray-600">Manage your PTCG card collection</p>
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <Package className="h-8 w-8 sm:h-10 sm:w-10 text-green-600" />
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{t.cardLibrary}</h1>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <LanguageSelector />
+              <a
+                href="/"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <Gamepad2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Search</span>
+              </a>
+              <a
+                href="/deck-builder"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <Sword className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Deck Builder</span>
+              </a>
+              <a
+                href="/market"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Market</span>
+              </a>
+              <a
+                href="/debug"
+                className="flex items-center justify-center space-x-2 px-3 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors text-xs font-medium opacity-75 hover:opacity-100"
+                title="Debug Console - All Routes & API Endpoints"
+              >
+                <span>🐛</span>
+                <span>Debug</span>
+              </a>
+              <div className="text-sm sm:text-base text-gray-500">
+                {Object.keys(groupedInventory).length} unique cards
               </div>
             </div>
-            
-            <div className="flex items-center space-x-3">
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
+        
+
+        {/* Sort and View Controls - Compact */}
+        <div className="mb-4 bg-white rounded-lg shadow-sm border p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex items-center space-x-2">
+              <label className="text-xs font-medium text-gray-700">Sort:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-xs"
+              >
+                <option value="name">Name</option>
+                <option value="id">Card ID</option>
+                <option value="rarity">Rarity</option>
+                <option value="tier">Tier</option>
+                <option value="quantity">Quantity</option>
+                <option value="value">Value</option>
+              </select>
+              <button
+                onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                className="px-2 py-1 text-xs bg-gray-200 text-gray-700 hover:bg-gray-300 rounded border border-gray-300"
+                title={`Sort ${sortDirection === 'asc' ? 'Descending' : 'Ascending'}`}
+              >
+                {sortDirection === 'asc' ? '↑' : '↓'}
+              </button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <label className="text-xs font-medium text-gray-700">Size:</label>
+              <div className="flex space-x-1">
+                <button
+                  onClick={() => setViewSize('small')}
+                  className={`px-2 py-1 text-xs rounded ${
+                    viewSize === 'small' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  S
+                </button>
+                <button
+                  onClick={() => setViewSize('medium')}
+                  className={`px-2 py-1 text-xs rounded ${
+                    viewSize === 'medium' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  M
+                </button>
+                <button
+                  onClick={() => setViewSize('large')}
+                  className={`px-2 py-1 text-xs rounded ${
+                    viewSize === 'large' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  L
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCardOnlyView(!cardOnlyView)}
+                className={`px-3 py-1 text-xs rounded transition-colors ${
+                  cardOnlyView 
+                    ? 'bg-purple-500 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                title={cardOnlyView ? "Show Full Cards" : "Card Only View"}
+              >
+                {cardOnlyView ? "Full" : "Card Only"}
+              </button>
               <button
                 onClick={() => setShowStats(!showStats)}
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                className={`px-3 py-1 text-xs rounded transition-colors flex items-center space-x-1 ${
+                  showStats 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                title="Toggle Statistics Panel"
               >
-                <BarChart3 className="w-4 h-4" />
+                <BarChart3 className="h-3 w-3" />
                 <span>Stats</span>
               </button>
-              
               <button
                 onClick={exportInventory}
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                className="px-3 py-1 text-xs bg-green-500 text-white hover:bg-green-600 rounded flex items-center space-x-1"
+                title="Export Inventory to JSON"
               >
-                <Download className="w-4 h-4" />
+                <Download className="h-3 w-3" />
                 <span>Export</span>
               </button>
             </div>
           </div>
+          <div className="relative max-w-md mx-auto">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <input
+              type="text"
+              placeholder="Search cards..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+            />
+          </div>
+          <div className="text-xs text-gray-500">
+            {Object.keys(groupedInventory).length} unique cards
+          </div>
+        </div>
 
-          {/* Stats Panel */}
-          {showStats && (
+        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
+          {/* Filters Sidebar - Auto-hide and Compact */}
+          <div className={`lg:flex-shrink-0 transition-all duration-300 ${
+            filtersVisible 
+              ? 'lg:w-64 w-full opacity-100 translate-x-0' 
+              : 'lg:w-12 w-0 opacity-0 -translate-x-full lg:translate-x-0'
+          }`}>
+            <div className="lg:sticky lg:top-6 relative">
+              {!filtersVisible && (
+                <button
+                  onClick={() => setFiltersVisible(true)}
+                  className="absolute left-2 top-4 z-10 bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+                  title="Show Filters"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
+              <div className={`bg-white rounded-lg border shadow-sm p-4 ${!filtersVisible ? 'hidden lg:block' : ''}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                    <Filter className="w-5 h-5" />
+                    <span>Filters</span>
+                  </h3>
+                  {filtersVisible && (
+                    <button
+                      onClick={() => setFiltersVisible(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                      title="Hide Filters"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
+                    <select
+                      value={conditionFilter}
+                      onChange={(e) => setConditionFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">All Conditions</option>
+                      {CARD_CONDITIONS.map(condition => (
+                        <option key={condition.value} value={condition.value}>
+                          {condition.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {showStats && (
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex items-center justify-between">
@@ -285,195 +595,122 @@ export default function InventoryPage() {
               </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="bg-white p-4 rounded-lg border mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search cards..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+          {/* Inventory Cards Grid */}
+          <div className="mt-6">
+            {filteredInventory.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No cards found</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {searchTerm || conditionFilter ? 'Try adjusting your search or filters.' : 'Your inventory is empty.'}
+                </p>
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Filter className="w-4 h-4 text-gray-500" />
-                <select
-                  value={conditionFilter}
-                  onChange={(e) => setConditionFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Conditions</option>
-                  {CARD_CONDITIONS.map(condition => (
-                    <option key={condition.value} value={condition.value}>
-                      {condition.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Inventory Grid */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
-          </div>
-        )}
-
-        {Object.keys(groupedInventory).length === 0 ? (
-          <div className="text-center py-12">
-            <Package className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No cards in inventory</h3>
-            <p className="text-gray-600">Start adding cards to your inventory from the card search page</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-            {Object.entries(groupedInventory).map(([cardIdStr, inventoryItems]) => {
-              const cardId = parseInt(cardIdStr);
-              const card = cards.find(c => c.CardID === cardId);
-              if (!card) return null;
-
-              const totalQuantity = inventoryItems.reduce((sum, item) => sum + item.quantity, 0);
-              const totalPurchaseValue = inventoryItems.reduce((sum, item) => 
-                sum + (item.purchaseCost ? item.purchaseCost * item.quantity : 0), 0);
-              const totalMarketValue = inventoryItems.reduce((sum, item) => 
-                sum + (item.marketPrice ? item.marketPrice * item.quantity : 0), 0);
-              const profitLoss = totalMarketValue - totalPurchaseValue;
-
-              return (
-                <div key={cardId} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group">
-                  {/* Full Card Image */}
-                  <div className="aspect-[5/7] bg-gray-100 relative min-h-[320px] lg:min-h-[360px]">
-                    <img
-                      src={card.ImageURL}
-                      alt={card.Name}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder-card.png';
-                      }}
-                    />
-                    
-                    {/* Overlay Information */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                        <h3 className="font-bold text-lg mb-1">{card.Name}</h3>
-                        <p className="text-sm opacity-90 mb-2">{card.ExpansionName}</p>
-                        {card.CardType && (
-                          <p className="text-xs opacity-75">{card.CardType} • {card.Rarity}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Quantity Badge */}
-                    <div className="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                      ×{totalQuantity}
-                    </div>
-
-                    {/* Tier Badge */}
-                    {card.Tier && (
-                      <div className={`absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-bold shadow-lg ${getTierColor(card.Tier)}`}>
-                        {card.Tier}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Card Info Panel */}
-                  <div className="p-4 space-y-3">
-                    {/* Quick Info */}
-                    <div className="text-center">
-                      <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">{card.Name}</h3>
-                      <p className="text-xs text-gray-600">{card.ExpansionName}</p>
-                    </div>
-                    
-                    {/* Inventory Details */}
-                    <div className="space-y-2">
-                      {inventoryItems.map((item) => (
-                        <div key={`${item.CardID}-${item.condition}`} className="flex justify-between items-center text-xs bg-gray-50 rounded-lg px-3 py-2">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-gray-600 font-medium">
-                              {CARD_CONDITIONS.find(c => c.value === item.condition)?.label}
-                            </span>
-                            <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">
-                              ×{item.quantity}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {item.purchaseCost && (
-                              <span className="text-green-600 font-semibold" title="Purchase Cost">
-                                ${item.purchaseCost.toFixed(2)}
-                              </span>
-                            )}
-                            {item.marketPrice && (
-                              <span className="text-blue-600 font-semibold" title="Market Price">
-                                ${item.marketPrice.toFixed(2)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Financial Summary */}
-                    {(totalPurchaseValue > 0 || totalMarketValue > 0) && (
-                      <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-600">Purchase Value:</span>
-                          <span className="font-semibold text-green-600">
-                            ${totalPurchaseValue.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-600">Market Value:</span>
-                          <span className="font-semibold text-blue-600">
-                            ${totalMarketValue.toFixed(2)}
-                          </span>
-                        </div>
-                        {totalPurchaseValue > 0 && totalMarketValue > 0 && (
-                          <div className="flex justify-between text-xs pt-1 border-t border-gray-200">
-                            <span className="text-gray-600 font-medium">Profit/Loss:</span>
-                            <span className={`font-bold ${profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {profitLoss >= 0 ? '+' : ''}${profitLoss.toFixed(2)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Manage Button */}
-                    <button
+            ) : (
+              <div className={`grid gap-4 ${
+                viewSize === 'small' 
+                  ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8' 
+                  : viewSize === 'medium'
+                  ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+                  : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+              }`}>
+                {filteredInventory.map((item) => {
+                  const card = cards.find(c => c.CardID === item.CardID);
+                  if (!card) return null;
+                  
+                  return (
+                    <div
+                      key={`${item.CardID}-${item.condition}`}
+                      className={`bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
+                        cardOnlyView ? 'p-2' : 'p-4'
+                      }`}
                       onClick={() => setSelectedCard(card)}
-                      className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                     >
-                      <Eye className="w-4 h-4" />
-                      <span>Manage Inventory</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                      {!cardOnlyView && (
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-medium text-gray-900 truncate">
+                              {card.Name}
+                            </h3>
+                            <p className="text-xs text-gray-500 truncate">
+                              {card.CardID}
+                            </p>
+                          </div>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            item.condition === 'near-mint' ? 'bg-green-100 text-green-800' :
+                            item.condition === 'lightly-played' ? 'bg-yellow-100 text-yellow-800' :
+                            item.condition === 'moderately-played' ? 'bg-orange-100 text-orange-800' :
+                            item.condition === 'heavily-played' ? 'bg-red-100 text-red-800' :
+                            item.condition === 'damaged' ? 'bg-gray-100 text-gray-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {CARD_CONDITIONS.find(c => c.value === item.condition)?.label || item.condition}
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className={`relative ${cardOnlyView ? 'aspect-[2.5/3.5]' : 'aspect-[2.5/3.5] mb-3'}`}>
+                        <img
+                          src={getCardImageSrc(card)}
+                          alt={card.Name}
+                          className="w-full h-full object-cover rounded"
+                          onError={(e) => {
+                            e.currentTarget.src = PLACEHOLDER_IMAGE_PATH;
+                          }}
+                        />
+                      </div>
 
-      {/* Inventory Manager Modal */}
-      {selectedCard && (
-        <InventoryManager
-          card={selectedCard}
-          onClose={() => setSelectedCard(null)}
-        />
-      )}
+                      {!cardOnlyView && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">Qty:</span>
+                            <span className="font-medium">{item.quantity}</span>
+                          </div>
+                          
+                          {item.purchaseCost && (
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-gray-600">Purchase:</span>
+                              <span className="font-medium">${item.purchaseCost.toFixed(2)}</span>
+                            </div>
+                          )}
+                          
+                          {item.marketPrice && (
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-gray-600">Market:</span>
+                              <span className="font-medium text-green-600">${item.marketPrice.toFixed(2)}</span>
+                            </div>
+                          )}
+
+                          {item.purchaseCost && item.marketPrice && (
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-gray-600">Profit:</span>
+                              <span className={`font-medium ${
+                                (item.marketPrice - item.purchaseCost) >= 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {((item.marketPrice - item.purchaseCost) * item.quantity) >= 0 ? '+' : ''}
+                                ${((item.marketPrice - item.purchaseCost) * item.quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
-  );
+
+    {/* Inventory Manager Modal */}
+    {selectedCard && (
+      <InventoryManager
+        card={selectedCard}
+        onClose={() => setSelectedCard(null)}
+      />
+    )}
+  </div>
+);
 }
