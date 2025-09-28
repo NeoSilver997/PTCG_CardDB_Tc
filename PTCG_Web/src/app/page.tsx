@@ -449,6 +449,33 @@ export default function Home() {
     }
   }, [filteredCards, addToInventory]);
 
+  const handleAddToInventory = useCallback(async (cardId: number): Promise<boolean> => {
+    try {
+      const success = await addToInventory(
+        cardId,
+        1, // Default quantity of 1
+        'Near Mint', // Default condition
+        undefined, // No notes
+        undefined, // No purchase cost
+        undefined // No market price
+      );
+      if (success) {
+        setNotification('Card added to inventory successfully!');
+        // Clear notification after 3 seconds
+        setTimeout(() => setNotification(null), 3000);
+      } else {
+        setNotification('Failed to add card to inventory');
+        setTimeout(() => setNotification(null), 3000);
+      }
+      return success;
+    } catch (error) {
+      console.error('Error adding card to inventory:', error);
+      setNotification('Error adding card to inventory');
+      setTimeout(() => setNotification(null), 3000);
+      return false;
+    }
+  }, [addToInventory]);
+
   useEffect(() => {
     loadCardData();
   }, [loadCardData]);
@@ -1047,6 +1074,8 @@ export default function Home() {
               onCardClick={handleCardClick}
               viewSize={viewSize}
               cardOnlyView={cardOnlyView}
+              onOpenInventory={handleCardClick}
+              onAddToInventory={handleAddToInventory}
             />
           </div>
         </div>

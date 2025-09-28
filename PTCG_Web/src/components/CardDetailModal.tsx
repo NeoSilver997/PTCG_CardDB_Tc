@@ -135,10 +135,10 @@ export default function CardDetailModal({
   useEffect(() => {
     const fetchPriceAndInventoryData = async () => {
       try {
-        console.log('🔍 Fetching price/inventory for card:', card.CardID, card.Name);
+        console.log('🔍 Fetching price/inventory for card:', selectedVersion.CardID, selectedVersion.Name);
         
         // Fetch latest market price
-        const priceResponse = await fetch(`/api/market-prices?cardId=${card.CardID}`);
+        const priceResponse = await fetch(`/api/market-prices?cardId=${selectedVersion.CardID}`);
         if (priceResponse.ok) {
           const priceData = await priceResponse.json();
           console.log('💰 Price data received:', priceData);
@@ -162,16 +162,16 @@ export default function CardDetailModal({
     };
     
     fetchPriceAndInventoryData();
-  }, [card.CardID, card.Name]);
+  }, [selectedVersion.CardID, selectedVersion.Name]);
 
   // Separate effect for inventory quantity that runs when inventory hook is ready
   useEffect(() => {
     if (!inventoryLoading) {
-      const qty = getTotalQuantity(card.CardID);
+      const qty = getTotalQuantity(selectedVersion.CardID);
       setInventoryQty(qty);
-      console.log('📦 Inventory quantity updated:', qty, 'for card:', card.CardID);
+      console.log('📦 Inventory quantity updated:', qty, 'for card:', selectedVersion.CardID);
     }
-  }, [card.CardID, getTotalQuantity, inventoryLoading]);
+  }, [selectedVersion.CardID, getTotalQuantity, inventoryLoading]);
 
   // Add render debugging
   console.log('🎯 CardDetailModal render - Price:', latestMarketPrice, 'Inventory:', inventoryQty);
@@ -942,46 +942,46 @@ export default function CardDetailModal({
               </div>
 
               {/* Additional Details */}
-              {(card.ExpansionName || card.ExpansionCode || card.Illustrator || card.Artist || card.SpecialTag) && (
+              {(selectedVersion.ExpansionName || selectedVersion.ExpansionCode || selectedVersion.Illustrator || selectedVersion.Artist || selectedVersion.SpecialTag) && (
                 <div className="pt-4 border-t space-y-3">
-                  {card.ExpansionName && (
+                  {selectedVersion.ExpansionName && (
                     <div>
                       <span className="text-gray-600 text-base font-medium">Expansion:</span>
-                      <div className="font-semibold text-lg">{card.ExpansionName}</div>
-                      {card.ExpansionCode && (
-                        <div className="text-sm text-gray-500">Code: {card.ExpansionCode}</div>
+                      <div className="font-semibold text-lg">{selectedVersion.ExpansionName}</div>
+                      {selectedVersion.ExpansionCode && (
+                        <div className="text-sm text-gray-500">Code: {selectedVersion.ExpansionCode}</div>
                       )}
                     </div>
                   )}
-                  {(card.Illustrator || card.Artist) && (
+                  {(selectedVersion.Illustrator || selectedVersion.Artist) && (
                     <div>
                       <span className="text-gray-600 text-base font-medium">Artist:</span>
-                      <div className="font-semibold text-lg">{card.Illustrator || card.Artist}</div>
+                      <div className="font-semibold text-lg">{selectedVersion.Illustrator || selectedVersion.Artist}</div>
                     </div>
                   )}
-                  {card.SpecialTag && (
+                  {selectedVersion.SpecialTag && (
                     <div>
                       <span className="text-gray-600 text-base font-medium">Special Tag:</span>
-                      <div className="font-semibold text-lg">{card.SpecialTag}</div>
+                      <div className="font-semibold text-lg">{selectedVersion.SpecialTag}</div>
                     </div>
                   )}
                 </div>
               )}
 
-              {card.Score && (
+              {selectedVersion.Score && (
                 <div className="pt-4 border-t">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-gray-600 text-base font-medium">Score:</span>
-                    <span className="font-bold text-2xl">{card.Score}</span>
+                    <span className="font-bold text-2xl">{selectedVersion.Score}</span>
                   </div>
-                  {card.ScoreBreakdown && renderScoreBreakdownChart(card.ScoreBreakdown)}
+                  {selectedVersion.ScoreBreakdown && renderScoreBreakdownChart(selectedVersion.ScoreBreakdown)}
                 </div>
               )}
 
-              {card.ImageURL && (
+              {selectedVersion.ImageURL && (
                 <div className="pt-4 border-t">
                   <a
-                    href={card.ImageURL}
+                    href={selectedVersion.ImageURL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center space-x-3 text-blue-600 hover:text-blue-800 text-base font-medium"

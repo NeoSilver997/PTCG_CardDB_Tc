@@ -9,9 +9,11 @@ interface CardGridProps {
   onCardClick: (card: PTCGCard) => void;
   viewSize?: 'small' | 'medium' | 'large';
   cardOnlyView?: boolean;
+  onOpenInventory?: (card: PTCGCard) => void;
+  onAddToInventory?: (cardId: number) => Promise<boolean>;
 }
 
-export default function CardGrid({ cards, onCardClick, viewSize = 'medium', cardOnlyView = false }: CardGridProps) {
+export default function CardGrid({ cards, onCardClick, viewSize = 'medium', cardOnlyView = false, onOpenInventory, onAddToInventory }: CardGridProps) {
   const { t } = useI18n();
 
   // Define grid classes based on view size and card-only mode
@@ -61,6 +63,8 @@ export default function CardGrid({ cards, onCardClick, viewSize = 'medium', card
           onClick={() => onCardClick(card)}
           viewSize={viewSize}
           cardOnlyView={cardOnlyView}
+          onOpenInventory={onOpenInventory ? () => onOpenInventory(card) : undefined}
+          onAddToInventory={onAddToInventory}
         />
       ))}
     </div>

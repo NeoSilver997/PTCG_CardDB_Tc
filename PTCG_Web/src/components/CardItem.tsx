@@ -9,9 +9,11 @@ interface CardItemProps {
   onClick: () => void;
   viewSize?: 'small' | 'medium' | 'large';
   cardOnlyView?: boolean;
+  onOpenInventory?: () => void;
+  onAddToInventory?: (cardId: number) => Promise<boolean>;
 }
 
-export default function CardItem({ card, onClick, viewSize = 'medium', cardOnlyView = false }: CardItemProps) {
+export default function CardItem({ card, onClick, viewSize = 'medium', cardOnlyView = false, onOpenInventory, onAddToInventory }: CardItemProps) {
   if (cardOnlyView) {
     return (
       <div
@@ -55,7 +57,7 @@ export default function CardItem({ card, onClick, viewSize = 'medium', cardOnlyV
           {card.Name}
         </h3>
         
-        <InventoryButton cardId={card.CardID} />
+        <InventoryButton cardId={card.CardID} onOpenInventory={onOpenInventory} onAddToInventory={onAddToInventory} />
       </div>
     </div>
   );
