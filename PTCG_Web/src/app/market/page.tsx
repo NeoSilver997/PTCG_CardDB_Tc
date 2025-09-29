@@ -62,10 +62,19 @@ export default function MarketPage() {
 
   const fetchMarketPrices = async () => {
     try {
-      const response = await fetch('/api/market-prices');
+      // Fetch raw market prices data to show ALL entries from market-prices.json
+      const response = await fetch('/api/market-prices?format=raw');
       if (response.ok) {
-        const data = await response.json();
-        setMarketPrices(data.flatMap((card: any) => card.marketPrices || []));
+        const rawData = await response.json();
+        // Convert raw data to flat array of market prices
+        const allPrices: MarketPrice[] = [];
+        Object.entries(rawData).forEach(([cardId, prices]) => {
+          if (Array.isArray(prices)) {
+            allPrices.push(...prices);
+          }
+        });
+        setMarketPrices(allPrices);
+        console.log('Loaded', allPrices.length, 'market price entries from market-prices.json');
       }
     } catch (error) {
       console.error('Error fetching market prices:', error);
@@ -111,35 +120,28 @@ export default function MarketPage() {
     if (marketPrices.length > 0) {
       console.log('Debug: first market price:', marketPrices[0]);
     }
-    if (cards.length > 0) {
-      console.log('Debug: first card:', { CardID: cards[0].CardID, Name: cards[0].Name });
-    }
 
-    // Combine cards with their market prices
-    const cardsWithPrices = cards.filter(card => {
-      const cardPrices = marketPrices.filter(mp => mp.cardId === card.CardID);
-      const hasPrices = cardPrices.length > 0;
-      if (hasPrices && card.CardID <= 13000) { // Only log for our test cards
-        console.log('Debug: Card', card.CardID, card.Name, 'has', cardPrices.length, 'prices');
+    // Group market prices by cardId
+    const pricesByCardId = new Map<number, MarketPrice[]>();
+    marketPrices.forEach(price => {
+      const cardId = price.cardId;
+      if (!pricesByCardId.has(cardId)) {
+        pricesByCardId.set(cardId, []);
       }
-      return hasPrices; // Only show cards that have market prices
+      pricesByCardId.get(cardId)!.push(price);
     });
 
-    console.log('Debug: cards with prices:', cardsWithPrices.length);
+    console.log('Debug: unique cards with prices:', pricesByCardId.size);
 
-    // Filter by search term
-    const filteredCards = cardsWithPrices.filter(card =>
-      card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      card.ExpansionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      card.CardType.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    // Transform to MarketCard format with calculated prices
-    const marketCards: MarketCard[] = filteredCards.map(card => {
-      const cardMarketPrices = marketPrices.filter(mp => mp.cardId === card.CardID);
+    // Create MarketCard entries for all cards with prices (even if card data is missing)
+    const marketCards: MarketCard[] = [];
+    
+    pricesByCardId.forEach((cardPrices, cardId) => {
+      // Try to find card data
+      const cardData = cards.find(card => card.CardID === cardId);
       
       // Sort prices by date (newest first)
-      const sortedPrices = cardMarketPrices.sort((a, b) => 
+      const sortedPrices = cardPrices.sort((a, b) => 
         new Date(b.date).getTime() - new Date(a.date).getTime()
       );
 
@@ -161,7 +163,7 @@ export default function MarketPage() {
         const currentPrice = sortedPrices[0].price;
         const previousPrice = sortedPrices[1].price;
         const change = currentPrice - previousPrice;
-        const percentage = (change / previousPrice) * 100;
+        const percentage = previousPrice > 0 ? (change / previousPrice) * 100 : 0;
         
         priceChange = {
           amount: change,
@@ -170,17 +172,72 @@ export default function MarketPage() {
         };
       }
 
-      return {
-        ...card,
+      // Use metadata from market price if card data is missing
+      const cardName = cardData?.Name || sortedPrices[0]?.metadata?.cardName || `Card #${cardId}`;
+      const expansionName = cardData?.ExpansionName || sortedPrices[0]?.metadata?.expansionCode || 'Unknown';
+      const cardType = cardData?.CardType || 'Unknown';
+
+      // Create MarketCard entry
+      const marketCard: MarketCard = {
+        CardID: cardId,
+        Name: cardName,
+        EvolutionStage: cardData?.EvolutionStage || '',
+        ImageURL: cardData?.ImageURL || `/cards/hk${cardId.toString().padStart(8, '0')}.png`,
+        CardType: cardType,
+        HP: cardData?.HP || '',
+        Type: cardData?.Type || '',
+        AbilityName: cardData?.AbilityName || '',
+        AbilityEffect: cardData?.AbilityEffect || '',
+        Skill1Name: cardData?.Skill1Name || '',
+        Skill1Energy: cardData?.Skill1Energy || '',
+        Skill1Damage: cardData?.Skill1Damage || '',
+        Skill1Effect: cardData?.Skill1Effect || '',
+        Skill2Name: cardData?.Skill2Name || '',
+        Skill2Energy: cardData?.Skill2Energy || '',
+        Skill2Damage: cardData?.Skill2Damage || '',
+        Skill2Effect: cardData?.Skill2Effect || '',
+        Weakness: cardData?.Weakness || '',
+        WeaknessType: cardData?.WeaknessType || '',
+        Resistance: cardData?.Resistance || '',
+        ResistanceType: cardData?.ResistanceType || '',
+        RetreatCost: cardData?.RetreatCost || '',
+        CollectorNumber: cardData?.CollectorNumber || '',
+        Rarity: cardData?.Rarity || '',
+        RegulationMark: cardData?.RegulationMark || '',
+        ExpansionName: expansionName,
+        ExpansionCode: cardData?.ExpansionCode || '',
+        Illustrator: cardData?.Illustrator || '',
+        Artist: cardData?.Artist || '',
+        SpecialTag: cardData?.SpecialTag || '',
+        Evolution: cardData?.Evolution || '',
+        PrimaryEffectType: cardData?.PrimaryEffectType || '',
+        SpecialEffectType: cardData?.SpecialEffectType || '',
+        AbilityStats: cardData?.AbilityStats || '',
+        Tier: cardData?.Tier || '',
+        Score: cardData?.Score || '',
+        ScoreBreakdown: cardData?.ScoreBreakdown || '',
+        OriginalImageURL: cardData?.OriginalImageURL || '',
         marketPrices: sortedPrices,
         averagePrice: avgPrice,
         priceChange,
         priceUpdated: sortedPrices[0]?.updatedAt
       };
+
+      marketCards.push(marketCard);
     });
 
+    console.log('Debug: total market cards created:', marketCards.length);
+
+    // Filter by search term
+    const filteredCards = marketCards.filter(card =>
+      card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      card.ExpansionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      card.CardType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      card.CardID.toString().includes(searchTerm)
+    );
+
     // Sort the results
-    return marketCards.sort((a, b) => {
+    return filteredCards.sort((a, b) => {
       switch (sortBy) {
         case 'price-high':
           return (b.averagePrice || 0) - (a.averagePrice || 0);
