@@ -36,8 +36,7 @@ const expansionMappings = {
   'SV3': 'sv3f',
   'SV2a': 'sv2af',
   'SV2': 'sv2f',
-  'SV1a': 'sv1af',
-  'SV1': 'sv1f'
+  'SV1a': 'sv1af'
 };
 
 async function loadCardMappings() {
@@ -148,179 +147,191 @@ async function searchChineseExpansions() {
   const chineseCards = [];
   
   for (const [csvCode, chineseCode] of Object.entries(expansionMappings)) {
-    const url = `https://beehivetcg.com/collections/${chineseCode}`;
-    console.log(`\n🔍 Checking: ${url} (CSV: ${csvCode})`);
-    
-    try {
-      const response = await axios.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-      });
-      
-      console.log(`📡 Response status: ${response.status}`);
-      console.log(`📄 Content length: ${response.data.length} characters`);
-      
-      const $ = cheerio.load(response.data);
-      
-      // Check various selectors for card links
-      const productLinks = $('a[href*="/products/"]');
-      console.log(`🔗 Found ${productLinks.length} product links`);
-      
-      if (productLinks.length > 0) {
-        console.log(`   📋 Parsing ${productLinks.length} products for Chinese cards...`);
-        
-        // 🔴 BREAKPOINT: Before processing product links
-        console.log(`🔴 DEBUG: Processing expansion ${chineseCode} with ${productLinks.length} products`);
-        debugger;
-      }
-      
-      let expansionMatchedCards = 0;
-      let expansionProcessedCards = 0;
-      const maxProcessWithoutMatch = 10; // Stop after processing 10 cards without any matches
-      
-      productLinks.each((index, element) => {
-        const $link = $(element);
-        const href = $link.attr('href');
-        const text = $link.text().trim();
-        
-        // Debug: Show first few links
-        if (index < 3) {
-          console.log(`   🔗 Link ${index + 1}: ${href} - "${text}"`);
-        }
-        
-        // Check if text contains Chinese characters
-        if (containsChinese(text)) {
-          expansionProcessedCards++;
-          const fullUrl = href.startsWith('http') ? href : `https://beehivetcg.com${href}`;
-          
-          // Extract card ID from URL - try multiple patterns
-          let cardId = null;
-          
-          // Pattern 1: /hk{number} at end of URL
-          const hkMatch = href.match(/\/hk(\d+)$/);
-          if (hkMatch) {
-            cardId = hkMatch[1];
-            console.log(`   🔍 Found HK pattern WebCardID: ${cardId}`);
+    console.log(`\n🔍 Checking expansion: ${chineseCode} (CSV: ${csvCode})`);
+
+    let expansionTotalCards = 0;
+    let expansionMatchedCards = 0;
+    let page = 1;
+    const maxPages = 10; // Maximum pages to check per expansion
+
+    while (page <= maxPages) {
+      const url = `https://beehivetcg.com/collections/${chineseCode}?page=${page}`;
+      console.log(`\n� Page ${page}: ${url}`);
+
+      try {
+        const response = await axios.get(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
           }
-          
-          // Pattern 2: Check if URL contains any numbers that could be WebCardID
-          const urlNumbers = href.match(/(\d+)/g);
-          if (urlNumbers && urlNumbers.length > 0) {
-            console.log(`   🔍 URL contains numbers: ${urlNumbers.join(', ')}`);
-            // Try to match any of these numbers with CSV WebCardIDs
-            for (const num of urlNumbers) {
-              if (cardMapping[num]) {
-                cardId = num;
-                console.log(`   ✅ Found matching WebCardID in CSV: ${cardId}`);
-                break;
+        });
+
+        console.log(`📡 Response status: ${response.status}`);
+        console.log(`📄 Content length: ${response.data.length} characters`);
+
+        const $ = cheerio.load(response.data);
+
+        // Check various selectors for card links
+        const productLinks = $('a[href*="/products/"]');
+        console.log(`🔗 Found ${productLinks.length} product links on page ${page}`);
+
+        // If no products found on this page, we've reached the end
+        if (productLinks.length === 0) {
+          console.log(`   ⏹️ No more products found on page ${page}, stopping pagination for ${chineseCode}`);
+          break;
+        }
+
+        console.log(`   📋 Parsing ${productLinks.length} products for Chinese cards...`);
+
+        // 🔴 BREAKPOINT: Before processing product links
+        console.log(`🔴 DEBUG: Processing expansion ${chineseCode} page ${page} with ${productLinks.length} products`);
+        debugger;
+
+        let pageProcessedCards = 0;
+        const maxProcessWithoutMatch = 20; // Allow more cards per page before early exit
+
+        productLinks.each((index, element) => {
+          const $link = $(element);
+          const href = $link.attr('href');
+          const text = $link.text().trim();
+
+          // Debug: Show first few links per page
+          if (index < 3) {
+            console.log(`   🔗 Link ${index + 1}: ${href} - "${text}"`);
+          }
+
+          // Check if text contains Chinese characters
+          if (containsChinese(text)) {
+            pageProcessedCards++;
+            expansionTotalCards++;
+            const fullUrl = href.startsWith('http') ? href : `https://beehivetcg.com${href}`;
+
+            // Extract card ID from URL - try multiple patterns
+            let cardId = null;
+
+            // Pattern 1: /hk{number} at end of URL
+            const hkMatch = href.match(/\/hk(\d+)$/);
+            if (hkMatch) {
+              cardId = hkMatch[1];
+              console.log(`   🔍 Found HK pattern WebCardID: ${cardId}`);
+            }
+
+            // Pattern 2: Check if URL contains any numbers that could be WebCardID
+            const urlNumbers = href.match(/(\d+)/g);
+            if (urlNumbers && urlNumbers.length > 0) {
+              console.log(`   🔍 URL contains numbers: ${urlNumbers.join(', ')}`);
+              // Try to match any of these numbers with CSV WebCardIDs
+              for (const num of urlNumbers) {
+                if (cardMapping[num]) {
+                  cardId = num;
+                  console.log(`   ✅ Found matching WebCardID in CSV: ${cardId}`);
+                  break;
+                }
               }
             }
-          }
-          
-          // Extract expansion and card number from Chinese card name
-          // Format: "SV11WF 174/086 萊希拉姆ex BWR"
-          let extractedExpansion = null;
-          let extractedCardNumber = null;
-          
-          const cardNameMatch = text.match(/^(\w+)\s+(\d+)\/(\d+)\s+(.+) (\w+)$/);
-          if (cardNameMatch) {
-            const chineseExpansionCode = cardNameMatch[1]; // e.g., "SV11WF"
-            const cardNumber = cardNameMatch[2]; // e.g., "174"
-            const totalCards = cardNameMatch[3]; // e.g., "086"
-            const cardName = cardNameMatch[4]; // e.g., "萊希拉姆ex"
-            const rarity = cardNameMatch[5]; // e.g., "BWR"
-            // Map Chinese expansion to CSV expansion
-            extractedExpansion = reverseExpansionMappings[chineseCode]; // e.g., "SV11W"
-            extractedCardNumber = cardNumber;
-            
-            console.log(`   🎯 Parsed card: Expansion=${extractedExpansion}, Number=${extractedCardNumber}, Name=${cardName}`);
-          }
-          
-          // Try to match with CSV data using multiple strategies
-          let matchedCard = null;
-          
-          // Strategy 1: Direct card ID match (legacy)
-          if (cardId && cardMapping[cardId]) {
-            // 🔴 BREAKPOINT: WebCardID match found
-            console.log(`🔴 DEBUG: WebCardID match found! CardID=${cardId}`);
-            debugger;
-            
-            matchedCard = cardMapping[cardId];
-            expansionMatchedCards++;
-            console.log(`   ✅ Direct WebCardID match found: ${cardId} -> ${matchedCard.name}`);
-          }
-          
-          // Strategy 2: Expansion + Card Number match (primary method)
-          if (!matchedCard && extractedExpansion && extractedCardNumber) {
-            const expansionKey = `${extractedExpansion}_${extractedCardNumber}`;
-            if (cardMapping[expansionKey]) {
-              // 🔴 BREAKPOINT: Expansion+Number match found
-              console.log(`🔴 DEBUG: Expansion+Number match found! Key=${expansionKey}`);
-              debugger;
-              
-              matchedCard = cardMapping[expansionKey];
-              expansionMatchedCards++;
-              console.log(`   ✅ Expansion+Number match found: ${expansionKey} -> ${matchedCard.name}`);
-            } else {
-              console.log(`   ❌ No match for expansion+number: ${expansionKey}`);
-            }
-          }
-          
-          // Strategy 3: Name-based matching (fallback)
-          if (!matchedCard) {
+
+            // Extract expansion and card number from Chinese card name
+            // Format: "SV11WF 174/086 萊希拉姆ex BWR"
+            let extractedExpansion = null;
+            let extractedCardNumber = null;
+
+            const cardNameMatch = text.match(/^(\w+)\s+(\d+)\/(\d+)\s+(.+) (\w+)$/);
             if (cardNameMatch) {
               const chineseExpansionCode = cardNameMatch[1]; // e.g., "SV11WF"
               const cardNumber = cardNameMatch[2]; // e.g., "174"
               const totalCards = cardNameMatch[3]; // e.g., "086"
               const cardName = cardNameMatch[4]; // e.g., "萊希拉姆ex"
-              if (nameMapping[cardName]) {
-                matchedCard = nameMapping[cardName];
+              const rarity = cardNameMatch[5]; // e.g., "BWR"
+              // Map Chinese expansion to CSV expansion
+              extractedExpansion = reverseExpansionMappings[chineseCode]; // e.g., "SV11W"
+              extractedCardNumber = cardNumber;
+
+              console.log(`   🎯 Parsed card: Expansion=${extractedExpansion}, Number=${extractedCardNumber}, Name=${cardName}`);
+            }
+
+            // Try to match with CSV data using multiple strategies
+            let matchedCard = null;
+
+
+            // Strategy 2: Expansion + Card Number match (primary method)
+            if (!matchedCard && extractedExpansion && extractedCardNumber) {
+              const expansionKey = `${extractedExpansion}_${extractedCardNumber.replaceAll("0","")}`;
+              if (cardMapping[expansionKey]) {
+                // 🔴 BREAKPOINT: Expansion+Number match found
+                console.log(`🔴 DEBUG: Expansion+Number match found! Key=${expansionKey}`);
+                debugger;
+
+                matchedCard = cardMapping[expansionKey];
                 expansionMatchedCards++;
-                console.log(`   ✅ Name match found: "${cardName}" -> ${matchedCard.name}`);
+                console.log(`   ✅ Expansion+Number match found: ${expansionKey} -> ${matchedCard.name}`);
               } else {
-                console.log(`   ❌ Name match not found for: "${cardName}"`);
+                console.log(`   ❌ No match for expansion+number: ${expansionKey}`);
               }
             }
+
+            // Strategy 3: Name-based matching (fallback)
+            if (!matchedCard) {
+              if (cardNameMatch) {
+                const chineseExpansionCode = cardNameMatch[1]; // e.g., "SV11WF"
+                const cardNumber = cardNameMatch[2]; // e.g., "174"
+                const totalCards = cardNameMatch[3]; // e.g., "086"
+                const cardName = cardNameMatch[4]; // e.g., "萊希拉姆ex"
+                if (nameMapping[cardName]) {
+                  matchedCard = nameMapping[cardName];
+                  expansionMatchedCards++;
+                  console.log(`   ✅ Name match found: "${cardName}" -> ${matchedCard.name}`);
+                } else {
+                  console.log(`   ❌ Name match not found for: "${cardName}"`);
+                }
+              }
+            }
+
+            chineseCards.push({
+              name: text,
+              url: fullUrl,
+              expansion: csvCode,
+              chineseExpansion: chineseCode,
+              cardId: cardId,
+              matched: !!matchedCard,
+              csvData: matchedCard
+            });
+
+            console.log(`   🎴 Chinese card found: ${text} (${fullUrl}) [Matched: ${!!matchedCard}]`);
+
+            // Early exit if no matches found after processing several cards on this page
+            if (pageProcessedCards >= maxProcessWithoutMatch && (expansionMatchedCards === 0 || (pageProcessedCards - (expansionMatchedCards * 2)) > maxProcessWithoutMatch)) {
+              // 🔴 BREAKPOINT: Early exit triggered
+              console.log(`🔴 DEBUG: Early exit triggered on page ${page} - processed ${pageProcessedCards} cards, found ${expansionMatchedCards} total matches`);
+              debugger;
+
+              console.log(`   ⏭️ No matches found in first ${maxProcessWithoutMatch} cards on page ${page}, skipping rest of expansion`);
+              return false; // Break out of .each() loop
+            }
           }
-          
-          chineseCards.push({
-            name: text,
-            url: fullUrl,
-            expansion: csvCode,
-            chineseExpansion: chineseCode,
-            cardId: cardId,
-            matched: !!matchedCard,
-            csvData: matchedCard
-          });
-          
-          console.log(`   🎴 Chinese card found: ${text} (${fullUrl}) [Matched: ${!!matchedCard}]`);
-          
-          // Early exit if no matches found after processing several cards
-          if (expansionProcessedCards >= maxProcessWithoutMatch && expansionMatchedCards === 0) {
-            // 🔴 BREAKPOINT: Early exit triggered
-            console.log(`🔴 DEBUG: Early exit triggered - processed ${expansionProcessedCards} cards, found ${expansionMatchedCards} matches`);
-            debugger;
-            
-            console.log(`   ⏭️ No matches found in first ${maxProcessWithoutMatch} cards, skipping rest of expansion`);
-            return false; // Break out of .each() loop
-          }
-        }
-      });
-      
-      const expansionCards = chineseCards.filter(c => c.chineseExpansion === chineseCode);
-      console.log(`✅ Completed scanning ${chineseCode} - Found ${expansionCards.length} Chinese cards (${expansionMatchedCards} matched)`);
-      
-      if (expansionMatchedCards === 0) {
-        console.log(`   ⚠️ No matches found for ${chineseCode}, but continuing to next expansion`);
+        });
+
+        console.log(`✅ Completed page ${page} for ${chineseCode} - Found ${pageProcessedCards} Chinese cards (${expansionMatchedCards} total matched so far)`);
+
+        // Move to next page
+        page++;
+
+        // Small delay to be polite to the server
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+      } catch (error) {
+        console.error(`❌ Error fetching page ${page} for ${url}:`, error.message);
+        break; // Stop pagination on error
       }
-      
-      // Small delay to be polite to the server
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-    } catch (error) {
-      console.error(`❌ Error fetching ${url}:`, error.message);
     }
+
+    const expansionCards = chineseCards.filter(c => c.chineseExpansion === chineseCode);
+    console.log(`🏁 Completed all pages for ${chineseCode} - Total: ${expansionCards.length} Chinese cards (${expansionMatchedCards} matched)`);
+
+    if (expansionMatchedCards === 0) {
+      console.log(`   ⚠️ No matches found for ${chineseCode}, but continuing to next expansion`);
+    }
+
+    // Small delay between expansions
+    await new Promise(resolve => setTimeout(resolve, 2000));
   }
   
   console.log(`\n📊 Final Results:`);
