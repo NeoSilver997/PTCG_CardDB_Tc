@@ -8,6 +8,14 @@ const nameMapping = {};
 
 // SV-only expansion mappings for Chinese BeehiveTCG
 const expansionMappings = {
+  'MBD': 'mbf',
+  'MBG': 'mbf',
+  'M1S': 'm1sf',
+  'M1L': 'm1lf',
+  'M': 'promof-m',
+  'SVOF': 'svof',
+  'SVOM': 'svof',
+  'SVTG': 'svtgf',
     'SV11W': 'sv11wf',
     'SV11B': 'sv11bf',
    'SV10': 'sv10f',
