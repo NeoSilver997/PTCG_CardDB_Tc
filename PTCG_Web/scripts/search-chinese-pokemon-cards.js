@@ -139,6 +139,10 @@ async function searchChineseExpansions() {
         console.log(`   📋 Parsing ${productLinks.length} products for Chinese cards...`);
       }
       
+      let expansionMatchedCards = 0;
+      let expansionProcessedCards = 0;
+      const maxProcessWithoutMatch = 10; // Stop after processing 10 cards without any matches
+      
       productLinks.each((index, element) => {
         const $link = $(element);
         const href = $link.attr('href');
@@ -151,6 +155,7 @@ async function searchChineseExpansions() {
         
         // Check if text contains Chinese characters
         if (containsChinese(text)) {
+          expansionProcessedCards++;
           const fullUrl = href.startsWith('http') ? href : `https://beehivetcg.com${href}`;
           
           // Extract card ID from URL
@@ -167,6 +172,7 @@ async function searchChineseExpansions() {
           // Strategy 1: Direct card ID match
           if (cardId && cardMapping[cardId]) {
             matchedCard = cardMapping[cardId];
+            expansionMatchedCards++;
             console.log(`   ✅ Direct match found: ${cardId} -> ${matchedCard.name}`);
           }
           
@@ -175,6 +181,7 @@ async function searchChineseExpansions() {
             const cleanName = text.replace(/[^\w\s]/g, '').toLowerCase();
             if (nameMapping[cleanName]) {
               matchedCard = nameMapping[cleanName];
+              expansionMatchedCards++;
               console.log(`   ✅ Name match found: "${cleanName}" -> ${matchedCard.name}`);
             }
           }
@@ -190,10 +197,21 @@ async function searchChineseExpansions() {
           });
           
           console.log(`   🎴 Chinese card found: ${text} (${fullUrl}) [Matched: ${!!matchedCard}]`);
+          
+          // Early exit if no matches found after processing several cards
+          if (expansionProcessedCards >= maxProcessWithoutMatch && expansionMatchedCards === 0) {
+            console.log(`   ⏭️ No matches found in first ${maxProcessWithoutMatch} cards, skipping rest of expansion`);
+            return false; // Break out of .each() loop
+          }
         }
       });
       
-      console.log(`✅ Completed scanning ${chineseCode} - Found ${chineseCards.filter(c => c.chineseExpansion === chineseCode).length} Chinese cards`);
+      const expansionCards = chineseCards.filter(c => c.chineseExpansion === chineseCode);
+      console.log(`✅ Completed scanning ${chineseCode} - Found ${expansionCards.length} Chinese cards (${expansionMatchedCards} matched)`);
+      
+      if (expansionMatchedCards === 0) {
+        console.log(`   ⚠️ No matches found for ${chineseCode}, but continuing to next expansion`);
+      }
       
       // Small delay to be polite to the server
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -222,6 +240,10 @@ async function searchChineseExpansions() {
     console.log(`   ${expansion}: ${cards.length} cards (${cards.filter(c => c.matched).length} matched)`);
   });
   
+  // Start price downloading for found cards
+  console.log(`\n💰 Starting price download for ${chineseCards.length} Chinese cards...`);
+  await downloadPrices(chineseCards);
+  
   // Save results
   const results = {
     summary: {
@@ -236,6 +258,99 @@ async function searchChineseExpansions() {
   
   fs.writeFileSync('market-prices.json', JSON.stringify(results, null, 2));
   console.log(`\n💾 Results saved to market-prices.json`);
+}
+
+async function downloadPrices(chineseCards) {
+  console.log(`\n🏪 Downloading prices for ${chineseCards.length} cards...`);
+  
+  let successCount = 0;
+  let errorCount = 0;
+  
+  for (let i = 0; i < chineseCards.length; i++) {
+    const card = chineseCards[i];
+    console.log(`\n📄 [${i + 1}/${chineseCards.length}] Processing: ${card.name}`);
+    
+    try {
+      const response = await axios.get(card.url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      
+      const $ = cheerio.load(response.data);
+      
+      // Try multiple selectors for price
+      let price = null;
+      const priceSelectors = [
+        '.price',
+        '.product-price',
+        '.money',
+        '.price-item',
+        '[class*="price"]',
+        '[class*="money"]'
+      ];
+      
+      for (const selector of priceSelectors) {
+        const priceElement = $(selector).first();
+        if (priceElement.length) {
+          const priceText = priceElement.text().trim();
+          const priceMatch = priceText.match(/HK\$?([\d,]+(?:\.\d+)?)/i);
+          if (priceMatch) {
+            price = parseFloat(priceMatch[1].replace(/,/g, ''));
+            break;
+          }
+        }
+      }
+      
+      // Try to find stock/availability
+      let stock = null;
+      const stockSelectors = [
+        '.stock',
+        '.inventory',
+        '.quantity',
+        '[class*="stock"]',
+        '[class*="inventory"]'
+      ];
+      
+      for (const selector of stockSelectors) {
+        const stockElement = $(selector).first();
+        if (stockElement.length) {
+          const stockText = stockElement.text().trim();
+          const stockMatch = stockText.match(/(\d+)/);
+          if (stockMatch) {
+            stock = parseInt(stockMatch[1]);
+            break;
+          }
+        }
+      }
+      
+      // Update card with price information
+      card.price = price;
+      card.currency = 'HKD';
+      card.stock = stock;
+      card.priceUpdated = new Date().toISOString();
+      
+      if (price) {
+        console.log(`   💰 Price found: HK$${price}${stock !== null ? ` (Stock: ${stock})` : ''}`);
+        successCount++;
+      } else {
+        console.log(`   ❌ No price found`);
+        errorCount++;
+      }
+      
+      // Delay between requests
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+    } catch (error) {
+      console.log(`   ❌ Error fetching price: ${error.message}`);
+      errorCount++;
+    }
+  }
+  
+  console.log(`\n📊 Price Download Summary:`);
+  console.log(`   ✅ Successfully downloaded: ${successCount} prices`);
+  console.log(`   ❌ Failed to download: ${errorCount} prices`);
+  console.log(`   📈 Success rate: ${((successCount / chineseCards.length) * 100).toFixed(1)}%`);
 }
 
 function containsChinese(text) {
