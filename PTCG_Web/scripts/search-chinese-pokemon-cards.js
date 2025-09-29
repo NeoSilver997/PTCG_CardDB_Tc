@@ -2,7 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
 
-const CSV_FILE = '../card_price_tracker.csv';
+const CSV_FILE = '../source/cards_output_all_mega.csv';
 const cardMapping = {};
 const nameMapping = {};
 
@@ -45,11 +45,19 @@ async function loadCardMappings() {
       processedLines++;
       if (index === 0) return; // Skip header
       
-      const [name, card_id, expansion, rarity, price, average, lowest, image_url] = line.split(',').map(s => s.trim());
+      const columns = line.split(',').map(s => s.trim());
+      const name = columns[0]; // Name
+      const card_id = columns[2]; // WebCardID
+      const collector_number = columns[22]; // CollectorNumber
+      const expansion = columns[26]; // ExpansionCode
+      const rarity = columns[23]; // Rarity
       
       // Debug: Show first few lines being processed
       if (index <= 5) {
-        console.log(`🔍 Processing line ${index}: ${name} | ${card_id} | ${expansion}`);
+        console.log(`🔍 Processing line ${index}: ${name} | WebCardID: ${card_id} | CollectorNumber: ${collector_number} | ExpansionCode: ${expansion}`);
+        if (index === 1) {
+          console.log(`   📋 CSV columns: Name=${columns[0]}, WebCardID=${columns[2]}, CollectorNumber=${columns[22]}, ExpansionCode=${columns[26]}, Rarity=${columns[23]}`);
+        }
       }
       
       // Filter for SV series only
@@ -65,12 +73,25 @@ async function loadCardMappings() {
             name: name,
             expansion: expansion,
             rarity: rarity,
-            id: card_id
+            id: card_id,
+            collectorNumber: collector_number
+          };
+        }
+        
+        // Create mapping by expansion + collector number
+        if (expansion && collector_number) {
+          const expansionKey = `${expansion}_${collector_number}`;
+          cardMapping[expansionKey] = {
+            name: name,
+            expansion: expansion,
+            rarity: rarity,
+            id: card_id,
+            collectorNumber: collector_number
           };
         }
         
         if (name) {
-          nameMapping[name.toLowerCase()] = {
+          nameMapping[name] = {
             name: name,
             expansion: expansion,
             rarity: rarity,
@@ -113,6 +134,9 @@ async function searchChineseExpansions() {
   console.log('\n🔍 Searching for Chinese card collections...');
   console.log(`🎯 Filtering for SV series only (${Object.keys(expansionMappings).length} expansions)`);
   
+  // 🔴 BREAKPOINT: Card scanning starting
+  debugger;
+  
   const chineseCards = [];
   
   for (const [csvCode, chineseCode] of Object.entries(expansionMappings)) {
@@ -137,6 +161,10 @@ async function searchChineseExpansions() {
       
       if (productLinks.length > 0) {
         console.log(`   📋 Parsing ${productLinks.length} products for Chinese cards...`);
+        
+        // 🔴 BREAKPOINT: Before processing product links
+        console.log(`🔴 DEBUG: Processing expansion ${chineseCode} with ${productLinks.length} products`);
+        debugger;
       }
       
       let expansionMatchedCards = 0;
@@ -158,31 +186,93 @@ async function searchChineseExpansions() {
           expansionProcessedCards++;
           const fullUrl = href.startsWith('http') ? href : `https://beehivetcg.com${href}`;
           
-          // Extract card ID from URL
-          const cardIdMatch = href.match(/\/hk(\d+)$/);
+          // Extract card ID from URL - try multiple patterns
           let cardId = null;
           
-          if (cardIdMatch) {
-            cardId = cardIdMatch[1];
+          // Pattern 1: /hk{number} at end of URL
+          const hkMatch = href.match(/\/hk(\d+)$/);
+          if (hkMatch) {
+            cardId = hkMatch[1];
+            console.log(`   🔍 Found HK pattern WebCardID: ${cardId}`);
+          }
+          
+          // Pattern 2: Check if URL contains any numbers that could be WebCardID
+          const urlNumbers = href.match(/(\d+)/g);
+          if (urlNumbers && urlNumbers.length > 0) {
+            console.log(`   🔍 URL contains numbers: ${urlNumbers.join(', ')}`);
+            // Try to match any of these numbers with CSV WebCardIDs
+            for (const num of urlNumbers) {
+              if (cardMapping[num]) {
+                cardId = num;
+                console.log(`   ✅ Found matching WebCardID in CSV: ${cardId}`);
+                break;
+              }
+            }
+          }
+          
+          // Extract expansion and card number from Chinese card name
+          // Format: "SV11WF 174/086 萊希拉姆ex BWR"
+          let extractedExpansion = null;
+          let extractedCardNumber = null;
+          
+          const cardNameMatch = text.match(/^(\w+)\s+(\d+)\/(\d+)\s+(.+) (\w+)$/);
+          if (cardNameMatch) {
+            const chineseExpansionCode = cardNameMatch[1]; // e.g., "SV11WF"
+            const cardNumber = cardNameMatch[2]; // e.g., "174"
+            const totalCards = cardNameMatch[3]; // e.g., "086"
+            const cardName = cardNameMatch[4]; // e.g., "萊希拉姆ex"
+            const rarity = cardNameMatch[5]; // e.g., "BWR"
+            // Map Chinese expansion to CSV expansion
+            extractedExpansion = reverseExpansionMappings[chineseCode]; // e.g., "SV11W"
+            extractedCardNumber = cardNumber;
+            
+            console.log(`   🎯 Parsed card: Expansion=${extractedExpansion}, Number=${extractedCardNumber}, Name=${cardName}`);
           }
           
           // Try to match with CSV data using multiple strategies
           let matchedCard = null;
           
-          // Strategy 1: Direct card ID match
+          // Strategy 1: Direct card ID match (legacy)
           if (cardId && cardMapping[cardId]) {
+            // 🔴 BREAKPOINT: WebCardID match found
+            console.log(`🔴 DEBUG: WebCardID match found! CardID=${cardId}`);
+            debugger;
+            
             matchedCard = cardMapping[cardId];
             expansionMatchedCards++;
-            console.log(`   ✅ Direct match found: ${cardId} -> ${matchedCard.name}`);
+            console.log(`   ✅ Direct WebCardID match found: ${cardId} -> ${matchedCard.name}`);
           }
           
-          // Strategy 2: Name-based matching
-          if (!matchedCard) {
-            const cleanName = text.replace(/[^\w\s]/g, '').toLowerCase();
-            if (nameMapping[cleanName]) {
-              matchedCard = nameMapping[cleanName];
+          // Strategy 2: Expansion + Card Number match (primary method)
+          if (!matchedCard && extractedExpansion && extractedCardNumber) {
+            const expansionKey = `${extractedExpansion}_${extractedCardNumber}`;
+            if (cardMapping[expansionKey]) {
+              // 🔴 BREAKPOINT: Expansion+Number match found
+              console.log(`🔴 DEBUG: Expansion+Number match found! Key=${expansionKey}`);
+              debugger;
+              
+              matchedCard = cardMapping[expansionKey];
               expansionMatchedCards++;
-              console.log(`   ✅ Name match found: "${cleanName}" -> ${matchedCard.name}`);
+              console.log(`   ✅ Expansion+Number match found: ${expansionKey} -> ${matchedCard.name}`);
+            } else {
+              console.log(`   ❌ No match for expansion+number: ${expansionKey}`);
+            }
+          }
+          
+          // Strategy 3: Name-based matching (fallback)
+          if (!matchedCard) {
+            if (cardNameMatch) {
+              const chineseExpansionCode = cardNameMatch[1]; // e.g., "SV11WF"
+              const cardNumber = cardNameMatch[2]; // e.g., "174"
+              const totalCards = cardNameMatch[3]; // e.g., "086"
+              const cardName = cardNameMatch[4]; // e.g., "萊希拉姆ex"
+              if (nameMapping[cardName]) {
+                matchedCard = nameMapping[cardName];
+                expansionMatchedCards++;
+                console.log(`   ✅ Name match found: "${cardName}" -> ${matchedCard.name}`);
+              } else {
+                console.log(`   ❌ Name match not found for: "${cardName}"`);
+              }
             }
           }
           
@@ -200,6 +290,10 @@ async function searchChineseExpansions() {
           
           // Early exit if no matches found after processing several cards
           if (expansionProcessedCards >= maxProcessWithoutMatch && expansionMatchedCards === 0) {
+            // 🔴 BREAKPOINT: Early exit triggered
+            console.log(`🔴 DEBUG: Early exit triggered - processed ${expansionProcessedCards} cards, found ${expansionMatchedCards} matches`);
+            debugger;
+            
             console.log(`   ⏭️ No matches found in first ${maxProcessWithoutMatch} cards, skipping rest of expansion`);
             return false; // Break out of .each() loop
           }
@@ -242,6 +336,11 @@ async function searchChineseExpansions() {
   
   // Start price downloading for found cards
   console.log(`\n💰 Starting price download for ${chineseCards.length} Chinese cards...`);
+  
+  // 🔴 BREAKPOINT: Before price download
+  console.log(`🔴 DEBUG: About to start price download for ${chineseCards.length} cards`);
+  debugger;
+  
   await downloadPrices(chineseCards);
   
   // Save results
@@ -262,6 +361,10 @@ async function searchChineseExpansions() {
 
 async function downloadPrices(chineseCards) {
   console.log(`\n🏪 Downloading prices for ${chineseCards.length} cards...`);
+  
+  // 🔴 BREAKPOINT: Price download starting
+  console.log(`🔴 DEBUG: Price download function started`);
+  debugger;
   
   let successCount = 0;
   let errorCount = 0;
@@ -342,6 +445,10 @@ async function downloadPrices(chineseCards) {
       await new Promise(resolve => setTimeout(resolve, 500));
       
     } catch (error) {
+      // 🔴 BREAKPOINT: Price download error
+      console.log(`🔴 DEBUG: Error downloading price for ${card.name}: ${error.message}`);
+      debugger;
+      
       console.log(`   ❌ Error fetching price: ${error.message}`);
       errorCount++;
     }
@@ -357,5 +464,11 @@ function containsChinese(text) {
   return /[\u4e00-\u9fff]/.test(text);
 }
 
-// Run the search
-searchChineseExpansions().catch(console.error);
+// Run the search with enhanced error handling
+searchChineseExpansions().catch(error => {
+  console.error('🔴 FATAL ERROR occurred:');
+  console.error('Error message:', error.message);
+  console.error('Error stack:', error.stack);
+  console.error('Error details:', error);
+  process.exit(1);
+});
