@@ -34,9 +34,13 @@ const expansionMappings = {
   'SV4': 'sv4f',
   'SV3a': 'sv3af',
   'SV3': 'sv3f',
+  'SV2D': 'sv2df',
+  'SV2P': 'sv2pf',
   'SV2a': 'sv2af',
   'SV2': 'sv2f',
-  'SV1a': 'sv1af'
+  'SV1a': 'sv1af',
+  'SV1V': 'sv1vf',
+  'SV1S': 'sv1sf'
 };
 
 async function loadCardMappings() {
