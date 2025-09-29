@@ -209,47 +209,101 @@ async function searchChineseExpansions() {
             expansionTotalCards++;
             const fullUrl = href.startsWith('http') ? href : `https://beehivetcg.com${href}`;
 
+            // Extract price, stock, and qty from the list page first
+            let listPrice = null;
+            let listStock = null;
+            let listQty = null;
+
+            // Find the parent container of this product link to extract price/stock
+            const $productContainer = $link.closest('.collection-product-card');
+
+            if ($productContainer.length > 0) {
+              // Extract price from .product-price span
+              const $priceElement = $productContainer.find('.product-price').first();
+              if ($priceElement.length > 0) {
+                const priceText = $priceElement.text().trim();
+                const priceMatch = priceText.match(/HK\$?([\d,]+(?:\.\d+)?)/i);
+                if (priceMatch) {
+                  listPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
+                  console.log(`   💰 List page price found: HK$${listPrice}`);
+                }
+              }
+
+              // Extract stock from .real-qty span (contains just the number)
+              const $stockElement = $productContainer.find('.real-qty').first();
+              if ($stockElement.length > 0) {
+                const stockText = $stockElement.text().trim();
+                const stockNum = parseInt(stockText, 10);
+                if (!isNaN(stockNum)) {
+                  listStock = stockNum;
+                  listQty = stockNum;
+                  console.log(`   📦 List page stock found: ${listStock}`);
+                }
+              }
+
+              // Check for "Add to Cart" button availability
+              const $addToCart = $productContainer.find('button.CartBtn').filter(function() {
+                return $(this).text().trim() === 'Add to Cart';
+              });
+
+              if ($addToCart.length > 0) {
+                console.log(`   📦 List page: Add to Cart button found, item available`);
+              } else {
+                console.log(`   📦 List page: No Add to Cart button found`);
+                // If no Add to Cart button, item might be out of stock
+                if (listStock === null) {
+                  listStock = 0;
+                  listQty = 0;
+                }
+              }
+            } else {
+              console.log(`   ⚠️ Could not find product container for price/stock extraction`);
+            }
+
             // Extract card ID from URL - try multiple patterns
             let cardId = null;
 
-            // Pattern 1: /hk{number} at end of URL
-            const hkMatch = href.match(/\/hk(\d+)$/);
-            if (hkMatch) {
-              cardId = hkMatch[1];
-              console.log(`   🔍 Found HK pattern WebCardID: ${cardId}`);
-            }
+            
 
-            // Pattern 2: Check if URL contains any numbers that could be WebCardID
-            const urlNumbers = href.match(/(\d+)/g);
-            if (urlNumbers && urlNumbers.length > 0) {
-              console.log(`   🔍 URL contains numbers: ${urlNumbers.join(', ')}`);
-              // Try to match any of these numbers with CSV WebCardIDs
-              for (const num of urlNumbers) {
-                if (cardMapping[num]) {
-                  cardId = num;
-                  console.log(`   ✅ Found matching WebCardID in CSV: ${cardId}`);
-                  break;
-                }
-              }
-            }
+            
 
             // Extract expansion and card number from Chinese card name
             // Format: "SV11WF 174/086 萊希拉姆ex BWR"
+            // Special formats: "[鏡面閃版-精靈球] SV11WF 174/086 萊希拉姆ex BWR"
             let extractedExpansion = null;
             let extractedCardNumber = null;
+            let processedRarity = null;
 
-            const cardNameMatch = text.match(/^(\w+)\s+(\d+)\/(\d+)\s+(.+) (\w+)$/);
+            // Handle special rarity variants first
+            let cleanText = text;
+            let specialRarity = '';
+
+            if (text.includes('[鏡面閃版-精靈球]')) {
+              specialRarity = ' 精靈球';
+              cleanText = text.replace('[鏡面閃版-精靈球]', '').trim();
+              console.log(`   🎯 Special rarity found: 精靈球 variant`);
+            } else if (text.includes('[鏡面閃版-大師球]')) {
+              specialRarity = ' 大師球';
+              cleanText = text.replace('[鏡面閃版-大師球]', '').trim();
+              console.log(`   🎯 Special rarity found: 大師球 variant`);
+            }
+
+            const cardNameMatch = cleanText.match(/^(\w+)\s+(\d+)\/(\d+)\s+(.+) (\w+)$/);
             if (cardNameMatch) {
               const chineseExpansionCode = cardNameMatch[1]; // e.g., "SV11WF"
               const cardNumber = cardNameMatch[2]; // e.g., "174"
               const totalCards = cardNameMatch[3]; // e.g., "086"
               const cardName = cardNameMatch[4]; // e.g., "萊希拉姆ex"
               const rarity = cardNameMatch[5]; // e.g., "BWR"
+
               // Map Chinese expansion to CSV expansion
               extractedExpansion = reverseExpansionMappings[chineseCode]; // e.g., "SV11W"
               extractedCardNumber = cardNumber;
 
-              console.log(`   🎯 Parsed card: Expansion=${extractedExpansion}, Number=${extractedCardNumber}, Name=${cardName}`);
+              // Combine rarity with special variant if present
+              processedRarity = rarity + specialRarity;
+
+              console.log(`   🎯 Parsed card: Expansion=${extractedExpansion}, Number=${extractedCardNumber}, Name=${cardName}, Rarity=${processedRarity}`);
             }
 
             // Try to match with CSV data using multiple strategies
@@ -296,7 +350,11 @@ async function searchChineseExpansions() {
               chineseExpansion: chineseCode,
               cardId: cardId,
               matched: !!matchedCard,
-              csvData: matchedCard
+              csvData: matchedCard,
+              listPrice: listPrice,
+              listStock: listStock,
+              listQty: listQty,
+              processedRarity: processedRarity
             });
 
             console.log(`   🎴 Chinese card found: ${text} (${fullUrl}) [Matched: ${!!matchedCard}]`);
@@ -384,27 +442,54 @@ async function searchChineseExpansions() {
 
 async function downloadPrices(chineseCards) {
   console.log(`\n🏪 Downloading prices for ${chineseCards.length} cards...`);
-  
-  // 🔴 BREAKPOINT: Price download starting
-  console.log(`🔴 DEBUG: Price download function started`);
-  debugger;
-  
+
+  // Count cards that already have list page data
+  const cardsWithListData = chineseCards.filter(card => card.listPrice !== null || card.listStock !== null);
+  const cardsNeedingProductPage = chineseCards.filter(card => card.listPrice === null && card.listStock === null);
+
+  console.log(`� Price data status:`);
+  console.log(`   📋 Cards with list page data: ${cardsWithListData.length}`);
+  console.log(`   🌐 Cards needing product page: ${cardsNeedingProductPage.length}`);
+
   let successCount = 0;
   let errorCount = 0;
-  
-  for (let i = 0; i < chineseCards.length; i++) {
-    const card = chineseCards[i];
-    console.log(`\n📄 [${i + 1}/${chineseCards.length}] Processing: ${card.name}`);
-    
+  let listDataUsed = 0;
+
+  // First, process cards that already have list page data
+  for (const card of cardsWithListData) {
+    console.log(`\n📄 Processing (list data): ${card.name}`);
+
+    // Use list page data directly
+    card.price = card.listPrice;
+    card.currency = 'HKD';
+    card.stock = card.listStock;
+    card.qty = card.listQty;
+    card.priceUpdated = new Date().toISOString();
+    card.priceSource = 'list_page';
+
+    if (card.price !== null) {
+      console.log(`   💰 Using list page price: HK$${card.price}${card.stock !== null ? ` (Stock: ${card.stock})` : ''}`);
+      successCount++;
+      listDataUsed++;
+    } else {
+      console.log(`   ⚠️ List page data incomplete, will check product page`);
+    }
+  }
+
+  // Then process cards that need product page data
+  for (let i = 0; i < cardsNeedingProductPage.length; i++) {
+    const card = cardsNeedingProductPage[i];
+    console.log(`\n📄 [${i + 1}/${cardsNeedingProductPage.length}] Processing (product page): ${card.name}`);
+
     try {
       const response = await axios.get(card.url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
       });
-      
+
       const $ = cheerio.load(response.data);
-      
+
       // Try multiple selectors for price
       let price = null;
       const priceSelectors = [
@@ -415,7 +500,7 @@ async function downloadPrices(chineseCards) {
         '[class*="price"]',
         '[class*="money"]'
       ];
-      
+
       for (const selector of priceSelectors) {
         const priceElement = $(selector).first();
         if (priceElement.length) {
@@ -427,9 +512,10 @@ async function downloadPrices(chineseCards) {
           }
         }
       }
-      
+
       // Try to find stock/availability
       let stock = null;
+      let qty = null;
       const stockSelectors = [
         '.stock',
         '.inventory',
@@ -437,7 +523,7 @@ async function downloadPrices(chineseCards) {
         '[class*="stock"]',
         '[class*="inventory"]'
       ];
-      
+
       for (const selector of stockSelectors) {
         const stockElement = $(selector).first();
         if (stockElement.length) {
@@ -445,40 +531,41 @@ async function downloadPrices(chineseCards) {
           const stockMatch = stockText.match(/(\d+)/);
           if (stockMatch) {
             stock = parseInt(stockMatch[1]);
+            qty = stock;
             break;
           }
         }
       }
-      
+
       // Update card with price information
       card.price = price;
       card.currency = 'HKD';
       card.stock = stock;
+      card.qty = qty;
       card.priceUpdated = new Date().toISOString();
-      
+      card.priceSource = 'product_page';
+
       if (price) {
-        console.log(`   💰 Price found: HK$${price}${stock !== null ? ` (Stock: ${stock})` : ''}`);
+        console.log(`   💰 Product page price found: HK$${price}${stock !== null ? ` (Stock: ${stock})` : ''}`);
         successCount++;
       } else {
-        console.log(`   ❌ No price found`);
+        console.log(`   ❌ No price found on product page`);
         errorCount++;
       }
-      
+
       // Delay between requests
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
     } catch (error) {
-      // 🔴 BREAKPOINT: Price download error
-      console.log(`🔴 DEBUG: Error downloading price for ${card.name}: ${error.message}`);
-      debugger;
-      
-      console.log(`   ❌ Error fetching price: ${error.message}`);
+      console.log(`   ❌ Error fetching product page: ${error.message}`);
       errorCount++;
     }
   }
-  
+
   console.log(`\n📊 Price Download Summary:`);
-  console.log(`   ✅ Successfully downloaded: ${successCount} prices`);
+  console.log(`   📋 List page data used: ${listDataUsed} cards`);
+  console.log(`   🌐 Product page requests: ${cardsNeedingProductPage.length}`);
+  console.log(`   ✅ Total successful: ${successCount} prices`);
   console.log(`   ❌ Failed to download: ${errorCount} prices`);
   console.log(`   📈 Success rate: ${((successCount / chineseCards.length) * 100).toFixed(1)}%`);
 }
