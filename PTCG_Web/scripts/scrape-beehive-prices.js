@@ -6,11 +6,28 @@ const fs = require('fs');
 const path = require('path');
 
 class BeehiveTCGPriceScraper {
-    constructor() {
+    constructor(expansionCode = 'sv8af') {
         this.baseUrl = 'https://beehivetcg.com';
-        this.collectionUrl = 'https://beehivetcg.com/collections/sv8af';
+        this.expansionCode = expansionCode.toUpperCase();
+        // Special handling for MBF -> use mbdf in URL but MBDF in content
+        const urlCode = expansionCode.toLowerCase() === 'mbf' ? 'mbf' : expansionCode.toLowerCase();
+        this.collectionUrl = `https://beehivetcg.com/collections/${urlCode}`;
         this.marketPricesFile = path.join(__dirname, '..', 'data', 'market-prices.json');
         this.scrapedPrices = [];
+        
+        // Determine the pattern to search for based on expansion code
+        this.cardPattern = this.getCardPattern(expansionCode);
+    }
+    
+    getCardPattern(expansionCode) {
+        const code = expansionCode.toUpperCase();
+        // Return regex pattern for finding card titles with capturing group for card number
+        if (code === 'MBF') {
+            return /MBDF\s+(\d+)\/\d+/;
+        } else {
+            // For other expansions like M1LF, SV10F, etc.
+            return new RegExp(`${code}\\s+(\\d+)\\/\\d+`);
+        }
     }
 
     async delay(ms) {
@@ -57,8 +74,8 @@ class BeehiveTCGPriceScraper {
             return null;
         }
 
-        // Extract card ID from title (e.g., "SV8aF 200/187 葉伊布ex SAR" -> 200)
-        const cardIdMatch = productTitle.match(/SV8aF\s+(\d+)\/\d+/);
+        // Extract card ID from title (e.g., "M1LF 001/063 超級妙蛙花ex" -> 1)
+        const cardIdMatch = productTitle.match(this.cardPattern);
         if (!cardIdMatch) {
             console.log(`Skipping non-card product: ${productTitle}`);
             return null;
@@ -148,10 +165,11 @@ class BeehiveTCGPriceScraper {
         const rarityMatch = productTitle.match(/\b(SAR|UR|SR|RR|ACE)\b/);
         const rarity = rarityMatch ? rarityMatch[1] : 'Unknown';
 
-        // Extract card name (remove the SV8aF XXX/187 prefix and rarity suffix)
+        // Extract card name (remove the expansion prefix and rarity suffix)
         let cardName = productTitle
-            .replace(/^SV8aF\s+\d+\/\d+\s*/, '') // Remove prefix
-            .replace(/\s+(SAR|UR|SR|RR|ACE)$/, '') // Remove rarity suffix
+            .replace(new RegExp(`^${this.expansionCode}\\s+\\d+\\/\\d+\\s*`), '') // Remove prefix
+            .replace(/\s+(SAR|UR|SR|RR|ACE|MUR)$/, '') // Remove rarity suffix
+            .replace(/\s*-\s*$/, '') // Remove trailing ' -'
             .trim();
 
         return {
@@ -174,20 +192,20 @@ class BeehiveTCGPriceScraper {
         const $ = cheerio.load(html);
         const products = [];
 
-        // Find all elements containing card titles (SV8aF followed by numbers)
+        // Find all elements containing card titles (expansion code followed by numbers)
         const titleElements = $('*').filter((i, el) => {
             const text = $(el).text().trim();
-            return text.match(/SV8aF\s+\d+\/\d+/);
+            return this.cardPattern.test(text);
         });
 
-        console.log(`Found ${titleElements.length} title elements containing "SV8aF"`);
+        console.log(`Found ${titleElements.length} title elements containing "${this.expansionCode}"`);
 
         titleElements.each((index, titleElement) => {
             const titleText = $(titleElement).text().trim();
             console.log(`Processing title ${index + 1}: "${titleText}"`);
 
             // Extract card ID from title
-            const cardIdMatch = titleText.match(/SV8aF\s+(\d+)\/\d+/);
+            const cardIdMatch = titleText.match(this.cardPattern);
             if (!cardIdMatch) {
                 console.log(`Skipping invalid title: ${titleText}`);
                 return;
@@ -203,8 +221,14 @@ class BeehiveTCGPriceScraper {
             }
 
             // Extract card name (everything after the card number)
-            const nameMatch = titleText.match(/SV8aF\s+\d+\/\d+\s+(.+)/);
-            const cardName = nameMatch ? nameMatch[1].trim() : 'Unknown';
+            const nameMatch = titleText.match(new RegExp(`${this.expansionCode}\\s+\\d+\\/\\d+\\s+(.+)`));
+            let cardName = nameMatch ? nameMatch[1].trim() : 'Unknown';
+            
+            // Clean card name
+            cardName = cardName
+                .replace(/\s+(SAR|UR|SR|RR|ACE|MUR)$/, '') // Remove rarity suffix
+                .replace(/\s*-\s*$/, '') // Remove trailing ' -'
+                .trim();
 
             // Find the price - look for SPAN elements containing HK$ in the vicinity of this title
             let price = 0;
@@ -364,13 +388,13 @@ class BeehiveTCGPriceScraper {
                 rarity: cardInfo.rarity,
                 stockQuantity: cardInfo.stockQuantity,
                 isSoldOut: cardInfo.isSoldOut,
-                productUrl: cardInfo.productUrl || `https://beehivetcg.com/products/sv8af-${cardInfo.cardId.toString().padStart(3, '0')}-187-${encodeURIComponent(cardInfo.cardName)}`
+                productUrl: cardInfo.productUrl || `https://beehivetcg.com/products/${this.expansionCode.toLowerCase()}-${cardInfo.cardId.toString().padStart(3, '0')}-063-${encodeURIComponent(cardInfo.cardName)}`
             }
         };
     }
 
     async scrapeAndSave() {
-        console.log('Starting Beehive TCG price scraping...');
+        console.log(`Starting Beehive TCG price scraping for expansion ${this.expansionCode}...`);
         console.log('Collection URL:', this.collectionUrl);
 
         // Scrape all products
@@ -421,7 +445,14 @@ class BeehiveTCGPriceScraper {
 
 // Run the scraper if this script is executed directly
 if (require.main === module) {
-    const scraper = new BeehiveTCGPriceScraper();
+    // Get expansion code from command line arguments
+    const expansionCode = process.argv[2] || 'sv8af';
+
+    console.log(`Starting scraper for expansion: ${expansionCode.toUpperCase()}`);
+    console.log(`Collection URL: https://beehivetcg.com/collections/${expansionCode}`);
+
+    // Create a scraper instance with the specified expansion
+    const scraper = new BeehiveTCGPriceScraper(expansionCode);
     scraper.scrapeAndSave().catch(console.error);
 }
 
