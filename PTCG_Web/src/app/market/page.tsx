@@ -495,6 +495,15 @@ export default function MarketPage() {
                 <div className="border-t bg-gray-50 p-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
+                      <strong>Card ID:</strong> {card.CardID}
+                    </div>
+                    <div>
+                      <strong>Collection No:</strong> {card.CollectorNumber || 'N/A'}
+                    </div>
+                    <div>
+                      <strong>Set:</strong> {card.ExpansionName}
+                    </div>
+                    <div>
                       <strong>Card Type:</strong> {card.CardType}
                     </div>
                     <div>
@@ -505,6 +514,9 @@ export default function MarketPage() {
                     </div>
                     <div>
                       <strong>Tier:</strong> {card.Tier}
+                    </div>
+                    <div>
+                      <strong>Rarity:</strong> {card.Rarity}
                     </div>
                   </div>
                   {card.AbilityName && (

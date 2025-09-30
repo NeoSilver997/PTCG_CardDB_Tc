@@ -6,6 +6,17 @@ export interface MarketPrice {
   condition: string; // 'Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played', 'Damaged'
   date: string; // ISO date string
   updatedAt: string; // ISO date string
+  metadata?: {
+    cardName?: string;
+    rarity?: string;
+    stockQuantity?: number;
+    isSoldOut?: boolean;
+    productUrl?: string;
+    expansionCode?: string;
+    cardNumber?: string;
+    mappingKey?: string;
+    language?: string;
+  };
 }
 
 export interface MarketPriceHistory {
