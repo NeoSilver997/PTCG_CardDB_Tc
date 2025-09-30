@@ -21,7 +21,7 @@ const expansionMappings = {
    'SV10': 'sv10f',
    'SV9a': 'sv9af',
    'SV9': 'sv9f',
-  'SV8a': 'sv8af',
+  'SV8a': 'sv8af',  // Note: BeehiveTCG uses sv8af for regular SV8a cards, sv8a for special variants
   'SV8': 'sv8f',
   'SV7a': 'sv7af',
   'SV7': 'sv7f',
@@ -141,6 +141,19 @@ async function loadCardMappings() {
       reverseExpansionMappings[chineseCode] = csvCode;
     });
     
+    // Debug: Check 含羞苞 mapping
+    console.log(`🌸 含羞苞 mapping verification:`);
+    console.log(`   SV8a -> ${expansionMappings['SV8a']} (should be sv8af for regular cards)`);
+    console.log(`   sv8af -> ${reverseExpansionMappings['sv8af']} (should be SV8a)`);
+    
+    // Check if 含羞苞 data exists in CSV
+    const budewKey = 'SV8a_1';
+    if (cardMapping[budewKey]) {
+      console.log(`   ✅ 含羞苞 found in CSV: ${budewKey} -> ${cardMapping[budewKey].name}`);
+    } else {
+      console.log(`   ❌ 含羞苞 NOT found in CSV with key: ${budewKey}`);
+    }
+    
     console.log(`📊 CSV Processing Summary:`);
     console.log(`   📄 Processed lines: ${processedLines}`);
     console.log(`   ✅ Valid cards: ${validCards}`);
@@ -249,6 +262,17 @@ async function searchChineseExpansions() {
                 if (priceMatch) {
                   listPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
                   console.log(`   💰 List page price found: HK$${listPrice}`);
+                  
+                  // Special validation for 含羞苞 price
+                  if (text.includes('含羞苞')) {
+                    if (listPrice < 20) {
+                      console.log(`   ⚠️ 含羞苞 price seems low (HK$${listPrice}), expected ~HK$25`);
+                    } else if (listPrice >= 20 && listPrice <= 30) {
+                      console.log(`   ✅ 含羞苞 price looks reasonable (HK$${listPrice})`);
+                    } else {
+                      console.log(`   💎 含羞苞 special variant price (HK$${listPrice})`);
+                    }
+                  }
                 }
               }
 
@@ -270,9 +294,9 @@ async function searchChineseExpansions() {
               });
 
               if ($addToCart.length > 0) {
-                console.log(`   📦 List page: Add to Cart button found, item available`);
+                //console.log(`   📦 List page: Add to Cart button found, item available`);
               } else {
-                console.log(`   📦 List page: No Add to Cart button found`);
+                //console.log(`   📦 List page: No Add to Cart button found`);
                 // If no Add to Cart button, item might be out of stock
                 if (listStock === null) {
                   listStock = 0;
@@ -313,14 +337,31 @@ async function searchChineseExpansions() {
 
             const cardNameMatch = cleanText.match(/^(\w+)\s+(\d+)\/(\d+)\s+(.+) (\w+)$/);
             if (cardNameMatch) {
-              const chineseExpansionCode = cardNameMatch[1]; // e.g., "SV11WF"
+              const chineseExpansionCode = cardNameMatch[1]; // e.g., "SV11WF" or "SV8aF"
               const cardNumber = cardNameMatch[2]; // e.g., "174"
               const totalCards = cardNameMatch[3]; // e.g., "086"
               const cardName = cardNameMatch[4]; // e.g., "萊希拉姆ex"
               const rarity = cardNameMatch[5]; // e.g., "BWR"
 
-              // Map Chinese expansion to CSV expansion
-              extractedExpansion = reverseExpansionMappings[chineseCode]; // e.g., "SV11W"
+              // Special handling for 含羞苞 expansion codes
+              if (cardName.includes('含羞苞')) {
+                if (chineseExpansionCode === 'SV8aF') {
+                  // Regular 含羞苞 from BeehiveTCG uses SV8aF, but CSV uses SV8a
+                  extractedExpansion = 'SV8a'; // Map back to CSV expansion
+                  console.log(`   🌸 含羞苞 regular edition: SV8aF -> SV8a (for CSV mapping)`);
+                } else if (chineseExpansionCode === 'SV8a') {
+                  // Mirror variants use SV8a directly
+                  extractedExpansion = 'SV8a';
+                  console.log(`   🌸 含羞苞 mirror edition: SV8a -> SV8a`);
+                } else {
+                  // Use regular mapping for other cases
+                  extractedExpansion = reverseExpansionMappings[chineseCode];
+                }
+              } else {
+                // Map Chinese expansion to CSV expansion for non-含羞苞 cards
+                extractedExpansion = reverseExpansionMappings[chineseCode];
+              }
+              
               extractedCardNumber = cardNumber.replace(/^0+/, ''); // Remove leading zeros
 
               // DEBUG: Log MUR variant processing
@@ -336,6 +377,20 @@ async function searchChineseExpansions() {
 
             // Try to match with CSV data using multiple strategies
             let matchedCard = null;
+
+            // Add validation for 含羞苞 (Budew) to prevent incorrect mapping
+            if (text.includes('含羞苞')) {
+              console.log(`   🌸 含羞苞 detected - applying special validation`);
+              console.log(`   🔍 Extracted: expansion=${extractedExpansion}, number=${extractedCardNumber}`);
+              // 含羞苞 should be from SV8a expansion, card number 1
+              // BeehiveTCG uses SV8aF for regular version, SV8a for mirror versions
+              if (extractedExpansion === 'SV8a' && extractedCardNumber === '1') {
+                console.log(`   ✅ 含羞苞 correctly identified: SV8a card #1`);
+              } else {
+                console.log(`   ⚠️ 含羞苞 expansion/number: ${extractedExpansion}_${extractedCardNumber}`);
+                console.log(`   📝 Note: Regular=SV8aF, Mirror=SV8a variants`);
+              }
+            }
 
 
             // Strategy 2: Expansion + Card Number match (primary method)
@@ -358,6 +413,16 @@ async function searchChineseExpansions() {
                 matchedCard = cardMapping[expansionKey];
                 expansionMatchedCards++;
                 console.log(`   ✅ Expansion+Number match found: ${expansionKey} -> ${matchedCard.name}`);
+                
+                // Special validation for 含羞苞 to ensure correct mapping
+                if (text.includes('含羞苞') && matchedCard.name !== '含羞苞') {
+                  console.log(`   🚨 WARNING: 含羞苞 mapped to wrong card: "${matchedCard.name}"`);
+                  console.log(`   Expected: 含羞苞, Got: ${matchedCard.name}`);
+                  matchedCard = null; // Reset match to prevent incorrect mapping
+                  expansionMatchedCards--; // Adjust counter
+                } else if (text.includes('含羞苞') && matchedCard.name === '含羞苞') {
+                  console.log(`   🌸 含羞苞 correctly matched!`);
+                }
               } else {
                 console.log(`   ❌ No match for expansion+number: ${expansionKey}`);
               }
@@ -393,6 +458,17 @@ async function searchChineseExpansions() {
               listQty: listQty,
               processedRarity: processedRarity
             });
+
+            // Enhanced logging for 含羞苞
+            if (text.includes('含羞苞')) {
+              console.log(`   🌸 含羞苞 card data summary:`);
+              console.log(`      Name: ${text}`);
+              console.log(`      Price: HK$${listPrice || 'N/A'}`);
+              console.log(`      Stock: ${listStock || 'N/A'}`);
+              console.log(`      Matched: ${!!matchedCard}`);
+              console.log(`      CSV Data: ${matchedCard ? matchedCard.name : 'None'}`);
+              console.log(`      URL: ${fullUrl}`);
+            }
 
             console.log(`   🎴 Chinese card found: ${text} (${fullUrl}) [Matched: ${!!matchedCard}]`);
 
@@ -503,6 +579,22 @@ async function downloadPrices(chineseCards) {
     card.qty = card.listQty;
     card.priceUpdated = new Date().toISOString();
     card.priceSource = 'list_page';
+
+    // Special validation for 含羞苞 pricing
+    if (card.name.includes('含羞苞')) {
+      console.log(`   🌸 含羞苞 price validation:`);
+      if (card.price < 20) {
+        console.log(`   ⚠️ Price unusually low: HK$${card.price} (expected ~HK$25 for regular)`);
+      } else if (card.price >= 20 && card.price <= 30) {
+        console.log(`   ✅ Regular edition price: HK$${card.price}`);
+      } else if (card.price >= 100 && card.price <= 150) {
+        console.log(`   💎 Mirror Pokeball edition: HK$${card.price}`);
+      } else if (card.price >= 250) {
+        console.log(`   🌟 Mirror Master Ball edition: HK$${card.price}`);
+      } else {
+        console.log(`   📊 Variant price: HK$${card.price}`);
+      }
+    }
 
     if (card.price !== null) {
       console.log(`   💰 Using list page price: HK$${card.price}${card.stock !== null ? ` (Stock: ${card.stock})` : ''}`);
