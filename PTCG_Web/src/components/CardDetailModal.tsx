@@ -145,6 +145,12 @@ export default function CardDetailModal({
           if (priceData.prices && priceData.prices.length > 0) {
             const latest = priceData.prices[0]; // Prices are sorted by date descending
             setLatestMarketPrice({ price: latest.price, currency: latest.currency });
+            
+            // Auto-populate market price field with current market price (only if not already set)
+            if (marketPrice === undefined) {
+              setMarketPrice(latest.price);
+            }
+            
             console.log('✅ Latest price set:', latest.price, latest.currency);
           } else {
             setLatestMarketPrice(null);
@@ -162,7 +168,7 @@ export default function CardDetailModal({
     };
     
     fetchPriceAndInventoryData();
-  }, [selectedVersion.CardID, selectedVersion.Name]);
+  }, [selectedVersion.CardID, selectedVersion.Name, marketPrice]);
 
   // Separate effect for inventory quantity that runs when inventory hook is ready
   useEffect(() => {
@@ -179,6 +185,8 @@ export default function CardDetailModal({
   // Update inventory info when selected version changes
   useEffect(() => {
     setSelectedVersion(card);
+    // Reset market price when card changes so it gets auto-populated with new card's price
+    setMarketPrice(undefined);
   }, [card]);
 
   const getTierColor = (tier?: string) => {
@@ -765,19 +773,41 @@ export default function CardDetailModal({
                       </div>
                       
                       <div className="flex flex-col space-y-1">
-                        <label htmlFor="marketPrice" className="text-sm font-medium text-gray-700">
-                          Market Price ($)
-                        </label>
+                        <div className="flex items-center justify-between">
+                          <label htmlFor="marketPrice" className="text-sm font-medium text-gray-700">
+                            Market Price ($)
+                          </label>
+                          {latestMarketPrice && (
+                            <button
+                              type="button"
+                              onClick={() => setMarketPrice(latestMarketPrice.price)}
+                              className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded transition-colors"
+                              title={`Use current market price: ${getCurrencySymbol(latestMarketPrice.currency)}${latestMarketPrice.price}`}
+                            >
+                              Use Current: {getCurrencySymbol(latestMarketPrice.currency)}{latestMarketPrice.price}
+                            </button>
+                          )}
+                        </div>
                         <input
                           type="number"
                           id="marketPrice"
                           value={marketPrice || ''}
                           onChange={(e) => setMarketPrice(e.target.value ? parseFloat(e.target.value) : undefined)}
-                          placeholder="0.00"
+                          placeholder={latestMarketPrice ? `Current: ${latestMarketPrice.price}` : "0.00"}
                           step="0.01"
                           min="0"
-                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className={`border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                            latestMarketPrice && marketPrice === latestMarketPrice.price 
+                              ? 'border-blue-300 bg-blue-50' 
+                              : 'border-gray-300'
+                          }`}
                         />
+                        {latestMarketPrice && marketPrice === latestMarketPrice.price && (
+                          <div className="text-xs text-blue-600 mt-1 flex items-center space-x-1">
+                            <DollarSign className="h-3 w-3" />
+                            <span>Using current market price</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
