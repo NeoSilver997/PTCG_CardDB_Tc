@@ -48,15 +48,38 @@ async function loadCardMappings() {
   try {
     const csvData = fs.readFileSync(CSV_FILE, 'utf8');
     const lines = csvData.split('\n');
-    
+
     let processedLines = 0;
     let validCards = 0;
-    
+
+    // Simple CSV parser that handles quoted fields
+    function parseCSVLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+
+      result.push(current); // Add the last field
+      return result;
+    }
+
     lines.forEach((line, index) => {
       processedLines++;
       if (index === 0) return; // Skip header
-      
-      const columns = line.split(',').map(s => s.trim());
+
+      const columns = parseCSVLine(line).map(s => s.trim());
       const name = columns[0]; // Name
       const card_id = columns[2]; // WebCardID
       const collector_number = columns[22]; // CollectorNumber
@@ -71,12 +94,12 @@ async function loadCardMappings() {
         }
       }
       
-      // Filter for SV series only
-      if (expansion && expansion.startsWith('SV')) {
+      // Load all cards (not just SV series)
+      if (expansion) {
         validCards++;
         
         if (index <= 5) {
-          console.log(`   ✅ Valid SV card found`);
+          console.log(`   ✅ Valid card found`);
         }
         
         if (card_id) {
@@ -120,7 +143,7 @@ async function loadCardMappings() {
     
     console.log(`📊 CSV Processing Summary:`);
     console.log(`   📄 Processed lines: ${processedLines}`);
-    console.log(`   ✅ Valid SV cards: ${validCards}`);
+    console.log(`   ✅ Valid cards: ${validCards}`);
     console.log(`   📋 Card mappings created: ${Object.keys(cardMapping).length}`);
     console.log(`   📝 Name-based mappings: ${Object.keys(nameMapping).length}`);
     
@@ -143,7 +166,7 @@ async function searchChineseExpansions() {
   const reverseExpansionMappings = await loadCardMappings();
   
   console.log('\n🔍 Searching for Chinese card collections...');
-  console.log(`🎯 Filtering for SV series only (${Object.keys(expansionMappings).length} expansions)`);
+  console.log(`🎯 Processing all supported expansions (${Object.keys(expansionMappings).length} expansions)`);
   
   // 🔴 BREAKPOINT: Card scanning starting
   debugger;
@@ -298,7 +321,12 @@ async function searchChineseExpansions() {
 
               // Map Chinese expansion to CSV expansion
               extractedExpansion = reverseExpansionMappings[chineseCode]; // e.g., "SV11W"
-              extractedCardNumber = cardNumber;
+              extractedCardNumber = cardNumber.replace(/^0+/, ''); // Remove leading zeros
+
+              // DEBUG: Log MUR variant processing
+              if (cardName.includes('超級路卡利歐ex') && rarity === 'MUR') {
+                console.log(`   🔴 DEBUG MUR: Original cardNumber="${cardNumber}", extractedCardNumber="${extractedCardNumber}", expansion="${extractedExpansion}"`);
+              }
 
               // Combine rarity with special variant if present
               processedRarity = rarity + specialRarity;
@@ -312,7 +340,16 @@ async function searchChineseExpansions() {
 
             // Strategy 2: Expansion + Card Number match (primary method)
             if (!matchedCard && extractedExpansion && extractedCardNumber) {
-              const expansionKey = `${extractedExpansion}_${extractedCardNumber.replaceAll("0","")}`;
+              const expansionKey = `${extractedExpansion}_${extractedCardNumber}`;
+              
+              // DEBUG: Log MUR variant matching attempt
+              if (cardNameMatch && cardNameMatch[4].includes('超級路卡利歐ex') && cardNameMatch[5] === 'MUR') {
+                console.log(`   🔴 DEBUG MUR MATCH: Trying key="${expansionKey}", hasMapping=${!!cardMapping[expansionKey]}`);
+                if (cardMapping[expansionKey]) {
+                  console.log(`   🔴 DEBUG MUR MATCH: Found mapping: ${JSON.stringify(cardMapping[expansionKey])}`);
+                }
+              }
+              
               if (cardMapping[expansionKey]) {
                 // 🔴 BREAKPOINT: Expansion+Number match found
                 console.log(`🔴 DEBUG: Expansion+Number match found! Key=${expansionKey}`);
