@@ -34,6 +34,7 @@ import {
   DollarSign,
   Sparkles
 } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
 
 interface Deck {
@@ -525,6 +526,23 @@ export default function NewDeckStudio() {
     setCurrentDeckCards(prev => prev.filter(c => c.CardID !== cardId));
   };
 
+  // Calculate main attribute based on most common Pokemon type
+  const calculateMainAttribute = (pokemonCards: DeckCard[]) => {
+    if (pokemonCards.length === 0) return 'Unknown';
+    
+    const typeCount: { [key: string]: number } = {};
+    pokemonCards.forEach(card => {
+      const type = card.Type || 'Unknown';
+      const quantity = card.quantity || 1;
+      typeCount[type] = (typeCount[type] || 0) + quantity;
+    });
+    
+    const mostCommonType = Object.entries(typeCount)
+      .sort(([,a], [,b]) => b - a)[0]?.[0];
+    
+    return mostCommonType || 'Unknown';
+  };
+
   const saveDeckFromBuilder = async () => {
     if (!deckName.trim()) {
       alert('Please enter a deck name');
@@ -575,7 +593,7 @@ export default function NewDeckStudio() {
           .map(card => card.Name)
           .slice(0, 5),
         estimatedValue: deckStats.estimatedValue,
-        mainAttribute: pokemonCards[0]?.Type || 'Unknown', // Use card Type instead of WeaknessType
+        mainAttribute: calculateMainAttribute(pokemonCards),
         primaryEffect: pokemonCards[0]?.PrimaryEffectType || 'Unknown'
       };
 
@@ -1590,163 +1608,6 @@ export default function NewDeckStudio() {
 
         {/* Detailed Breakdown */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* All Card Types Breakdown */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">All Card Types</h3>
-            <div className="space-y-3">
-              {Array.from(new Set(selectedDeck.cards?.map(card => card.CardType) || [])).map((cardType, index) => {
-                const count = selectedDeck.cards?.filter(card => card.CardType === cardType).reduce((sum, card) => sum + card.quantity, 0) || 0;
-                const percentage = selectedDeck.totalCards > 0 ? (count / selectedDeck.totalCards * 100).toFixed(1) : '0';
-                
-                return (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-4 h-4 rounded ${
-                        cardType.includes('寶可夢') || cardType.toLowerCase().includes('pokemon') ? 'bg-blue-500' :
-                        cardType.includes('物品') || cardType.toLowerCase().includes('item') ? 'bg-green-500' :
-                        cardType.includes('支援') || cardType.toLowerCase().includes('supporter') ? 'bg-purple-500' :
-                        cardType.includes('場地') || cardType.toLowerCase().includes('stadium') ? 'bg-orange-500' :
-                        cardType.includes('能量') || cardType.toLowerCase().includes('energy') ? 'bg-yellow-500' :
-                        'bg-gray-500'
-                      }`}></div>
-                      <span className="text-sm">{cardType}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold">{count}</div>
-                      <div className="text-xs text-gray-500">{percentage}%</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* Energy Types Breakdown */}
-            {getEnergyCards(selectedDeck).length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Energy Types</h4>
-                <div className="space-y-2">
-                  {Array.from(new Set(getEnergyCards(selectedDeck).map(card => card.Type))).map((energyType, index) => {
-                    const count = getEnergyCards(selectedDeck).filter(card => card.Type === energyType).reduce((sum, card) => sum + (card.quantity || 1), 0);
-                    return (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <EnergyIcon type={energyType} size="w-4 h-4" />
-                          <span className="text-sm">{energyType}</span>
-                        </div>
-                        <span className="text-sm font-medium">{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Rarity Breakdown */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Rarity Distribution</h4>
-              <div className="space-y-2">
-                {Array.from(new Set(selectedDeck.cards?.map(card => card.Rarity).filter(rarity => rarity) || [])).map((rarity, index) => {
-                  const count = selectedDeck.cards?.filter(card => card.Rarity === rarity).reduce((sum, card) => sum + card.quantity, 0) || 0;
-                  
-                  return (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-3 h-3 rounded-full ${
-                          rarity === 'UR' || rarity === 'Ultra Rare' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
-                          rarity === 'RRR' || rarity === 'Secret Rare' ? 'bg-gradient-to-r from-purple-400 to-pink-500' :
-                          rarity === 'RR' || rarity === 'Double Rare' ? 'bg-gradient-to-r from-blue-400 to-purple-500' :
-                          rarity === 'R' || rarity === 'Rare' ? 'bg-gradient-to-r from-green-400 to-blue-500' :
-                          rarity === 'U' || rarity === 'Uncommon' ? 'bg-gradient-to-r from-gray-300 to-gray-500' :
-                          'bg-gray-300'
-                        }`}></div>
-                        <span className="text-sm">{rarity}</span>
-                      </div>
-                      <span className="text-sm font-medium">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Expansion/Mark Breakdown */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Expansion & Mark Analysis</h3>
-            
-            {/* Expansion Marks */}
-            <div className="mb-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Expansion Sets</h4>
-              <div className="space-y-2">
-                {Array.from(new Set(selectedDeck.cards?.map(card => card.ExpansionName || card.ExpansionCode || 'Unknown').filter(expansion => expansion) || [])).map((expansion, index) => {
-                  const count = selectedDeck.cards?.filter(card => (card.ExpansionName || card.ExpansionCode || 'Unknown') === expansion).reduce((sum, card) => sum + card.quantity, 0) || 0;
-                  const percentage = selectedDeck.totalCards > 0 ? (count / selectedDeck.totalCards * 100).toFixed(1) : '0';
-                  
-                  return (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-4 h-4 bg-indigo-500 rounded"></div>
-                        <span className="text-sm">{expansion}</span>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold">{count}</div>
-                        <div className="text-xs text-gray-500">{percentage}%</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Regulation Marks */}
-            {Array.from(new Set(selectedDeck.cards?.map(card => card.RegulationMark).filter(reg => reg && reg !== '無') || [])).length > 0 && (
-              <div className="pt-4 border-t border-gray-200">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Regulation Marks</h4>
-                <div className="space-y-2">
-                  {Array.from(new Set(selectedDeck.cards?.map(card => card.RegulationMark).filter(reg => reg && reg !== '無') || [])).map((regulation, index) => {
-                    const count = selectedDeck.cards?.filter(card => card.RegulationMark === regulation).reduce((sum, card) => sum + card.quantity, 0) || 0;
-                    
-                    return (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 bg-blue-100 rounded border-2 border-blue-400 flex items-center justify-center">
-                            <span className="text-xs font-bold text-blue-600">{regulation}</span>
-                          </div>
-                          <span className="text-sm">Regulation {regulation}</span>
-                        </div>
-                        <span className="text-sm font-medium">{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Evolution Stages */}
-            <div className="pt-4 border-t border-gray-200">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Evolution Stages</h4>
-              <div className="space-y-2">
-                {Array.from(new Set(selectedDeck.cards?.map(card => card.EvolutionStage).filter(stage => stage) || [])).map((stage, index) => {
-                  const count = selectedDeck.cards?.filter(card => card.EvolutionStage === stage).reduce((sum, card) => sum + card.quantity, 0) || 0;
-                  
-                  return (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-4 h-4 rounded ${
-                          stage.includes('基礎') || stage.toLowerCase().includes('basic') ? 'bg-green-500' :
-                          stage.includes('1') ? 'bg-blue-500' :
-                          stage.includes('2') ? 'bg-purple-500' :
-                          'bg-gray-500'
-                        }`}></div>
-                        <span className="text-sm">{stage}</span>
-                      </div>
-                      <span className="text-sm font-medium">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
           {/* Weakness & Resistance Analysis */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Weakness & Resistance</h3>
@@ -1823,6 +1684,194 @@ export default function NewDeckStudio() {
                 {Array.from(new Set(selectedDeck.cards?.map(card => card.RetreatCost).filter(cost => cost !== undefined && cost !== null && cost !== '') || [])).length === 0 && (
                   <div className="text-sm text-gray-500">No retreat costs found</div>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* All Card Types Breakdown - Pie Chart */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">All Card Types</h3>
+            
+            {/* Pie Chart */}
+            <div className="h-64 mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={Array.from(new Set(selectedDeck.cards?.map(card => card.CardType) || [])).map((cardType, index) => {
+                      const count = selectedDeck.cards?.filter(card => card.CardType === cardType).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                      const percentage = selectedDeck.totalCards > 0 ? (count / selectedDeck.totalCards * 100) : 0;
+                      
+                      return {
+                        name: cardType,
+                        value: count,
+                        percentage: percentage.toFixed(1),
+                        color: cardType.includes('寶可夢') || cardType.toLowerCase().includes('pokemon') ? '#3B82F6' :
+                               cardType.includes('物品') || cardType.toLowerCase().includes('item') ? '#10B981' :
+                               cardType.includes('支援') || cardType.toLowerCase().includes('supporter') ? '#8B5CF6' :
+                               cardType.includes('場地') || cardType.toLowerCase().includes('stadium') ? '#F59E0B' :
+                               cardType.includes('能量') || cardType.toLowerCase().includes('energy') ? '#EAB308' :
+                               '#6B7280'
+                      };
+                    })}
+                    dataKey="value"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={80}
+                    paddingAngle={2}
+                  >
+                    {Array.from(new Set(selectedDeck.cards?.map(card => card.CardType) || [])).map((cardType, index) => {
+                      const color = cardType.includes('寶可夢') || cardType.toLowerCase().includes('pokemon') ? '#3B82F6' :
+                                   cardType.includes('物品') || cardType.toLowerCase().includes('item') ? '#10B981' :
+                                   cardType.includes('支援') || cardType.toLowerCase().includes('supporter') ? '#8B5CF6' :
+                                   cardType.includes('場地') || cardType.toLowerCase().includes('stadium') ? '#F59E0B' :
+                                   cardType.includes('能量') || cardType.toLowerCase().includes('energy') ? '#EAB308' :
+                                   '#6B7280';
+                      return <Cell key={`cell-${index}`} fill={color} />;
+                    })}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any, name: string, props: any) => [
+                      `${value} cards (${props.payload.percentage}%)`,
+                      name
+                    ]}
+                  />
+                  <Legend 
+                    verticalAlign="bottom"
+                    height={36}
+                    formatter={(value: string, entry: any) => (
+                      <span style={{ color: entry.color, fontSize: '12px' }}>
+                        {value} ({entry.payload.value})
+                      </span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            
+            {/* Energy Types Breakdown */}
+            {getEnergyCards(selectedDeck).length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Energy Types</h4>
+                <div className="space-y-2">
+                  {Array.from(new Set(getEnergyCards(selectedDeck).map(card => card.Type))).map((energyType, index) => {
+                    const count = getEnergyCards(selectedDeck).filter(card => card.Type === energyType).reduce((sum, card) => sum + (card.quantity || 1), 0);
+                    return (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <EnergyIcon type={energyType} size="w-4 h-4" />
+                          <span className="text-sm">{energyType}</span>
+                        </div>
+                        <span className="text-sm font-medium">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Rarity Breakdown */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Rarity Distribution</h4>
+              <div className="space-y-2">
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.Rarity).filter(rarity => rarity) || [])).map((rarity, index) => {
+                  const count = selectedDeck.cards?.filter(card => card.Rarity === rarity).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${
+                          rarity === 'UR' || rarity === 'Ultra Rare' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                          rarity === 'RRR' || rarity === 'Secret Rare' ? 'bg-gradient-to-r from-purple-400 to-pink-500' :
+                          rarity === 'RR' || rarity === 'Double Rare' ? 'bg-gradient-to-r from-blue-400 to-purple-500' :
+                          rarity === 'R' || rarity === 'Rare' ? 'bg-gradient-to-r from-green-400 to-blue-500' :
+                          rarity === 'U' || rarity === 'Uncommon' ? 'bg-gradient-to-r from-gray-300 to-gray-500' :
+                          'bg-gray-300'
+                        }`}></div>
+                        <span className="text-sm">{rarity}</span>
+                      </div>
+                      <span className="text-sm font-medium">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Expansion/Mark Breakdown - Smaller Font */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-base font-medium text-gray-900 mb-3">Expansion & Mark Analysis</h3>
+            
+            {/* Expansion Marks */}
+            <div className="mb-3">
+              <h4 className="text-xs font-medium text-gray-700 mb-2">Expansion Sets</h4>
+              <div className="space-y-1">
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.ExpansionName || card.ExpansionCode || 'Unknown').filter(expansion => expansion) || [])).map((expansion, index) => {
+                  const count = selectedDeck.cards?.filter(card => (card.ExpansionName || card.ExpansionCode || 'Unknown') === expansion).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                  const percentage = selectedDeck.totalCards > 0 ? (count / selectedDeck.totalCards * 100).toFixed(1) : '0';
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-indigo-500 rounded"></div>
+                        <span className="text-xs">{expansion}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium text-xs">{count}</div>
+                        <div className="text-xs text-gray-500">{percentage}%</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Regulation Marks */}
+            {Array.from(new Set(selectedDeck.cards?.map(card => card.RegulationMark).filter(reg => reg && reg !== '無') || [])).length > 0 && (
+              <div className="pt-3 border-t border-gray-200 mb-3">
+                <h4 className="text-xs font-medium text-gray-700 mb-2">Regulation Marks</h4>
+                <div className="space-y-1">
+                  {Array.from(new Set(selectedDeck.cards?.map(card => card.RegulationMark).filter(reg => reg && reg !== '無') || [])).map((regulation, index) => {
+                    const count = selectedDeck.cards?.filter(card => card.RegulationMark === regulation).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                    
+                    return (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-5 h-5 bg-blue-100 rounded border-2 border-blue-400 flex items-center justify-center">
+                            <span className="text-xs font-bold text-blue-600">{regulation}</span>
+                          </div>
+                          <span className="text-xs">Regulation {regulation}</span>
+                        </div>
+                        <span className="text-xs font-medium">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Evolution Stages */}
+            <div className="pt-3 border-t border-gray-200">
+              <h4 className="text-xs font-medium text-gray-700 mb-2">Evolution Stages</h4>
+              <div className="space-y-1">
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.EvolutionStage).filter(stage => stage) || [])).map((stage, index) => {
+                  const count = selectedDeck.cards?.filter(card => card.EvolutionStage === stage).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded ${
+                          stage.includes('基礎') || stage.toLowerCase().includes('basic') ? 'bg-green-500' :
+                          stage.includes('1') ? 'bg-blue-500' :
+                          stage.includes('2') ? 'bg-purple-500' :
+                          'bg-gray-500'
+                        }`}></div>
+                        <span className="text-xs">{stage}</span>
+                      </div>
+                      <span className="text-xs font-medium">{count}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
