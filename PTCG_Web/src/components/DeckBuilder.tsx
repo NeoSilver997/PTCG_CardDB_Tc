@@ -752,7 +752,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                         CardType: "Trainer",
                         quantity: 1,
                         AbilityName: "", AbilityEffect: "", Rarity: "U", Evolution: "", EvolutionStage: "",
-                        ImageURL: "", HP: "", Type: "", Weakness: "", WeaknessType: "", Resistance: "",
+                        ImageURL: "", HP: "", Type: "", Attribute: "", Weakness: "", WeaknessType: "", Resistance: "",
                         ResistanceType: "", Skill1Name: "", Skill1Energy: "", Skill1Damage: "", Skill1Effect: "",
                         Skill2Name: "", Skill2Energy: "", Skill2Damage: "", Skill2Effect: "", RetreatCost: "",
                         Illustrator: "", ExpansionCode: "", ExpansionName: "", CollectorNumber: "", RegulationMark: "",

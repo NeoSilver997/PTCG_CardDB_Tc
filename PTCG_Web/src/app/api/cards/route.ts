@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
           'ImageURL': 'ImageURL',
           'CardType': 'CardType',
           'HP': 'HP',
-          'Attribute': 'Type',
+          'Attribute': 'Type',        // Keep existing mapping for backward compatibility
           'Ability': 'AbilityName',
           'AbilityDesc': 'AbilityEffect',
           'Skill1Name': 'Skill1Name',
@@ -82,6 +82,11 @@ export async function GET(request: NextRequest) {
       Object.keys(card).forEach(key => {
         cleanedCard[key] = card[key] || '';
       });
+
+      // Add Attribute field explicitly from Type (which contains the CSV Attribute data)
+      if (cleanedCard.Type) {
+        cleanedCard.Attribute = cleanedCard.Type;
+      }
 
       // Convert WebCardID (CardID) to number
       if (cleanedCard.CardID && cleanedCard.CardID !== '') {

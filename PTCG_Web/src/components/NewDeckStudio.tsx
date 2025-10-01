@@ -315,22 +315,44 @@ export default function NewDeckStudio() {
     }
   }, [selectedDeck, currentView]);
 
-  const loadDecks = async () => {
+  const loadDecks = useCallback(async () => {
     try {
       // Load from API
       const response = await fetch('/api/decks');
       if (response.ok) {
         const apiDecks = await response.json();
-        // Process API decks to ensure proper date format
-        const processedApiDecks = apiDecks.map((deck: any) => ({
-          ...deck,
-          updatedAt: deck.updatedAt ? new Date(deck.updatedAt) : new Date(),
-          keyCards: deck.keyCards || [],
-          estimatedValue: deck.estimatedValue || 0,
-          mainAttribute: deck.mainAttribute || 'Unknown',
-          primaryEffect: deck.primaryEffect || 'Unknown',
-          cards: deck.cards || []
+        
+        // Process API decks to ensure proper date format and calculate missing main attributes
+        const processedApiDecks = await Promise.all(apiDecks.map(async (deck: any) => {
+          let mainAttribute = deck.mainAttribute;
+          
+          // If mainAttribute is missing and deck has cards, calculate it
+          if (!mainAttribute || mainAttribute === 'Unknown') {
+            const pokemonCards = (deck.cards || []).filter((card: any) => 
+              card.CardType && (
+                card.CardType.includes('寶可夢') || 
+                card.CardType.toLowerCase().includes('pokemon') || 
+                card.CardType.includes('Pokémon')
+              )
+            );
+            
+            if (pokemonCards.length > 0) {
+              console.log(`Recalculating main attribute for deck: ${deck.name}`);
+              mainAttribute = await calculateMainAttribute(pokemonCards);
+            }
+          }
+          
+          return {
+            ...deck,
+            updatedAt: deck.updatedAt ? new Date(deck.updatedAt) : new Date(),
+            keyCards: deck.keyCards || [],
+            estimatedValue: deck.estimatedValue || 0,
+            mainAttribute: mainAttribute || 'Unknown',
+            primaryEffect: deck.primaryEffect || 'Unknown',
+            cards: deck.cards || []
+          };
         }));
+        
         setDecks(processedApiDecks);
       } else {
         // Start with empty deck list if API fails
@@ -343,7 +365,7 @@ export default function NewDeckStudio() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Deck Management Functions
   const createNewDeck = () => {
@@ -527,19 +549,56 @@ export default function NewDeckStudio() {
   };
 
   // Calculate main attribute based on most common Pokemon type
-  const calculateMainAttribute = (pokemonCards: DeckCard[]) => {
+  const calculateMainAttribute = async (pokemonCards: DeckCard[]) => {
+    console.log('calculateMainAttribute called with', pokemonCards.length, 'Pokemon cards');
     if (pokemonCards.length === 0) return 'Unknown';
     
     const typeCount: { [key: string]: number } = {};
+    
+    // Check if we need to fetch card data for missing Type information
+    const needsCardData = pokemonCards.some(card => !card.Type || card.Type === 'Unknown');
+    console.log('needsCardData:', needsCardData);
+    let cardDataMap: { [key: number]: any } = {};
+    
+    if (needsCardData) {
+      try {
+        console.log('Fetching card data for type lookup...');
+        // Fetch all card data to lookup missing types
+        const response = await fetch('/api/cards');
+        if (response.ok) {
+          const allCards = await response.json();
+          cardDataMap = allCards.reduce((map: any, card: any) => {
+            map[card.CardID] = card;
+            return map;
+          }, {});
+          console.log('Fetched card data for', Object.keys(cardDataMap).length, 'cards');
+        }
+      } catch (error) {
+        console.warn('Failed to fetch card data for type lookup:', error);
+      }
+    }
+    
     pokemonCards.forEach(card => {
-      const type = card.Type || 'Unknown';
+      let type = card.Type;
+      console.log('Processing card:', card.Name, 'Original Type:', type, 'CardID:', card.CardID);
+      
+      // If Type is missing or unknown, try to get it from the card database
+      if (!type || type === 'Unknown') {
+        const fullCardData = cardDataMap[card.CardID];
+        type = fullCardData?.Type || fullCardData?.Attribute || 'Unknown';
+        console.log('  -> Looked up type:', type);
+      }
+      
       const quantity = card.quantity || 1;
       typeCount[type] = (typeCount[type] || 0) + quantity;
+      console.log('  -> Type count so far:', typeCount);
     });
     
     const mostCommonType = Object.entries(typeCount)
       .sort(([,a], [,b]) => b - a)[0]?.[0];
     
+    console.log('Final type count:', typeCount);
+    console.log('Most common type:', mostCommonType);
     return mostCommonType || 'Unknown';
   };
 
@@ -576,6 +635,9 @@ export default function NewDeckStudio() {
       // Calculate deck stats with market prices
       const deckStats = await calculateDeckStats({ cards: currentDeckCards, totalCards } as Deck);
 
+      // Calculate main attribute asynchronously
+      const mainAttribute = await calculateMainAttribute(pokemonCards);
+
       const deckData: Deck = {
         id: selectedDeck?.id || `deck_${Date.now()}`,
         name: deckName,
@@ -589,11 +651,11 @@ export default function NewDeckStudio() {
         updatedAt: new Date(),
         cards: currentDeckCards,
         keyCards: currentDeckCards
-          .filter(card => card.quantity >= 3 || card.Rarity === 'RRR' || card.Rarity === 'UR')
+          .filter(card => card.quantity >= 3 || card.Rarity === 'RR' || card.Rarity === 'SAR')
           .map(card => card.Name)
           .slice(0, 5),
         estimatedValue: deckStats.estimatedValue,
-        mainAttribute: calculateMainAttribute(pokemonCards),
+        mainAttribute: mainAttribute,
         primaryEffect: pokemonCards[0]?.PrimaryEffectType || 'Unknown'
       };
 
@@ -631,7 +693,7 @@ export default function NewDeckStudio() {
   useEffect(() => {
     loadDecks();
     loadCards();
-  }, [loadCards]);
+  }, [loadCards, loadDecks]);
 
   const extractFilterOptions = (cardData: PTCGCard[]) => {
     const abilityMap = new Map<string, number>();

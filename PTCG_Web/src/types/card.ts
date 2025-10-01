@@ -8,6 +8,7 @@ export interface PTCGCard {
   CardType: string;
   HP: string;
   Type: string;
+  Attribute: string;
   Weakness: string;
   WeaknessType: string;
   Resistance: string;
