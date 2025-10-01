@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
 import { Deck, DeckCard } from '../types/deck';
+import { MarketPrice } from '../types/market';
 import { Search, Plus, Minus, Eye, X, Filter, Star, Users, Zap, Shield, Sword, Heart, DollarSign, Target, Package } from 'lucide-react';
 import { useI18n } from '../i18n/context';
 import SearchFiltersComponent from './SearchFilters';
@@ -24,14 +25,128 @@ interface DeckBuilderProps {
 
 const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initialDeck }) => {
   const { t } = useI18n();
-
+  
   const [deck, setDeck] = useState<SimpleDeck>(initialDeck || { name: '', cards: [] });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'library' | 'deck' | 'summary'>('library');
+  const [activeTab, setActiveTab] = useState<'library' | 'deck' | 'summary'>('summary');
+  const [marketPrices, setMarketPrices] = useState<{ [cardId: string]: any }>({});
+  const [loadingPrices, setLoadingPrices] = useState(false);
 
-  // Helper function to format image path from CardID
+  // Fetch market prices on component mount
+  useEffect(() => {
+    const fetchMarketPrices = async () => {
+      try {
+        setLoadingPrices(true);
+        const response = await fetch('/api/market-prices');
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Convert array response to object with CardID as keys
+          const pricesObject: { [cardId: string]: any } = {};
+          data.forEach((item: any) => {
+            if (item.CardID) {
+              pricesObject[item.CardID.toString()] = item;
+            }
+          });
+          
+          console.log('🔍 Market prices loaded:', {
+            totalCards: Object.keys(pricesObject).length,
+            sampleKeys: Object.keys(pricesObject).slice(0, 5),
+            sampleData: pricesObject[Object.keys(pricesObject)[0]]
+          });
+          
+          // Check ID ranges
+          const ids = Object.keys(pricesObject).map(Number).sort((a,b) => a-b);
+          console.log('📊 ID Ranges:', {
+            min: ids[0],
+            max: ids[ids.length-1],
+            firstTen: ids.slice(0, 10),
+            lastTen: ids.slice(-10),
+            count: ids.length
+          });
+          
+          // Check for specific problematic IDs
+          const problemIds = [14376, 14456, 12107, 12386];
+          console.log('🔍 Checking problem IDs:');
+          problemIds.forEach(id => {
+            const hasData = !!pricesObject[id.toString()];
+            console.log(`  ${id}: ${hasData ? '✅' : '❌'}`);
+          });
+          
+          setMarketPrices(pricesObject);
+        } else {
+          console.error('❌ Failed to fetch market prices:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('Error fetching market prices:', error);
+      } finally {
+        setLoadingPrices(false);
+      }
+    };
+
+    fetchMarketPrices();
+  }, []);
+
+  // Helper function to get the best price for a card
+  const getCardPrice = useCallback((cardId: number): number => {
+    const cardIdStr = cardId.toString();
+    const cardData = marketPrices[cardIdStr];
+    
+    // Debug specific card
+    if (cardId === 12386) {
+      console.log('🔍 Debugging card 12386:', {
+        cardIdStr,
+        marketPricesKeys: Object.keys(marketPrices).length,
+        hasKey: cardIdStr in marketPrices,
+        cardData: cardData,
+        hasMarketPrices: cardData?.marketPrices ? true : false,
+        averagePrice: cardData?.averagePrice
+      });
+    }
+    
+    if (!cardData) {
+      if (cardId === 12386) console.log('❌ No card data for 12386');
+      return 0;
+    }
+
+    // Use averagePrice if available (most efficient)
+    if (typeof cardData.averagePrice === 'number' && cardData.averagePrice > 0) {
+      if (cardId === 12386) console.log('✅ Using averagePrice for 12386:', cardData.averagePrice);
+      return cardData.averagePrice;
+    }
+
+    // Fallback to marketPrices array
+    if (Array.isArray(cardData.marketPrices) && cardData.marketPrices.length > 0) {
+      const prices = cardData.marketPrices.filter((p: any) => p && typeof p.price === 'number');
+      
+      if (cardId === 12386) {
+        console.log('🔍 Market prices array for 12386:', prices);
+      }
+      
+      if (prices.length === 0) {
+        if (cardId === 12386) console.log('❌ No valid prices after filtering for 12386');
+        return 0;
+      }
+
+      // Get the most recent price for Near Mint condition first
+      const nearMintPrices = prices.filter((p: any) => p.condition === 'Near Mint');
+      if (nearMintPrices.length > 0) {
+        const price = Math.min(...nearMintPrices.map((p: any) => p.price));
+        if (cardId === 12386) console.log('✅ Near Mint price for 12386:', price);
+        return price;
+      }
+
+      // Fallback to the lowest price available
+      const price = Math.min(...prices.map((p: any) => p.price));
+      if (cardId === 12386) console.log('✅ Fallback price for 12386:', price);
+      return price;
+    }
+
+    if (cardId === 12386) console.log('❌ No valid price data structure for 12386');
+    return 0;
+  }, [marketPrices]);  // Helper function to format image path from CardID
   const getImagePath = (cardId: number) => {
     return `hk${cardId.toString().padStart(8, '0')}.png`;
   };
@@ -176,6 +291,27 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
 
   // Deck Summary Calculations
   const getDeckSummary = useMemo(() => {
+    // Don't calculate if market prices aren't loaded yet
+    if (Object.keys(marketPrices).length === 0) {
+      console.log('⏳ Market prices not loaded yet, skipping calculation');
+      return {
+        totalPrice: 0,
+        keyCards: [],
+        damageAnalysis: {
+          totalDamage: 0,
+          averageDamage: 0,
+          maxDamage: 0,
+          damageCards: []
+        },
+        turnItems: {
+          firstTurn: [],
+          secondTurn: []
+        }
+      };
+    }
+    
+    console.log('📊 Calculating deck summary with', Object.keys(marketPrices).length, 'market prices loaded');
+    
     const summary = {
       totalPrice: 0,
       keyCards: [] as SimpleDeckCard[],
@@ -190,6 +326,12 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
         secondTurn: [] as SimpleDeckCard[]
       }
     };
+
+    // Calculate total price from market prices
+    summary.totalPrice = deck.cards.reduce((total, card) => {
+      const cardPrice = getCardPrice(card.CardID);
+      return total + (cardPrice * card.quantity);
+    }, 0);
 
     // Key cards (S/A tier Pokemon and important trainers)
     summary.keyCards = deck.cards.filter(card =>
@@ -249,7 +391,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
     });
 
     return summary;
-  }, [deck.cards]);
+  }, [deck.cards, getCardPrice, marketPrices]);
 
   const saveDeck = async () => {
     if (!deck.name.trim()) {
@@ -347,12 +489,70 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                 <DollarSign className="w-5 h-5 text-green-500 mr-2" />
                 <h3 className="text-lg font-semibold">牌組總價</h3>
               </div>
-              <div className="text-3xl font-bold text-green-600 mb-2">
-                HK$ {getDeckSummary.totalPrice.toLocaleString()}
-              </div>
-              <p className="text-sm text-gray-600">
+              {loadingPrices ? (
+                <div className="text-gray-500 text-sm mb-2">載入市場價格中...</div>
+              ) : deck.cards.length === 0 ? (
+                <div className="text-gray-500 text-sm mb-2">請先添加卡牌到牌組</div>
+              ) : (
+                <div>
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    HK$ {getDeckSummary.totalPrice.toLocaleString()}
+                  </div>
+                  {getDeckSummary.totalPrice === 0 ? (
+                    <div className="text-sm text-amber-600">
+                      ⚠️ 當前牌組中的卡牌沒有可用的市場價格數據
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-600">
+                      基於可用的市場價格數據計算
+                    </div>
+                  )}
+                </div>
+              )}
+              <p className="text-sm text-gray-600 flex items-center gap-2">
                 基於市場價格計算
+                {loadingPrices ? (
+                  <span className="text-xs text-blue-500">載入中...</span>
+                ) : Object.keys(marketPrices).length > 0 ? (
+                  <span className="text-xs text-green-500">✓ 價格已載入</span>
+                ) : (
+                  <span className="text-xs text-red-500">價格載入失敗</span>
+                )}
               </p>
+              {deck.cards.length === 0 && (
+                <div className="mt-2 text-sm text-gray-500">
+                  從「瀏覽」頁面新增卡牌以查看價格分析
+                  <button
+                    onClick={() => {
+                      // Add a test card with known ID from market prices
+                      const testCardId = 14376; // One of the card IDs that should have price data
+                      const testCard = {
+                        CardID: testCardId,
+                        Name: "測試卡片 (氣球)",
+                        CardType: "Trainer",
+                        quantity: 1,
+                        AbilityName: "", AbilityEffect: "", Rarity: "U", Evolution: "", EvolutionStage: "",
+                        ImageURL: "", HP: "", Type: "", Weakness: "", WeaknessType: "", Resistance: "",
+                        ResistanceType: "", Skill1Name: "", Skill1Energy: "", Skill1Damage: "", Skill1Effect: "",
+                        Skill2Name: "", Skill2Energy: "", Skill2Damage: "", Skill2Effect: "", RetreatCost: "",
+                        Illustrator: "", ExpansionCode: "", ExpansionName: "", CollectorNumber: "", RegulationMark: "",
+                        Artist: "", SpecialTag: "", PrimaryEffectType: "", SpecialEffectType: "", AbilityStats: "", Tier: ""
+                      };
+                      setDeck(prev => ({ ...prev, cards: [testCard] }));
+                      
+                      // Also test a few other IDs to see which ones have data
+                      console.log('🔍 Testing price availability:');
+                      [14376, 14456, 12107, 12386, 8293, 8294].forEach(id => {
+                        const hasPrice = marketPrices[id.toString()];
+                        console.log(`Card ${id}: ${hasPrice ? '✅ Has price data' : '❌ No price data'}`);
+                      });
+                    }}
+                    className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                  >
+                    🧪 測試價格
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Key Cards */}
