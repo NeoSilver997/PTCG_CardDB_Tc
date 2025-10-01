@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { 
   ExternalLink, 
   Server, 
@@ -14,8 +15,12 @@ import {
   XCircle,
   AlertCircle,
   Copy,
-  RefreshCw
+  RefreshCw,
+  Palette
 } from 'lucide-react';
+
+// Dynamically import UIDraft component
+const UIDraft = dynamic(() => import('../../components/UIDraft'), { ssr: false });
 
 interface Route {
   path: string;
@@ -36,6 +41,7 @@ export default function DebugPage() {
   const [routes, setRoutes] = useState<LinkGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkingStatus, setCheckingStatus] = useState(false);
+  const [showUIDraft, setShowUIDraft] = useState(false);
 
   useEffect(() => {
     loadRoutes();
@@ -106,6 +112,15 @@ export default function DebugPage() {
         color: 'gray',
         routes: [
           { path: '/debug', type: 'page', description: 'This debug page - All routes and API endpoints' }
+        ]
+      },
+      {
+        title: 'UI Components',
+        icon: Palette,
+        color: 'purple',
+        routes: [
+          { path: '/deck-studio', type: 'page', description: 'New Comprehensive Deck UI - Manager, Builder & Library' },
+          { path: '#ui-draft', type: 'page', description: 'Modern UI Draft - Component showcase without functionality' }
         ]
       }
     ];
@@ -357,6 +372,40 @@ export default function DebugPage() {
               </div>
             );
           })}
+        </div>
+
+        {/* UI Draft Section */}
+        <div className="mt-12 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <Palette className="h-8 w-8 text-purple-600" />
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">UI Components Draft</h2>
+                <p className="text-gray-600">Modern UI showcase without functionality</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowUIDraft(!showUIDraft)}
+              className="flex items-center space-x-2 px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+            >
+              <Palette className="h-5 w-5" />
+              <span>{showUIDraft ? 'Hide' : 'Show'} UI Draft</span>
+            </button>
+          </div>
+
+          {showUIDraft && (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="p-4 bg-purple-50 border-b border-gray-200">
+                <p className="text-sm text-purple-800">
+                  This is a non-functional UI draft showcasing modern design patterns for the PTCG application.
+                  All components are for visual demonstration only.
+                </p>
+              </div>
+              <div className="max-h-96 overflow-auto">
+                <UIDraft />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

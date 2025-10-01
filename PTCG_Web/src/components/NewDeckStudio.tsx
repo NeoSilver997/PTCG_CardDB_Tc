@@ -645,6 +645,138 @@ export default function NewDeckStudio() {
     }).format(price);
   };
 
+  // Energy Icon Components
+  const EnergyIcon = ({ type, size = 'w-4 h-4' }: { type: string; size?: string }) => {
+    const getEnergyIcon = (energyType: string) => {
+      switch (energyType.toLowerCase()) {
+        case 'fire':
+        case 'fire energy':
+        case '火':
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">🔥</div>
+            </div>
+          );
+        case 'water':
+        case 'water energy':
+        case '水':
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">💧</div>
+            </div>
+          );
+        case 'lightning':
+        case 'electric':
+        case 'lightning energy':
+        case '雷':
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">⚡</div>
+            </div>
+          );
+        case 'grass':
+        case 'grass energy':
+        case '草':
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">🌿</div>
+            </div>
+          );
+        case 'psychic':
+        case 'psychic energy':
+        case '超':
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">🔮</div>
+            </div>
+          );
+        case 'fighting':
+        case 'fighting energy':
+        case '鬥':
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">👊</div>
+            </div>
+          );
+        case 'darkness':
+        case 'dark':
+        case 'darkness energy':
+        case '惡':
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">🌙</div>
+            </div>
+          );
+        case 'metal':
+        case 'steel':
+        case 'metal energy':
+        case '鋼':
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">⚙️</div>
+            </div>
+          );
+        case 'fairy':
+        case 'fairy energy':
+        case '妖精':
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">✨</div>
+            </div>
+          );
+        case 'colorless':
+        case 'normal':
+        case '無色':
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">○</div>
+            </div>
+          );
+        default:
+          return (
+            <div className={`${size} rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center`}>
+              <div className="text-white text-xs font-bold">?</div>
+            </div>
+          );
+      }
+    };
+    
+    return getEnergyIcon(type);
+  };
+
+  // Helper function to get basic Pokemon from deck
+  const getBasicPokemon = (deck: Deck) => {
+    if (!deck.cards) return [];
+    
+    return deck.cards.filter(card => {
+      // Check if it's a Pokemon card and likely basic (not evolved)
+      const isPokemon = card.CardType && (
+        card.CardType.includes('寶可夢') || 
+        card.CardType.toLowerCase().includes('pokemon') || 
+        card.CardType.includes('Pokémon')
+      );
+      
+      if (!isPokemon) return false;
+      
+      // Check if it's basic (doesn't have evolution keywords)
+      const isBasic = card.EvolutionStage.includes('基礎');
+      
+      return isBasic;
+    });
+  };
+
+  // Helper function to get energy cards from deck
+  const getEnergyCards = (deck: Deck) => {
+    if (!deck.cards) return [];
+    
+    return deck.cards.filter(card => {
+      return card.CardType && (
+        card.CardType.toLowerCase().includes('energy') || 
+        card.CardType.includes('能量')
+      );
+    });
+  };
+
   // Deck Manager View
   const DeckManagerView = () => (
     <div className="space-y-6">
@@ -773,14 +905,30 @@ export default function NewDeckStudio() {
                   <div className="text-xs text-gray-500">Total Cards</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-blue-600">{deck.pokemonCount}</div>
-                  <div className="text-xs text-gray-500">Pokemon</div>
+                  <div className="text-lg font-semibold text-blue-600">{deck.pokemonCount} ({getBasicPokemon(deck).length})</div>
+                  <div className="text-xs text-gray-500">Pokemon (Basic)</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-semibold text-green-600">{deck.trainerCount}</div>
                   <div className="text-xs text-gray-500">Trainers</div>
                 </div>
               </div>
+
+              {/* Energy Types */}
+              {getEnergyCards(deck).length > 0 && (
+                <div className="mb-3">
+                  <div className="text-xs font-medium text-gray-500 mb-2">Energy Types:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {Array.from(new Set(getEnergyCards(deck).map(card => card.Type))).map((energyType, index) => (
+                      <div key={index} className="flex items-center bg-gray-100 rounded-full p-1">
+                        <EnergyIcon type={energyType} size="w-4 h-4" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+
 
               {/* Main Attribute & Effect */}
               <div className="space-y-2 mb-3">
@@ -959,6 +1107,10 @@ export default function NewDeckStudio() {
               <div className="text-xs text-gray-500">Total Cards</div>
             </div>
             <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{getBasicPokemon({ cards: currentDeckCards } as Deck).length}</div>
+              <div className="text-xs text-gray-500">Basic Pokemon</div>
+            </div>
+            <div className="text-center">
               <div className={`text-2xl font-bold ${currentDeckCards.reduce((sum, card) => sum + card.quantity, 0) === 60 ? 'text-green-600' : 'text-orange-600'}`}>
                 {currentDeckCards.reduce((sum, card) => sum + card.quantity, 0) === 60 ? 'Valid' : 'Invalid'}
               </div>
@@ -982,7 +1134,38 @@ export default function NewDeckStudio() {
       {/* Current Deck Cards */}
       {currentDeckCards.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Deck ({currentDeckCards.reduce((sum, card) => sum + card.quantity, 0)} cards)</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Current Deck ({currentDeckCards.reduce((sum, card) => sum + card.quantity, 0)} cards)</h3>
+            
+            {/* Energy Summary */}
+            {getEnergyCards({ cards: currentDeckCards } as Deck).length > 0 && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">Energy:</span>
+                {Array.from(new Set(getEnergyCards({ cards: currentDeckCards } as Deck).map(card => card.Type))).slice(0, 3).map((energyType, index) => (
+                  <div key={index} className="flex items-center space-x-1">
+                    <EnergyIcon type={energyType} size="w-4 h-4" />
+                    <span className="text-xs text-gray-600">
+                      {getEnergyCards({ cards: currentDeckCards } as Deck).filter(card => card.Type === energyType).reduce((sum, card) => sum + card.quantity, 0)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Basic Pokemon Summary */}
+          {getBasicPokemon({ cards: currentDeckCards } as Deck).length > 0 && (
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+              <div className="text-sm font-medium text-blue-700 mb-2">Basic Pokemon ({getBasicPokemon({ cards: currentDeckCards } as Deck).length} types):</div>
+              <div className="flex flex-wrap gap-2">
+                {getBasicPokemon({ cards: currentDeckCards } as Deck).slice(0, 6).map((pokemon, index) => (
+                  <span key={index} className="text-xs bg-white px-2 py-1 rounded text-blue-600 font-medium">
+                    {pokemon.Name} ×{pokemon.quantity}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             {currentDeckCards.map((card) => (
               <div key={`deck-${card.CardID}`} className="relative bg-gray-50 rounded-lg overflow-hidden border">
@@ -1235,7 +1418,17 @@ export default function NewDeckStudio() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                  <span>Pokemon Cards</span>
+                  <span>Basic Pokemon</span>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold">{getBasicPokemon(selectedDeck).length}</div>
+                  <div className="text-xs text-gray-500">{Math.round((getBasicPokemon(selectedDeck).length / selectedDeck.totalCards) * 100)}%</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 bg-blue-300 rounded"></div>
+                  <span>All Pokemon Cards</span>
                 </div>
                 <div className="text-right">
                   <div className="font-semibold">{selectedDeck.pokemonCount}</div>
@@ -1254,7 +1447,7 @@ export default function NewDeckStudio() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <EnergyIcon type="energy" size="w-4 h-4" />
                   <span>Energy Cards</span>
                 </div>
                 <div className="text-right">
@@ -1263,6 +1456,55 @@ export default function NewDeckStudio() {
                 </div>
               </div>
             </div>
+            
+            {/* Energy Breakdown */}
+            {getEnergyCards(selectedDeck).length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Energy Breakdown</h4>
+                <div className="space-y-2">
+                  {Array.from(new Set(getEnergyCards(selectedDeck).map(card => card.Type))).map((energyType, index) => {
+                    const count = getEnergyCards(selectedDeck).filter(card => card.Type === energyType).reduce((sum, card) => sum + (card.quantity || 1), 0);
+                    return (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <EnergyIcon type={energyType} size="w-4 h-4" />
+                          <span className="text-sm">{energyType} Energy</span>
+                        </div>
+                        <span className="text-sm font-medium">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Basic Pokemon List */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Pokemon</h3>
+            {getBasicPokemon(selectedDeck).length > 0 ? (
+              <div className="space-y-3">
+                {getBasicPokemon(selectedDeck).map((pokemon, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span className="text-blue-600 font-bold text-sm">{pokemon.HP || '?'}</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">{pokemon.Name}</div>
+                        <div className="text-sm text-gray-500">{pokemon.Type}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-blue-600">×{pokemon.quantity || 1}</div>
+                      <div className="text-xs text-gray-500">copies</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">No basic Pokemon found in this deck</p>
+            )}
           </div>
 
           {/* Performance Metrics */}

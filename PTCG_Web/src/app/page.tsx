@@ -888,6 +888,13 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <LanguageSelector />
               <a
+                href="/deck-studio"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Deck Studio</span>
+              </a>
+              <a
                 href="/deck-builder"
                 className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
               >
