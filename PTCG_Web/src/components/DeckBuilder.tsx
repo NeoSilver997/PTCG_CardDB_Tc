@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
 import { Deck, DeckCard } from '../types/deck';
-import { Search, Plus, Minus, Eye, X, Filter, Star, Users, Zap, Shield, Sword, Heart } from 'lucide-react';
+import { Search, Plus, Minus, Eye, X, Filter, Star, Users, Zap, Shield, Sword, Heart, DollarSign, Target, Package } from 'lucide-react';
 import { useI18n } from '../i18n/context';
 import SearchFiltersComponent from './SearchFilters';
 
@@ -24,16 +24,18 @@ interface DeckBuilderProps {
 
 const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initialDeck }) => {
   const { t } = useI18n();
-  
+
   const [deck, setDeck] = useState<SimpleDeck>(initialDeck || { name: '', cards: [] });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'library' | 'deck' | 'summary'>('library');
 
   // Helper function to format image path from CardID
   const getImagePath = (cardId: number) => {
     return `hk${cardId.toString().padStart(8, '0')}.png`;
   };
+
   const [filters, setFilters] = useState<SearchFilters>({
     ability: '',
     effectType: '',
@@ -56,16 +58,16 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
   // Generate abilities and effect types with counts for SearchFiltersComponent
   const abilities: AbilityOption[] = useMemo(() => {
     const countMap = new Map<string, number>();
-    
+
     initialCards.forEach(card => {
       if (card.CardType.includes('能量')) return; // Exclude energy cards
-      
+
       const ability = card.AbilityName;
       if (ability && ability.trim() !== '') {
         countMap.set(ability, (countMap.get(ability) || 0) + 1);
       }
     });
-    
+
     return Array.from(countMap.entries())
       .map(([value, count]) => ({ value, label: value, count }))
       .sort((a, b) => b.count - a.count);
@@ -73,16 +75,16 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
 
   const effectTypes: EffectTypeOption[] = useMemo(() => {
     const countMap = new Map<string, number>();
-    
+
     initialCards.forEach(card => {
       if (card.CardType.includes('能量')) return; // Exclude energy cards
-      
+
       const effectType = card.PrimaryEffectType;
       if (effectType && effectType.trim() !== '') {
         countMap.set(effectType, (countMap.get(effectType) || 0) + 1);
       }
     });
-    
+
     return Array.from(countMap.entries())
       .map(([value, count]) => ({ value, label: value, count }))
       .sort((a, b) => b.count - a.count);
@@ -172,6 +174,83 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
     }
   };
 
+  // Deck Summary Calculations
+  const getDeckSummary = useMemo(() => {
+    const summary = {
+      totalPrice: 0,
+      keyCards: [] as SimpleDeckCard[],
+      damageAnalysis: {
+        totalDamage: 0,
+        averageDamage: 0,
+        maxDamage: 0,
+        damageCards: [] as { card: SimpleDeckCard, damage: number }[]
+      },
+      turnItems: {
+        firstTurn: [] as SimpleDeckCard[],
+        secondTurn: [] as SimpleDeckCard[]
+      }
+    };
+
+    // Key cards (S/A tier Pokemon and important trainers)
+    summary.keyCards = deck.cards.filter(card =>
+      (card.CardType === 'Pokémon' && (card.Tier === 'S' || card.Tier === 'A')) ||
+      (card.CardType === 'Trainer' && (card.AbilityName?.includes('Search') || card.AbilityName?.includes('Draw')))
+    ).sort((a, b) => {
+      const tierOrder = { 'S': 0, 'A': 1, 'B': 2, 'C': 3, 'D': 4 };
+      const aTier = tierOrder[a.Tier as keyof typeof tierOrder] ?? 5;
+      const bTier = tierOrder[b.Tier as keyof typeof tierOrder] ?? 5;
+      return aTier - bTier;
+    });
+
+    // Damage analysis
+    const damageData: { card: SimpleDeckCard, damage: number }[] = [];
+    deck.cards.forEach(card => {
+      if (card.CardType === 'Pokémon') {
+        let maxDamage = 0;
+        if (card.Skill1Damage && card.Skill1Damage !== '') {
+          const damage1 = parseInt(card.Skill1Damage.replace(/\D/g, '')) || 0;
+          maxDamage = Math.max(maxDamage, damage1);
+        }
+        if (card.Skill2Damage && card.Skill2Damage !== '') {
+          const damage2 = parseInt(card.Skill2Damage.replace(/\D/g, '')) || 0;
+          maxDamage = Math.max(maxDamage, damage2);
+        }
+        if (maxDamage > 0) {
+          damageData.push({ card, damage: maxDamage });
+          summary.damageAnalysis.totalDamage += maxDamage * card.quantity;
+        }
+      }
+    });
+
+    summary.damageAnalysis.damageCards = damageData.sort((a, b) => b.damage - a.damage);
+    summary.damageAnalysis.maxDamage = Math.max(...damageData.map(d => d.damage), 0);
+    summary.damageAnalysis.averageDamage = damageData.length > 0 ?
+      summary.damageAnalysis.totalDamage / deck.cards.reduce((sum, card) => sum + card.quantity, 0) : 0;
+
+    // Turn-based items categorization
+    deck.cards.forEach(card => {
+      if (card.CardType === 'Trainer' || card.CardType === 'Energy') {
+        // First turn items (searchers, basic energy, etc.)
+        if (card.AbilityName?.includes('Search') ||
+            card.AbilityName?.includes('Draw') ||
+            card.CardType === 'Energy' ||
+            card.Name.includes('Nest Ball') ||
+            card.Name.includes('Quick Ball')) {
+          summary.turnItems.firstTurn.push(card);
+        }
+        // Second turn items (supporters, stadiums, etc.)
+        else if (card.AbilityName?.includes('Supporter') ||
+                 card.Name.includes('Professor') ||
+                 card.Name.includes('Boss') ||
+                 card.Name.includes('Stadium')) {
+          summary.turnItems.secondTurn.push(card);
+        }
+      }
+    });
+
+    return summary;
+  }, [deck.cards]);
+
   const saveDeck = async () => {
     if (!deck.name.trim()) {
       alert(t.enterDeckName);
@@ -223,187 +302,324 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
 
       <div className="max-w-7xl mx-auto p-4">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-          {/* Card Library */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-md p-3 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">{t.cardLibrary}</h2>
-
-              {/* Search and Filters */}
-              <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder={t.searchPlaceholder}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setFilters({
-                      ability: '',
-                      effectType: '',
-                      cardType: '',
-                      rarity: '',
-                      tier: '',
-                      attribute: '',
-                      regulation: '',
-                      expansion: '',
-                      weaknessType: '',
-                      resistanceType: '',
-                      noRetreat: false,
-                      noResistance: false,
-                      noWeakness: false,
-                      specialPokemonType: '',
-                      owned: 'all',
-                      priceRange: 'all'
-                    })}
-                    className="px-4 py-3 sm:py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm min-h-[44px] sm:min-h-auto"
-                  >
-                    <Filter className="w-4 h-4 mx-auto sm:mx-0" />
-                    <span className="ml-2 hidden sm:inline">{t.clear}</span>
-                  </button>
-                </div>
-
-                {/* Comprehensive Filters */}
-                <SearchFiltersComponent 
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  cards={initialCards}
-                  abilities={abilities}
-                  effectTypes={effectTypes}
-                />
-              </div>
-
-              {/* Card Grid - Mobile Optimized */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 max-h-96 overflow-y-auto">
-                {filteredCards.map(card => (
-                  <div key={card.CardID} className="bg-gray-50 rounded-lg p-2 sm:p-3 hover:shadow-md transition-shadow">
-                    <div className="aspect-[3/4] bg-gray-200 rounded mb-2 flex items-center justify-center">
-                      <img
-                        src={`/cards/${getImagePath(card.CardID)}`}
-                        alt={card.Name}
-                        className="w-full h-full object-cover rounded"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                    <h3 className="font-medium text-xs sm:text-sm mb-1 truncate" title={card.Name}>{card.Name}</h3>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-gray-600 truncate flex-1 mr-1" title={card.CardType}>{card.CardType}</span>
-                      {card.Tier && getTierIcon(card.Tier)}
-                    </div>
-                    <div className="flex gap-1 sm:gap-2">
-                      <button
-                        onClick={() => addCardToDeck(card)}
-                        disabled={getCardCount(card.CardID) >= 4}
-                        className="flex-1 px-2 py-2 sm:py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed min-h-[36px] sm:min-h-auto flex items-center justify-center"
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        <span className="hidden sm:inline">{t.add}</span>
-                      </button>
-                      <button
-                        onClick={() => setSelectedCard(card)}
-                        className="px-2 py-2 sm:py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 min-h-[36px] sm:min-h-auto flex items-center justify-center"
-                      >
-                        <Eye className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveTab('library')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'library'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t.cardLibrary}
+            </button>
+            <button
+              onClick={() => setActiveTab('deck')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'deck'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t.currentDeck}
+            </button>
+            <button
+              onClick={() => setActiveTab('summary')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'summary'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              牌組摘要
+            </button>
           </div>
+        </div>
 
-          {/* Deck Panel - Mobile Optimized */}
-          <div className="lg:col-span-1 order-first lg:order-last">
-            <div className="bg-white rounded-lg shadow-md p-3 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">{t.currentDeck}</h2>
-
-              <div className="mb-3 sm:mb-4">
-                <input
-                  type="text"
-                  placeholder={t.deckName}
-                  value={deck.name}
-                  onChange={(e) => setDeck(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] sm:min-h-auto"
-                />
+        {activeTab === 'summary' ? (
+          /* Deck Summary View */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Price Summary */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center mb-4">
+                <DollarSign className="w-5 h-5 text-green-500 mr-2" />
+                <h3 className="text-lg font-semibold">牌組總價</h3>
               </div>
-
-              <div className="mb-3 sm:mb-4">
-                <p className="text-sm text-gray-600 font-medium">
-                  {t.cards}: {deck.cards.reduce((sum, card) => sum + card.quantity, 0)} / 60
-                </p>
+              <div className="text-3xl font-bold text-green-600 mb-2">
+                HK$ {getDeckSummary.totalPrice.toLocaleString()}
               </div>
+              <p className="text-sm text-gray-600">
+                基於市場價格計算
+              </p>
+            </div>
 
-              <div className="space-y-2 max-h-64 sm:max-h-80 overflow-y-auto mb-4">
-                {deck.cards.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8 text-sm">{t.noCards}</p>
+            {/* Key Cards */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center mb-4">
+                <Star className="w-5 h-5 text-yellow-500 mr-2" />
+                <h3 className="text-lg font-semibold">關鍵卡牌</h3>
+              </div>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {getDeckSummary.keyCards.length === 0 ? (
+                  <p className="text-gray-500 text-sm">無關鍵卡牌</p>
                 ) : (
-                  deck.cards.map(card => (
+                  getDeckSummary.keyCards.map(card => (
                     <div key={card.CardID} className="flex items-center justify-between bg-gray-50 rounded p-2">
-                      <div className="flex-1 min-w-0 mr-2">
-                        <p className="text-xs sm:text-sm font-medium truncate" title={card.Name}>{card.Name}</p>
-                        <p className="text-xs text-gray-600 truncate" title={card.CardType}>{card.CardType}</p>
+                      <div className="flex items-center">
+                        {card.Tier && getTierIcon(card.Tier)}
+                        <span className="ml-2 text-sm font-medium">{card.Name}</span>
                       </div>
-                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => removeCardFromDeck(card.CardID)}
-                          className="p-1 sm:p-1 bg-red-500 text-white rounded hover:bg-red-600 min-w-[32px] min-h-[32px] sm:min-w-auto sm:min-h-auto flex items-center justify-center"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="text-sm font-medium min-w-[20px] text-center">
-                          {card.quantity}
-                        </span>
-                        <button
-                          onClick={() => addCardToDeck(card)}
-                          disabled={card.quantity >= 4}
-                          className="p-1 sm:p-1 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed min-w-[32px] min-h-[32px] sm:min-w-auto sm:min-h-auto flex items-center justify-center"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
+                      <span className="text-sm text-gray-600">x{card.quantity}</span>
                     </div>
                   ))
                 )}
               </div>
+            </div>
 
-              <button
-                onClick={saveDeck}
-                className="w-full px-4 py-3 sm:py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium min-h-[44px] sm:min-h-auto"
-              >
-                {t.saveDeck}
-              </button>
+            {/* Damage Analysis */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center mb-4">
+                <Target className="w-5 h-5 text-red-500 mr-2" />
+                <h3 className="text-lg font-semibold">傷害分析</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-sm text-gray-600">平均傷害</p>
+                  <p className="text-2xl font-bold text-red-600">{Math.round(getDeckSummary.damageAnalysis.averageDamage)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">最高傷害</p>
+                  <p className="text-2xl font-bold text-red-600">{getDeckSummary.damageAnalysis.maxDamage}</p>
+                </div>
+              </div>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                <p className="text-sm font-medium">高傷害卡牌:</p>
+                {getDeckSummary.damageAnalysis.damageCards.slice(0, 5).map(({ card, damage }) => (
+                  <div key={card.CardID} className="flex justify-between text-sm">
+                    <span>{card.Name}</span>
+                    <span className="font-medium text-red-600">{damage}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Turn-based Items */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center mb-4">
+                <Package className="w-5 h-5 text-blue-500 mr-2" />
+                <h3 className="text-lg font-semibold">回合道具</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium text-green-600 mb-2">先攻道具</h4>
+                  <div className="space-y-1 max-h-24 overflow-y-auto">
+                    {getDeckSummary.turnItems.firstTurn.length === 0 ? (
+                      <p className="text-xs text-gray-500">無</p>
+                    ) : (
+                      getDeckSummary.turnItems.firstTurn.map(card => (
+                        <div key={card.CardID} className="text-xs">
+                          {card.Name} x{card.quantity}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium text-blue-600 mb-2">後攻道具</h4>
+                  <div className="space-y-1 max-h-24 overflow-y-auto">
+                    {getDeckSummary.turnItems.secondTurn.length === 0 ? (
+                      <p className="text-xs text-gray-500">無</p>
+                    ) : (
+                      getDeckSummary.turnItems.secondTurn.map(card => (
+                        <div key={card.CardID} className="text-xs">
+                          {card.Name} x{card.quantity}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        ) : activeTab === 'deck' ? (
+          /* Deck Panel - Mobile Optimized */
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4">{t.currentDeck}</h2>
 
-        {/* Card Detail Modal - Mobile Optimized */}
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder={t.deckName}
+                value={deck.name}
+                onChange={(e) => setDeck(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 font-medium">
+                {t.cards}: {deck.cards.reduce((sum, card) => sum + card.quantity, 0)} / 60
+              </p>
+            </div>
+
+            <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
+              {deck.cards.length === 0 ? (
+                <p className="text-gray-500 text-center py-8 text-sm">{t.noCards}</p>
+              ) : (
+                deck.cards.map(card => (
+                  <div key={card.CardID} className="flex items-center justify-between bg-gray-50 rounded p-2">
+                    <div className="flex-1 min-w-0 mr-2">
+                      <p className="text-sm font-medium truncate" title={card.Name}>{card.Name}</p>
+                      <p className="text-xs text-gray-600 truncate" title={card.CardType}>{card.CardType}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => removeCardFromDeck(card.CardID)}
+                        className="p-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="text-sm font-medium min-w-[20px] text-center">
+                        {card.quantity}
+                      </span>
+                      <button
+                        onClick={() => addCardToDeck(card)}
+                        disabled={card.quantity >= 4}
+                        className="p-1 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <button
+              onClick={saveDeck}
+              className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+            >
+              {t.saveDeck}
+            </button>
+          </div>
+        ) : (
+          /* Card Library View */
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4">{t.cardLibrary}</h2>
+
+            {/* Search and Filters */}
+            <div className="mb-6 space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder={t.searchPlaceholder}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={() => setFilters({
+                    ability: '',
+                    effectType: '',
+                    cardType: '',
+                    rarity: '',
+                    tier: '',
+                    attribute: '',
+                    regulation: '',
+                    expansion: '',
+                    weaknessType: '',
+                    resistanceType: '',
+                    noRetreat: false,
+                    noResistance: false,
+                    noWeakness: false,
+                    specialPokemonType: '',
+                    owned: 'all',
+                    priceRange: 'all'
+                  })}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  {t.clear}
+                </button>
+              </div>
+
+              {/* Comprehensive Filters */}
+              <SearchFiltersComponent
+                filters={filters}
+                onFiltersChange={setFilters}
+                cards={initialCards}
+                abilities={abilities}
+                effectTypes={effectTypes}
+              />
+            </div>
+
+            {/* Card Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
+              {filteredCards.map(card => (
+                <div key={card.CardID} className="bg-gray-50 rounded-lg p-3 hover:shadow-md transition-shadow">
+                  <div className="aspect-[3/4] bg-gray-200 rounded mb-2 flex items-center justify-center">
+                    <img
+                      src={`/cards/${getImagePath(card.CardID)}`}
+                      alt={card.Name}
+                      className="w-full h-full object-cover rounded"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <h3 className="font-medium text-sm mb-1 truncate" title={card.Name}>{card.Name}</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-600 truncate flex-1 mr-1" title={card.CardType}>{card.CardType}</span>
+                    {card.Tier && getTierIcon(card.Tier)}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => addCardToDeck(card)}
+                      disabled={getCardCount(card.CardID) >= 4}
+                      className="flex-1 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      {t.add}
+                    </button>
+                    <button
+                      onClick={() => setSelectedCard(card)}
+                      className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600"
+                    >
+                      <Eye className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Card Detail Modal */}
         {selectedCard && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-40">
-            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto z-50">
-              <div className="p-3 sm:p-6">
-                <div className="flex justify-between items-start mb-4 sm:mb-6">
-                  <h2 className="text-lg sm:text-2xl font-bold pr-4 flex-1">{selectedCard.Name}</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
+            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-6">
+                  <h2 className="text-2xl font-bold pr-4">{selectedCard.Name}</h2>
                   <button
                     onClick={() => setSelectedCard(null)}
-                    className="p-2 hover:bg-gray-100 rounded-full flex-shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center"
+                    className="p-2 hover:bg-gray-100 rounded-full"
                   >
-                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <X className="w-6 h-6" />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Card Image and Basic Info */}
                   <div>
-                    <div className="aspect-[3/4] bg-gray-200 rounded-lg mb-4 flex items-center justify-center max-w-sm mx-auto lg:max-w-none lg:mx-0">
+                    <div className="aspect-[3/4] bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
                       <img
                         src={`/cards/${getImagePath(selectedCard.CardID)}`}
                         alt={selectedCard.Name}
@@ -414,7 +630,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                       />
                     </div>
 
-                    <div className="space-y-2 text-sm sm:text-base">
+                    <div className="space-y-2 text-sm">
                       <p><strong>Type:</strong> {selectedCard.CardType}</p>
                       <p><strong>Rarity:</strong> {selectedCard.Rarity}</p>
                       <p><strong>Tier:</strong> {selectedCard.Tier} {getTierIcon(selectedCard.Tier || '')}</p>
@@ -496,7 +712,6 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                   <button
                     onClick={() => addCardToDeck(selectedCard)}
                     disabled={getCardCount(selectedCard.CardID) >= 4}
-
                     className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     Add to Deck ({getCardCount(selectedCard.CardID)}/4)
