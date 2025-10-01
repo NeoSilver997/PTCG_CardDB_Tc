@@ -1557,72 +1557,100 @@ export default function NewDeckStudio() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Navigation Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <div className="flex items-center space-x-3">
-                <Package className="h-8 w-8 text-blue-600" />
-                <h1 className="text-xl font-bold text-gray-900">Deck Studio</h1>
-              </div>
-              
-              {/* Navigation Tabs */}
-              <nav className="hidden md:flex space-x-8">
-                <button
-                  onClick={() => setCurrentView('manager')}
-                  className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-                    currentView === 'manager'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Manager
-                </button>
-                <button
-                  onClick={() => setCurrentView('builder')}
-                  className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-                    currentView === 'builder'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Builder
-                </button>
-                {selectedDeck && (
-                  <button
-                    onClick={() => setCurrentView('review')}
-                    className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-                      currentView === 'review'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Review
-                  </button>
-                )}
-              </nav>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header - Mobile Optimized */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <Package className="h-8 w-8 sm:h-10 sm:w-10 text-purple-600" />
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Deck Studio</h1>
             </div>
-
-            {/* Mobile Menu */}
-            <div className="md:hidden">
-              <select
-                value={currentView}
-                onChange={(e) => setCurrentView(e.target.value as any)}
-                className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <a
+                href="/"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
               >
-                <option value="manager">Manager</option>
-                <option value="builder">Builder</option>
-                {selectedDeck && <option value="review">Review</option>}
-              </select>
+                <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Card Search</span>
+              </a>
+              <a
+                href="/deck-builder"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <Sword className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Deck Builder</span>
+              </a>
+              <a
+                href="/inventory"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Inventory</span>
+              </a>
+              <a
+                href="/market"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Market</span>
+              </a>
+              <a
+                href="/debug"
+                className="flex items-center justify-center space-x-2 px-3 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors text-xs font-medium opacity-75 hover:opacity-100"
+                title="Debug Console - All Routes & API Endpoints"
+              >
+                <span>🐛</span>
+                <span>Debug</span>
+              </a>
+              <div className="text-sm sm:text-base text-gray-500">
+                {decks.length} decks
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
+        {/* View Navigation - Mobile Optimized */}
+        <div className="mb-4 bg-white rounded-lg shadow-sm border p-3">
+          <nav className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-6">
+            <button
+              onClick={() => setCurrentView('manager')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors w-full sm:w-auto ${
+                currentView === 'manager'
+                  ? 'bg-purple-100 text-purple-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              Manager
+            </button>
+            <button
+              onClick={() => setCurrentView('builder')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors w-full sm:w-auto ${
+                currentView === 'builder'
+                  ? 'bg-purple-100 text-purple-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              Builder
+            </button>
+            <button
+              onClick={() => setCurrentView('review')}
+              disabled={!selectedDeck}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors w-full sm:w-auto ${
+                currentView === 'review'
+                  ? 'bg-purple-100 text-purple-700'
+                  : selectedDeck
+                  ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  : 'text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              Review {selectedDeck ? `(${selectedDeck.name})` : ''}
+            </button>
+          </nav>
+        </div>
+
         {currentView === 'manager' && <DeckManagerView />}
         {currentView === 'builder' && <DeckBuilderView />}
         {currentView === 'review' && <DeckReviewView />}
