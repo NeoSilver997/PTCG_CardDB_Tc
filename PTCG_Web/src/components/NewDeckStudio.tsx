@@ -58,73 +58,206 @@ interface DeckCard extends PTCGCard {
   quantity: number;
 }
 
-// Mock data for demonstration - will be replaced with real API calls
-const mockDecks: Deck[] = [
-  {
-    id: '1',
-    name: 'Lightning Storm',
-    format: 'Standard',
-    totalCards: 60,
-    pokemonCount: 15,
-    trainerCount: 35,
-    energyCount: 10,
-    isValid: true,
-    updatedAt: new Date('2024-10-01'),
-    description: 'Aggressive Lightning-type deck focused on fast KO strategy with powerful Electric Pokemon',
-    keyCards: ['Pikachu VMAX', 'Raichu V', 'Lightning Energy', 'Professor Oak'],
-    estimatedValue: 245.50,
-    mainAttribute: 'Lightning',
-    primaryEffect: 'Damage Boost'
-  },
-  {
-    id: '2',
-    name: 'Fire Control',
-    format: 'Expanded',
-    totalCards: 60,
-    pokemonCount: 12,
-    trainerCount: 38,
-    energyCount: 10,
-    isValid: true,
-    updatedAt: new Date('2024-09-28'),
-    description: 'Control-focused Fire deck using disruption and powerful finishers',
-    keyCards: ['Charizard V', 'Arcanine', 'Fire Energy', 'Team Rocket\'s Handiwork'],
-    estimatedValue: 189.75,
-    mainAttribute: 'Fire',
-    primaryEffect: 'Hand Disruption'
-  },
-  {
-    id: '3',
-    name: 'Psychic Force',
-    format: 'Standard',
-    totalCards: 58,
-    pokemonCount: 14,
-    trainerCount: 34,
-    energyCount: 10,
-    isValid: false,
-    updatedAt: new Date('2024-09-25'),
-    description: 'Psychic-type deck with powerful psychic abilities and mind control effects',
-    keyCards: ['Mewtwo V-UNION', 'Mr. Mime', 'Psychic Energy'],
-    estimatedValue: 320.25,
-    mainAttribute: 'Psychic',
-    primaryEffect: 'Special Conditions'
-  },
-  {
-    id: '4',
-    name: 'Water Rush',
-    format: 'Standard',
-    totalCards: 60,
-    pokemonCount: 16,
-    trainerCount: 34,
-    energyCount: 10,
-    isValid: true,
-    updatedAt: new Date('2024-09-30'),
-    description: 'Fast-paced Water deck focusing on quick setup and consistent pressure',
-    keyCards: ['Blastoise VMAX', 'Squirtle', 'Water Energy', 'Misty\'s Favor'],
-    estimatedValue: 156.80,
-    mainAttribute: 'Water',
-    primaryEffect: 'Energy Acceleration'
+// Helper function to fetch market prices
+const fetchMarketPrices = async (): Promise<{ [cardId: number]: number }> => {
+  try {
+    const response = await fetch('/api/market-prices?format=raw');
+    if (!response.ok) {
+      throw new Error('Failed to fetch market prices');
+    }
+    const marketPricesData = await response.json();
+    
+    // Convert to a simple lookup object with CardID -> average price
+    const priceMap: { [cardId: number]: number } = {};
+    
+    Object.entries(marketPricesData).forEach(([cardIdStr, prices]: [string, any[]]) => {
+      const cardId = parseInt(cardIdStr);
+      if (prices && prices.length > 0) {
+        // Calculate average price from recent prices (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const recentPrices = prices.filter(price => 
+          new Date(price.date) >= thirtyDaysAgo
+        );
+        
+        const validPrices = recentPrices.length > 0 ? recentPrices : prices;
+        const averagePrice = validPrices.reduce((sum, price) => sum + price.price, 0) / validPrices.length;
+        
+        priceMap[cardId] = averagePrice;
+      }
+    });
+    
+    return priceMap;
+  } catch (error) {
+    console.error('Error fetching market prices:', error);
+    return {};
   }
-];
+};
+
+// Helper functions for deck analysis
+const calculateDeckStats = async (deck: Deck) => {
+  if (!deck.cards || deck.cards.length === 0) {
+    return {
+      mostExpensiveCard: 'N/A',
+      estimatedValue: 0,
+      averageCardPrice: 0,
+      priceDistribution: { budget: 0, premium: 0, expensive: 0 },
+      consistencyScore: 0,
+      speedRating: 0,
+      powerLevel: 0,
+      strategyFocus: 'Unknown',
+      effectDistribution: { 'Unknown': 100 }
+    };
+  }
+
+  // Fetch market prices
+  const marketPrices = await fetchMarketPrices();
+
+  // Fallback rarity-based prices (used when market data is unavailable)
+  const rarityPrices: { [key: string]: number } = {
+    'C': 0.25,      // Common
+    'U': 0.50,      // Uncommon  
+    'R': 2.00,      // Rare
+    'RR': 5.00,     // Double Rare
+    'RRR': 15.00,   // Triple Rare
+    'UR': 50.00,    // Ultra Rare
+    'HR': 75.00,    // Hyper Rare
+    'SR': 100.00,   // Secret Rare
+    'PR': 8.00      // Promo
+  };
+
+  // Calculate total estimated value and find most expensive card
+  let totalValue = 0;
+  let mostExpensiveCard = 'N/A';
+  let highestPrice = 0;
+  const cardPrices: { name: string, price: number }[] = [];
+
+  deck.cards.forEach(card => {
+    let estimatedPrice = 0;
+    
+    // Try to use market price first
+    if (marketPrices[card.CardID]) {
+      estimatedPrice = marketPrices[card.CardID];
+    } else {
+      // Fallback to rarity-based pricing with multipliers
+      const basePrice = rarityPrices[card.Rarity] || 0.50;
+      
+      // Apply multipliers for special characteristics
+      let multiplier = 1;
+      if (card.AbilityName && card.AbilityName !== '無') multiplier *= 1.5;
+      if (card.HP && parseInt(card.HP) > 250) multiplier *= 1.3;
+      if (card.CardType.includes('寶可夢') && card.EvolutionStage.includes('基礎')) multiplier *= 1.2;
+      if (card.Tier === 'S' || card.Tier === 'A') multiplier *= 2;
+      
+      estimatedPrice = basePrice * multiplier;
+    }
+    
+    const totalCardValue = estimatedPrice * card.quantity;
+    
+    totalValue += totalCardValue;
+    cardPrices.push({ name: card.Name, price: estimatedPrice });
+    
+    if (estimatedPrice > highestPrice) {
+      highestPrice = estimatedPrice;
+      mostExpensiveCard = card.Name;
+    }
+  });
+
+  const averageCardPrice = totalValue / deck.totalCards;
+
+  // Calculate price distribution
+  const budgetCards = cardPrices.filter(c => c.price <= 1).length;
+  const premiumCards = cardPrices.filter(c => c.price > 1 && c.price <= 10).length;
+  const expensiveCards = cardPrices.filter(c => c.price > 10).length;
+  const totalCards = cardPrices.length;
+
+  const priceDistribution = {
+    budget: Math.round((budgetCards / totalCards) * 100),
+    premium: Math.round((premiumCards / totalCards) * 100),
+    expensive: Math.round((expensiveCards / totalCards) * 100)
+  };
+
+  // Calculate consistency score based on deck composition
+  const basicPokemonCount = deck.cards.filter(card => 
+    card.EvolutionStage && card.EvolutionStage.includes('基礎')
+  ).reduce((sum, card) => sum + card.quantity, 0);
+  
+  const consistencyScore = Math.min(100, Math.max(0, 
+    (basicPokemonCount / deck.totalCards * 100) + 
+    (deck.isValid ? 20 : 0) + 
+    (deck.totalCards === 60 ? 15 : 0)
+  ));
+
+  // Calculate speed rating based on energy and trainer ratios
+  const speedRating = Math.min(100, Math.max(0,
+    (deck.energyCount / deck.totalCards * 100) + 
+    (deck.trainerCount / deck.totalCards * 100)
+  ));
+
+  // Calculate power level based on rare cards and key cards
+  const rareCards = deck.cards.filter(card => 
+    card.Rarity === 'RRR' || card.Rarity === 'UR' || card.Rarity === 'R'
+  ).length;
+  const powerLevel = Math.min(100, Math.max(0,
+    (rareCards / deck.cards.length * 100) + 
+    ((deck.keyCards?.length || 0) * 10)
+  ));
+
+  // Analyze strategy focus
+  const pokemonCards = deck.cards.filter(card => 
+    card.CardType && (
+      card.CardType.includes('寶可夢') || 
+      card.CardType.toLowerCase().includes('pokemon')
+    )
+  );
+  
+  const hasHighHP = pokemonCards.some(card => parseInt(card.HP || '0') > 200);
+  const hasLowRetreat = pokemonCards.some(card => parseInt(card.RetreatCost || '3') <= 1);
+  const hasSpecialEffects = pokemonCards.some(card => 
+    card.AbilityName && card.AbilityName !== '無'
+  );
+
+  let strategyFocus = 'Balanced';
+  if (hasHighHP && !hasLowRetreat) strategyFocus = 'Tank/Control';
+  else if (hasLowRetreat && !hasHighHP) strategyFocus = 'Speed/Rush';
+  else if (hasSpecialEffects) strategyFocus = 'Combo/Synergy';
+  else if (deck.trainerCount > deck.pokemonCount) strategyFocus = 'Support Heavy';
+
+  // Analyze effect distribution
+  const effectTypes = new Map<string, number>();
+  deck.cards.forEach(card => {
+    if (card.PrimaryEffectType) {
+      const effects = card.PrimaryEffectType.split(',').map(e => e.trim());
+      effects.forEach(effect => {
+        effectTypes.set(effect, (effectTypes.get(effect) || 0) + card.quantity);
+      });
+    }
+  });
+
+  const totalEffects = Array.from(effectTypes.values()).reduce((sum, count) => sum + count, 0);
+  const effectDistribution: { [key: string]: number } = {};
+  
+  if (totalEffects > 0) {
+    effectTypes.forEach((count, effect) => {
+      effectDistribution[effect] = Math.round((count / totalEffects) * 100);
+    });
+  } else {
+    effectDistribution['Various'] = 100;
+  }
+
+  return {
+    mostExpensiveCard,
+    estimatedValue: Math.round(totalValue * 100) / 100,
+    averageCardPrice: Math.round(averageCardPrice * 100) / 100,
+    priceDistribution,
+    consistencyScore: Math.round(consistencyScore),
+    speedRating: Math.round(speedRating),
+    powerLevel: Math.round(powerLevel),
+    strategyFocus,
+    effectDistribution
+  };
+};
 
 export default function NewDeckStudio() {
   const [currentView, setCurrentView] = useState<'manager' | 'builder' | 'review'>('manager');
@@ -183,7 +316,7 @@ export default function NewDeckStudio() {
 
   const loadDecks = async () => {
     try {
-      // Try to load from API first
+      // Load from API
       const response = await fetch('/api/decks');
       if (response.ok) {
         const apiDecks = await response.json();
@@ -194,15 +327,18 @@ export default function NewDeckStudio() {
           keyCards: deck.keyCards || [],
           estimatedValue: deck.estimatedValue || 0,
           mainAttribute: deck.mainAttribute || 'Unknown',
-          primaryEffect: deck.primaryEffect || 'Unknown'
+          primaryEffect: deck.primaryEffect || 'Unknown',
+          cards: deck.cards || []
         }));
-        setDecks([...mockDecks, ...processedApiDecks]);
+        setDecks(processedApiDecks);
       } else {
-        throw new Error('API unavailable');
+        // Start with empty deck list if API fails
+        setDecks([]);
       }
     } catch (error) {
-      // Fallback to mock data
-      setDecks(mockDecks);
+      console.error('Error loading decks:', error);
+      // Start with empty deck list on error
+      setDecks([]);
     } finally {
       setLoading(false);
     }
@@ -419,6 +555,9 @@ export default function NewDeckStudio() {
         )
       );
 
+      // Calculate deck stats with market prices
+      const deckStats = await calculateDeckStats({ cards: currentDeckCards, totalCards } as Deck);
+
       const deckData: Deck = {
         id: selectedDeck?.id || `deck_${Date.now()}`,
         name: deckName,
@@ -435,8 +574,8 @@ export default function NewDeckStudio() {
           .filter(card => card.quantity >= 3 || card.Rarity === 'RRR' || card.Rarity === 'UR')
           .map(card => card.Name)
           .slice(0, 5),
-        estimatedValue: 0, // TODO: Calculate based on market prices
-        mainAttribute: pokemonCards[0]?.WeaknessType || 'Unknown', // Using WeaknessType as fallback for attribute
+        estimatedValue: deckStats.estimatedValue,
+        mainAttribute: pokemonCards[0]?.Type || 'Unknown', // Use card Type instead of WeaknessType
         primaryEffect: pokemonCards[0]?.PrimaryEffectType || 'Unknown'
       };
 
@@ -1274,7 +1413,48 @@ export default function NewDeckStudio() {
 
   // Deck Review View
   const DeckReviewView = () => {
+    const [deckStats, setDeckStats] = useState<any>(null);
+    const [loadingStats, setLoadingStats] = useState(true);
+
+    useEffect(() => {
+      if (selectedDeck && selectedDeck.cards) {
+        setLoadingStats(true);
+        calculateDeckStats(selectedDeck)
+          .then(stats => {
+            setDeckStats(stats);
+            setLoadingStats(false);
+          })
+          .catch(error => {
+            console.error('Error calculating deck stats:', error);
+            // Fallback to default stats
+            setDeckStats({
+              mostExpensiveCard: 'N/A',
+              estimatedValue: 0,
+              averageCardPrice: 0,
+              priceDistribution: { budget: 0, premium: 0, expensive: 0 },
+              consistencyScore: 0,
+              speedRating: 0,
+              powerLevel: 0,
+              strategyFocus: 'Unknown',
+              effectDistribution: { 'Unknown': 100 }
+            });
+            setLoadingStats(false);
+          });
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedDeck]);
+
     if (!selectedDeck) return null;
+    if (loadingStats || !deckStats) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-600">Calculating deck analysis...</p>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-6">
@@ -1307,30 +1487,39 @@ export default function NewDeckStudio() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Estimated Value:</span>
                 <span className="font-semibold text-green-600">
-                  {selectedDeck.estimatedValue ? formatPrice(selectedDeck.estimatedValue) : 'N/A'}
+                  {formatPrice(deckStats.estimatedValue)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Average per Card:</span>
                 <span className="font-semibold">
-                  {selectedDeck.estimatedValue ? formatPrice(selectedDeck.estimatedValue / selectedDeck.totalCards) : 'N/A'}
+                  {formatPrice(deckStats.averageCardPrice)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Most Expensive:</span>
-                <span className="font-semibold text-blue-600">Pikachu VMAX</span>
+                <span className="font-semibold text-blue-600">{deckStats.mostExpensiveCard}</span>
               </div>
               <div className="border-t pt-2">
                 <div className="text-xs text-gray-500 mb-1">Price Distribution:</div>
                 <div className="flex space-x-1">
-                  <div className="flex-1 bg-green-200 h-2 rounded"></div>
-                  <div className="flex-1 bg-yellow-200 h-2 rounded"></div>
-                  <div className="flex-1 bg-red-200 h-2 rounded"></div>
+                  <div 
+                    className="bg-green-200 h-2 rounded" 
+                    style={{ width: `${deckStats.priceDistribution.budget}%` }}
+                  ></div>
+                  <div 
+                    className="bg-yellow-200 h-2 rounded" 
+                    style={{ width: `${deckStats.priceDistribution.premium}%` }}
+                  ></div>
+                  <div 
+                    className="bg-red-200 h-2 rounded" 
+                    style={{ width: `${deckStats.priceDistribution.expensive}%` }}
+                  ></div>
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>Budget</span>
-                  <span>Premium</span>
-                  <span>Expensive</span>
+                  <span>Budget ({deckStats.priceDistribution.budget}%)</span>
+                  <span>Premium ({deckStats.priceDistribution.premium}%)</span>
+                  <span>Expensive ({deckStats.priceDistribution.expensive}%)</span>
                 </div>
               </div>
             </div>
@@ -1360,7 +1549,7 @@ export default function NewDeckStudio() {
               )}
               <div className="border-t pt-2">
                 <div className="text-xs text-gray-500 mb-1">Strategy Focus:</div>
-                <span className="text-sm font-medium text-blue-600">Aggressive Offense</span>
+                <span className="text-sm font-medium text-blue-600">{deckStats.strategyFocus}</span>
               </div>
             </div>
           </div>
@@ -1387,22 +1576,12 @@ export default function NewDeckStudio() {
               <div className="border-t pt-2">
                 <div className="text-xs text-gray-500 mb-2">Effect Distribution:</div>
                 <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span>Damage Boost</span>
-                    <span className="text-gray-500">40%</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Energy Acceleration</span>
-                    <span className="text-gray-500">25%</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Card Draw</span>
-                    <span className="text-gray-500">20%</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Other</span>
-                    <span className="text-gray-500">15%</span>
-                  </div>
+                  {Object.entries(deckStats.effectDistribution).slice(0, 4).map(([effect, percentage], index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span>{effect}</span>
+                      <span className="text-gray-500">{percentage as number}%</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1410,57 +1589,41 @@ export default function NewDeckStudio() {
         </div>
 
         {/* Detailed Breakdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Card Type Breakdown */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* All Card Types Breakdown */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Card Type Breakdown</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                  <span>Basic Pokemon</span>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold">{getBasicPokemon(selectedDeck).length}</div>
-                  <div className="text-xs text-gray-500">{Math.round((getBasicPokemon(selectedDeck).length / selectedDeck.totalCards) * 100)}%</div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 bg-blue-300 rounded"></div>
-                  <span>All Pokemon Cards</span>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold">{selectedDeck.pokemonCount}</div>
-                  <div className="text-xs text-gray-500">{Math.round((selectedDeck.pokemonCount / selectedDeck.totalCards) * 100)}%</div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 bg-green-500 rounded"></div>
-                  <span>Trainer Cards</span>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold">{selectedDeck.trainerCount}</div>
-                  <div className="text-xs text-gray-500">{Math.round((selectedDeck.trainerCount / selectedDeck.totalCards) * 100)}%</div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <EnergyIcon type="energy" size="w-4 h-4" />
-                  <span>Energy Cards</span>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold">{selectedDeck.energyCount}</div>
-                  <div className="text-xs text-gray-500">{Math.round((selectedDeck.energyCount / selectedDeck.totalCards) * 100)}%</div>
-                </div>
-              </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">All Card Types</h3>
+            <div className="space-y-3">
+              {Array.from(new Set(selectedDeck.cards?.map(card => card.CardType) || [])).map((cardType, index) => {
+                const count = selectedDeck.cards?.filter(card => card.CardType === cardType).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                const percentage = selectedDeck.totalCards > 0 ? (count / selectedDeck.totalCards * 100).toFixed(1) : '0';
+                
+                return (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-4 h-4 rounded ${
+                        cardType.includes('寶可夢') || cardType.toLowerCase().includes('pokemon') ? 'bg-blue-500' :
+                        cardType.includes('物品') || cardType.toLowerCase().includes('item') ? 'bg-green-500' :
+                        cardType.includes('支援') || cardType.toLowerCase().includes('supporter') ? 'bg-purple-500' :
+                        cardType.includes('場地') || cardType.toLowerCase().includes('stadium') ? 'bg-orange-500' :
+                        cardType.includes('能量') || cardType.toLowerCase().includes('energy') ? 'bg-yellow-500' :
+                        'bg-gray-500'
+                      }`}></div>
+                      <span className="text-sm">{cardType}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">{count}</div>
+                      <div className="text-xs text-gray-500">{percentage}%</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             
-            {/* Energy Breakdown */}
+            {/* Energy Types Breakdown */}
             {getEnergyCards(selectedDeck).length > 0 && (
               <div className="mt-4 pt-4 border-t border-gray-200">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Energy Breakdown</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Energy Types</h4>
                 <div className="space-y-2">
                   {Array.from(new Set(getEnergyCards(selectedDeck).map(card => card.Type))).map((energyType, index) => {
                     const count = getEnergyCards(selectedDeck).filter(card => card.Type === energyType).reduce((sum, card) => sum + (card.quantity || 1), 0);
@@ -1468,7 +1631,7 @@ export default function NewDeckStudio() {
                       <div key={index} className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <EnergyIcon type={energyType} size="w-4 h-4" />
-                          <span className="text-sm">{energyType} Energy</span>
+                          <span className="text-sm">{energyType}</span>
                         </div>
                         <span className="text-sm font-medium">{count}</span>
                       </div>
@@ -1477,8 +1640,196 @@ export default function NewDeckStudio() {
                 </div>
               </div>
             )}
+
+            {/* Rarity Breakdown */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Rarity Distribution</h4>
+              <div className="space-y-2">
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.Rarity).filter(rarity => rarity) || [])).map((rarity, index) => {
+                  const count = selectedDeck.cards?.filter(card => card.Rarity === rarity).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${
+                          rarity === 'UR' || rarity === 'Ultra Rare' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                          rarity === 'RRR' || rarity === 'Secret Rare' ? 'bg-gradient-to-r from-purple-400 to-pink-500' :
+                          rarity === 'RR' || rarity === 'Double Rare' ? 'bg-gradient-to-r from-blue-400 to-purple-500' :
+                          rarity === 'R' || rarity === 'Rare' ? 'bg-gradient-to-r from-green-400 to-blue-500' :
+                          rarity === 'U' || rarity === 'Uncommon' ? 'bg-gradient-to-r from-gray-300 to-gray-500' :
+                          'bg-gray-300'
+                        }`}></div>
+                        <span className="text-sm">{rarity}</span>
+                      </div>
+                      <span className="text-sm font-medium">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
+          {/* Expansion/Mark Breakdown */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Expansion & Mark Analysis</h3>
+            
+            {/* Expansion Marks */}
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Expansion Sets</h4>
+              <div className="space-y-2">
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.ExpansionName || card.ExpansionCode || 'Unknown').filter(expansion => expansion) || [])).map((expansion, index) => {
+                  const count = selectedDeck.cards?.filter(card => (card.ExpansionName || card.ExpansionCode || 'Unknown') === expansion).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                  const percentage = selectedDeck.totalCards > 0 ? (count / selectedDeck.totalCards * 100).toFixed(1) : '0';
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-4 h-4 bg-indigo-500 rounded"></div>
+                        <span className="text-sm">{expansion}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold">{count}</div>
+                        <div className="text-xs text-gray-500">{percentage}%</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Regulation Marks */}
+            {Array.from(new Set(selectedDeck.cards?.map(card => card.RegulationMark).filter(reg => reg && reg !== '無') || [])).length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Regulation Marks</h4>
+                <div className="space-y-2">
+                  {Array.from(new Set(selectedDeck.cards?.map(card => card.RegulationMark).filter(reg => reg && reg !== '無') || [])).map((regulation, index) => {
+                    const count = selectedDeck.cards?.filter(card => card.RegulationMark === regulation).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                    
+                    return (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-blue-100 rounded border-2 border-blue-400 flex items-center justify-center">
+                            <span className="text-xs font-bold text-blue-600">{regulation}</span>
+                          </div>
+                          <span className="text-sm">Regulation {regulation}</span>
+                        </div>
+                        <span className="text-sm font-medium">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Evolution Stages */}
+            <div className="pt-4 border-t border-gray-200">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Evolution Stages</h4>
+              <div className="space-y-2">
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.EvolutionStage).filter(stage => stage) || [])).map((stage, index) => {
+                  const count = selectedDeck.cards?.filter(card => card.EvolutionStage === stage).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-4 h-4 rounded ${
+                          stage.includes('基礎') || stage.toLowerCase().includes('basic') ? 'bg-green-500' :
+                          stage.includes('1') ? 'bg-blue-500' :
+                          stage.includes('2') ? 'bg-purple-500' :
+                          'bg-gray-500'
+                        }`}></div>
+                        <span className="text-sm">{stage}</span>
+                      </div>
+                      <span className="text-sm font-medium">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Weakness & Resistance Analysis */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Weakness & Resistance</h3>
+            
+            {/* Weakness Analysis */}
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Weakness Types</h4>
+              <div className="space-y-2">
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.WeaknessType).filter(weakness => weakness && weakness !== '無' && weakness !== 'None') || [])).map((weakness, index) => {
+                  const count = selectedDeck.cards?.filter(card => card.WeaknessType === weakness).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <EnergyIcon type={weakness} size="w-4 h-4" />
+                        <span className="text-sm">{weakness} Weakness</span>
+                      </div>
+                      <span className="text-sm font-medium text-red-600">{count}</span>
+                    </div>
+                  );
+                })}
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.WeaknessType).filter(weakness => weakness && weakness !== '無' && weakness !== 'None') || [])).length === 0 && (
+                  <div className="text-sm text-gray-500">No weaknesses found</div>
+                )}
+              </div>
+            </div>
+
+            {/* Resistance Analysis */}
+            <div className="pt-4 border-t border-gray-200 mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Resistance Types</h4>
+              <div className="space-y-2">
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.ResistanceType).filter(resistance => resistance && resistance !== '無' && resistance !== 'None') || [])).map((resistance, index) => {
+                  const count = selectedDeck.cards?.filter(card => card.ResistanceType === resistance).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <EnergyIcon type={resistance} size="w-4 h-4" />
+                        <span className="text-sm">{resistance} Resistance</span>
+                      </div>
+                      <span className="text-sm font-medium text-green-600">{count}</span>
+                    </div>
+                  );
+                })}
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.ResistanceType).filter(resistance => resistance && resistance !== '無' && resistance !== 'None') || [])).length === 0 && (
+                  <div className="text-sm text-gray-500">No resistances found</div>
+                )}
+              </div>
+            </div>
+
+            {/* Retreat Cost Analysis */}
+            <div className="pt-4 border-t border-gray-200">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Retreat Cost Distribution</h4>
+              <div className="space-y-2">
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.RetreatCost).filter(cost => cost !== undefined && cost !== null && cost !== '') || [])).sort((a, b) => {
+                  const aNum = parseInt(String(a)) || 0;
+                  const bNum = parseInt(String(b)) || 0;
+                  return aNum - bNum;
+                }).map((cost, index) => {
+                  const count = selectedDeck.cards?.filter(card => card.RetreatCost === cost).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-400">
+                          <span className="text-xs font-bold text-blue-600">{cost}</span>
+                        </div>
+                        <span className="text-sm">{cost} Retreat Cost</span>
+                      </div>
+                      <span className="text-sm font-medium">{count}</span>
+                    </div>
+                  );
+                })}
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.RetreatCost).filter(cost => cost !== undefined && cost !== null && cost !== '') || [])).length === 0 && (
+                  <div className="text-sm text-gray-500">No retreat costs found</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Basic Pokemon List & Performance Metrics */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Basic Pokemon List */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Pokemon</h3>
@@ -1511,33 +1862,45 @@ export default function NewDeckStudio() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Consistency Score:</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{width: '85%'}}></div>
-                  </div>
-                  <span className="text-sm font-medium">85%</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Speed Rating:</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{width: '78%'}}></div>
-                  </div>
-                  <span className="text-sm font-medium">78%</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Power Level:</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div className="bg-red-500 h-2 rounded-full" style={{width: '92%'}}></div>
-                  </div>
-                  <span className="text-sm font-medium">92%</span>
-                </div>
-              </div>
+              {(() => {
+                return (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Consistency Score:</span>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-20 bg-gray-200 rounded-full h-2">
+                          <div className="bg-green-500 h-2 rounded-full" style={{width: `${deckStats.consistencyScore}%`}}></div>
+                        </div>
+                        <span className="text-sm font-medium">{deckStats.consistencyScore}%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Speed Rating:</span>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-20 bg-gray-200 rounded-full h-2">
+                          <div className="bg-blue-500 h-2 rounded-full" style={{width: `${deckStats.speedRating}%`}}></div>
+                        </div>
+                        <span className="text-sm font-medium">{deckStats.speedRating}%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Power Level:</span>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-20 bg-gray-200 rounded-full h-2">
+                          <div className="bg-red-500 h-2 rounded-full" style={{width: `${deckStats.powerLevel}%`}}></div>
+                        </div>
+                        <span className="text-sm font-medium">{deckStats.powerLevel}%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Deck Validity:</span>
+                      <span className={`text-sm font-medium ${selectedDeck.isValid ? 'text-green-600' : 'text-red-600'}`}>
+                        {selectedDeck.isValid ? 'Valid (60 cards)' : `Invalid (${selectedDeck.totalCards} cards)`}
+                      </span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

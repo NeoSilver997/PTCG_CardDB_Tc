@@ -17,6 +17,10 @@ export interface Deck {
   trainerCount: number;
   energyCount: number;
   totalCards: number;
+  keyCards?: string[];
+  estimatedValue?: number;
+  mainAttribute?: string;
+  primaryEffect?: string;
 }
 
 export interface DeckValidation {

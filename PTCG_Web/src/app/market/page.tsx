@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { Search, Plus, TrendingUp, TrendingDown, Minus, Clock, X, BarChart3, PieChart, Activity, DollarSign, Users, Package, Star, Award } from 'lucide-react';
+import { Search, Plus, TrendingUp, TrendingDown, Minus, Clock, X, BarChart3, PieChart, Activity, DollarSign, Users, Package, Star, Award, Sword, Gamepad2 } from 'lucide-react';
 import { PTCGCard } from '../../types/card';
 import { MarketPrice, MarketCard } from '../../types/market';
 import { getDefaultCurrencyForCard, getCurrencySymbol } from '../../utils/currency';
@@ -467,18 +467,71 @@ export default function MarketPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header - Mobile Optimized */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <DollarSign className="h-8 w-8 sm:h-10 sm:w-10 text-purple-600" />
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Market Prices</h1>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <a
+                href="/"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Card Search</span>
+              </a>
+              <a
+                href="/deck-studio"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Deck Studio</span>
+              </a>
+              <a
+                href="/deck-builder"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <Sword className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Deck Builder</span>
+              </a>
+              <a
+                href="/inventory"
+                className="flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium w-full sm:w-auto min-h-[44px] sm:min-h-auto"
+              >
+                <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Inventory</span>
+              </a>
+              <a
+                href="/debug"
+                className="flex items-center justify-center space-x-2 px-3 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors text-xs font-medium opacity-75 hover:opacity-100"
+                title="Debug Console - All Routes & API Endpoints"
+              >
+                <span>🐛</span>
+                <span>Debug</span>
+              </a>
+              <div className="text-sm sm:text-base text-gray-500">
+                {filteredMarketCards.length} items
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
+        {/* Market Controls */}
+        <div className="mb-4 bg-white rounded-lg shadow-sm border p-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Market Prices</h1>
+              <h2 className="text-xl font-bold text-gray-900">Market Overview</h2>
               <p className="text-gray-600">Track and manage Pokemon card market prices</p>
             </div>
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 w-full sm:w-auto"
             >
               <Plus size={16} />
               Add Price
