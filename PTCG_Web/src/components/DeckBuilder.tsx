@@ -89,31 +89,75 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
     fetchMarketPrices();
   }, []);
 
+  // Helper function to get estimated price based on rarity
+  const getEstimatedPriceByRarity = useCallback((rarity: string): number => {
+    const rarityPrices: { [key: string]: number } = {
+      'C': 1,        // Common - HK$1
+      'U': 3,        // Uncommon - HK$3
+      'R': 8,        // Rare - HK$8
+      'RR': 15,      // Double Rare - HK$15
+      'RRR': 30,     // Triple Rare - HK$30
+      'SR': 50,      // Super Rare - HK$50
+      'UR': 100,     // Ultra Rare - HK$100
+      'HR': 80,      // Hyper Rare - HK$80
+      'AR': 25,      // Art Rare - HK$25
+      'SAR': 120,    // Special Art Rare - HK$120
+      'TR': 20,      // Trainer Rare - HK$20
+      'PR': 10,      // Promo - HK$10
+      'K': 5,        // Trainer (K) - HK$5
+      'CHR': 40,     // Character Rare - HK$40
+      'CSR': 150,    // Character Super Rare - HK$150
+      'VMAX': 25,    // VMAX - HK$25
+      'VSTAR': 30,   // VSTAR - HK$30
+      'ex': 40,      // ex cards - HK$40
+    };
+    
+    return rarityPrices[rarity] || 2; // Default HK$2 for unknown rarities
+  }, []);
+
+  // Helper function to get estimated price for lower rarity
+  const getLowerRarityPrice = useCallback((rarity: string): number => {
+    const rarityHierarchy: { [key: string]: string } = {
+      'C': 'C',        // Common - already lowest
+      'U': 'C',        // Uncommon -> Common
+      'R': 'U',        // Rare -> Uncommon
+      'RR': 'R',       // Double Rare -> Rare
+      'RRR': 'RR',     // Triple Rare -> Double Rare
+      'SR': 'RRR',     // Super Rare -> Triple Rare
+      'UR': 'SR',      // Ultra Rare -> Super Rare
+      'HR': 'SR',      // Hyper Rare -> Super Rare
+      'AR': 'RR',      // Art Rare -> Double Rare
+      'SAR': 'UR',     // Special Art Rare -> Ultra Rare
+      'TR': 'R',       // Trainer Rare -> Rare
+      'PR': 'U',       // Promo -> Uncommon
+      'K': 'C',        // Trainer (K) -> Common
+      'CHR': 'RR',     // Character Rare -> Double Rare
+      'CSR': 'SAR',    // Character Super Rare -> Special Art Rare
+      'VMAX': 'RR',    // VMAX -> Double Rare
+      'VSTAR': 'RRR',  // VSTAR -> Triple Rare
+      'ex': 'RRR',     // ex cards -> Triple Rare
+    };
+    
+    const lowerRarity = rarityHierarchy[rarity] || 'C';
+    return getEstimatedPriceByRarity(lowerRarity);
+  }, [getEstimatedPriceByRarity]);
+
   // Helper function to get the best price for a card
-  const getCardPrice = useCallback((cardId: number): number => {
+  const getCardPrice = useCallback((cardId: number, cardRarity?: string): number => {
     const cardIdStr = cardId.toString();
     const cardData = marketPrices[cardIdStr];
     
-    // Debug specific card
-    if (cardId === 12386) {
-      console.log('🔍 Debugging card 12386:', {
-        cardIdStr,
-        marketPricesKeys: Object.keys(marketPrices).length,
-        hasKey: cardIdStr in marketPrices,
-        cardData: cardData,
-        hasMarketPrices: cardData?.marketPrices ? true : false,
-        averagePrice: cardData?.averagePrice
-      });
-    }
-    
+    // Remove debug logging for cleaner console
     if (!cardData) {
-      if (cardId === 12386) console.log('❌ No card data for 12386');
-      return 0;
+      // No market data - use estimated price based on rarity
+      if (cardRarity) {
+        return getEstimatedPriceByRarity(cardRarity);
+      }
+      return 2; // Default fallback price
     }
 
     // Use averagePrice if available (most efficient)
     if (typeof cardData.averagePrice === 'number' && cardData.averagePrice > 0) {
-      if (cardId === 12386) console.log('✅ Using averagePrice for 12386:', cardData.averagePrice);
       return cardData.averagePrice;
     }
 
@@ -121,32 +165,24 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
     if (Array.isArray(cardData.marketPrices) && cardData.marketPrices.length > 0) {
       const prices = cardData.marketPrices.filter((p: any) => p && typeof p.price === 'number');
       
-      if (cardId === 12386) {
-        console.log('🔍 Market prices array for 12386:', prices);
-      }
-      
       if (prices.length === 0) {
-        if (cardId === 12386) console.log('❌ No valid prices after filtering for 12386');
-        return 0;
+        // Market data exists but no valid prices - use estimated price
+        return cardRarity ? getEstimatedPriceByRarity(cardRarity) : 2;
       }
 
       // Get the most recent price for Near Mint condition first
       const nearMintPrices = prices.filter((p: any) => p.condition === 'Near Mint');
       if (nearMintPrices.length > 0) {
-        const price = Math.min(...nearMintPrices.map((p: any) => p.price));
-        if (cardId === 12386) console.log('✅ Near Mint price for 12386:', price);
-        return price;
+        return Math.min(...nearMintPrices.map((p: any) => p.price));
       }
 
       // Fallback to the lowest price available
-      const price = Math.min(...prices.map((p: any) => p.price));
-      if (cardId === 12386) console.log('✅ Fallback price for 12386:', price);
-      return price;
+      return Math.min(...prices.map((p: any) => p.price));
     }
 
-    if (cardId === 12386) console.log('❌ No valid price data structure for 12386');
-    return 0;
-  }, [marketPrices]);  // Helper function to format image path from CardID
+    // Market data exists but structure is unexpected - use estimated price
+    return cardRarity ? getEstimatedPriceByRarity(cardRarity) : 2;
+  }, [marketPrices, getEstimatedPriceByRarity]);  // Helper function to format image path from CardID
   const getImagePath = (cardId: number) => {
     return `hk${cardId.toString().padStart(8, '0')}.png`;
   };
@@ -296,7 +332,10 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
       console.log('⏳ Market prices not loaded yet, skipping calculation');
       return {
         totalPrice: 0,
+        cheaperTotalPrice: 0,
+        totalSavings: 0,
         keyCards: [],
+        topExpensiveCards: [],
         damageAnalysis: {
           totalDamage: 0,
           averageDamage: 0,
@@ -314,7 +353,10 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
     
     const summary = {
       totalPrice: 0,
+      cheaperTotalPrice: 0,
+      totalSavings: 0,
       keyCards: [] as SimpleDeckCard[],
+      topExpensiveCards: [] as { card: SimpleDeckCard; unitPrice: number; totalPrice: number }[],
       damageAnalysis: {
         totalDamage: 0,
         averageDamage: 0,
@@ -327,11 +369,49 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
       }
     };
 
-    // Calculate total price from market prices
+    // Calculate total price from market prices and get card prices
+    const cardPrices: { card: SimpleDeckCard; unitPrice: number; totalPrice: number }[] = [];
+    
     summary.totalPrice = deck.cards.reduce((total, card) => {
-      const cardPrice = getCardPrice(card.CardID);
-      return total + (cardPrice * card.quantity);
+      const cardPrice = getCardPrice(card.CardID, card.Rarity);
+      const totalCardPrice = cardPrice * card.quantity;
+      
+      cardPrices.push({
+        card: card,
+        unitPrice: cardPrice,
+        totalPrice: totalCardPrice
+      });
+      
+      return total + totalCardPrice;
     }, 0);
+    
+    // Get top 5 most expensive cards by total price (price × quantity)
+    summary.topExpensiveCards = cardPrices
+      .sort((a, b) => b.totalPrice - a.totalPrice)
+      .slice(0, 5);
+
+    // Calculate cheaper total price using alternatives where available
+    summary.cheaperTotalPrice = deck.cards.reduce((total, card) => {
+      const currentPrice = getCardPrice(card.CardID, card.Rarity);
+      
+      // Find cheaper alternatives with same name and effect
+      const cheaperAlternatives = initialCards
+        .filter(altCard => 
+          altCard.CardID !== card.CardID &&
+          altCard.Name === card.Name &&
+          (altCard.AbilityName === card.AbilityName || 
+           altCard.PrimaryEffectType === card.PrimaryEffectType)
+        )
+        .map(altCard => getCardPrice(altCard.CardID, altCard.Rarity))
+        .filter(price => price > 0 && price < currentPrice)
+        .sort((a, b) => a - b);
+      
+      // Use cheapest alternative if available, otherwise use current price
+      const cheapestPrice = cheaperAlternatives.length > 0 ? cheaperAlternatives[0] : currentPrice;
+      return total + (cheapestPrice * card.quantity);
+    }, 0);
+
+    summary.totalSavings = summary.totalPrice - summary.cheaperTotalPrice;
 
     // Key cards (S/A tier Pokemon and important trainers)
     summary.keyCards = deck.cards.filter(card =>
@@ -391,7 +471,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
     });
 
     return summary;
-  }, [deck.cards, getCardPrice, marketPrices]);
+  }, [deck.cards, getCardPrice, marketPrices, initialCards]);
 
   const saveDeck = async () => {
     if (!deck.name.trim()) {
@@ -482,7 +562,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
 
         {activeTab === 'summary' ? (
           /* Deck Summary View */
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Price Summary */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center mb-4">
@@ -498,13 +578,24 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                   <div className="text-3xl font-bold text-green-600 mb-2">
                     HK$ {getDeckSummary.totalPrice.toLocaleString()}
                   </div>
-                  {getDeckSummary.totalPrice === 0 ? (
-                    <div className="text-sm text-amber-600">
-                      ⚠️ 當前牌組中的卡牌沒有可用的市場價格數據
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-600">
-                      基於可用的市場價格數據計算
+                  <div className="text-sm text-gray-600 mb-3">
+                    包含市場價格和稀有度估價
+                  </div>
+                  
+                  {getDeckSummary.totalSavings > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-blue-800">較便宜總價:</span>
+                        <span className="text-lg font-bold text-blue-600">
+                          HK$ {getDeckSummary.cheaperTotalPrice.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-blue-700">潛在節省:</span>
+                        <span className="text-sm font-bold text-green-600">
+                          HK$ {getDeckSummary.totalSavings.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -541,10 +632,17 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                       setDeck(prev => ({ ...prev, cards: [testCard] }));
                       
                       // Also test a few other IDs to see which ones have data
-                      console.log('🔍 Testing price availability:');
-                      [14376, 14456, 12107, 12386, 8293, 8294].forEach(id => {
+                      console.log('🔍 Testing price availability and estimated pricing:');
+                      [14376, 14456, 12107, 12386].forEach(id => {
                         const hasPrice = marketPrices[id.toString()];
-                        console.log(`Card ${id}: ${hasPrice ? '✅ Has price data' : '❌ No price data'}`);
+                        console.log(`Card ${id}: ${hasPrice ? '✅ Has market data' : '❌ No market data - will use estimated price'}`);
+                      });
+                      
+                      // Test estimated pricing for different rarities
+                      console.log('💰 Estimated pricing by rarity:');
+                      ['C', 'U', 'R', 'RR', 'RRR', 'SR', 'UR', 'HR', 'AR', 'SAR'].forEach(rarity => {
+                        const price = getEstimatedPriceByRarity(rarity);
+                        console.log(`  ${rarity}: HK$${price}`);
                       });
                     }}
                     className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
@@ -640,6 +738,89 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                     )}
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Top Expensive Cards */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center mb-4">
+                <DollarSign className="w-5 h-5 text-yellow-500 mr-2" />
+                <h3 className="text-lg font-semibold">最貴卡牌 TOP 5</h3>
+              </div>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {getDeckSummary.topExpensiveCards.length === 0 ? (
+                  <p className="text-gray-500 text-sm">無卡牌數據</p>
+                ) : (
+                  getDeckSummary.topExpensiveCards.map((item, index) => {
+                    // Find cheaper alternatives with same name and effect
+                    const cheaperAlternatives = initialCards
+                      .filter(card => 
+                        card.CardID !== item.card.CardID &&
+                        card.Name === item.card.Name &&
+                        (card.AbilityName === item.card.AbilityName || 
+                         card.PrimaryEffectType === item.card.PrimaryEffectType)
+                      )
+                      .map(card => ({
+                        card,
+                        price: getCardPrice(card.CardID, card.Rarity)
+                      }))
+                      .filter(alt => alt.price > 0 && alt.price < item.unitPrice)
+                      .sort((a, b) => a.price - b.price);
+                    
+                    const cheapestAlternative = cheaperAlternatives[0];
+                    const savings = cheapestAlternative ? 
+                      (item.unitPrice - cheapestAlternative.price) * item.card.quantity : 0;
+                    
+                    return (
+                      <div key={item.card.CardID} className="bg-gray-50 rounded p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center">
+                            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold mr-2 ${
+                              index === 0 ? 'bg-yellow-500 text-white' :
+                              index === 1 ? 'bg-gray-400 text-white' :
+                              index === 2 ? 'bg-orange-400 text-white' :
+                              'bg-gray-300 text-gray-700'
+                            }`}>
+                              {index + 1}
+                            </span>
+                            <div>
+                              <span className="text-sm font-medium">{item.card.Name}</span>
+                              <div className="text-xs text-gray-500">稀有度: {item.card.Rarity}</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-bold text-green-600">
+                              HK$ {item.totalPrice.toLocaleString()}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              HK$ {item.unitPrice} × {item.card.quantity}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {cheapestAlternative ? (
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-600">
+                              較便宜版本 ({cheapestAlternative.card.Rarity}):
+                            </span>
+                            <div className="text-right">
+                              <div className="font-medium text-blue-600">
+                                HK$ {(cheapestAlternative.price * item.card.quantity).toLocaleString()}
+                              </div>
+                              <div className="text-green-600 font-medium">
+                                節省 HK$ {savings.toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500">
+                            無較便宜的相同卡牌版本
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>

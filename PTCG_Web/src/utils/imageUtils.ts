@@ -15,15 +15,10 @@ export function formatCardImagePath(cardId: number): string {
 /**
  * Gets the appropriate image source for a card
  * @param card - The card object with ImageURL and CardID
- * @returns The image URL or formatted path
+ * @returns The formatted local image path
  */
 export function getCardImageSrc(card: { ImageURL?: string; CardID: number }): string {
-  // If ImageURL exists and is not empty, use it
-  if (card.ImageURL && card.ImageURL.trim() !== '') {
-    return card.ImageURL;
-  }
-  
-  // Otherwise, use the formatted CardID path
+  // Always use local images for better performance and reliability
   return formatCardImagePath(card.CardID);
 }
 

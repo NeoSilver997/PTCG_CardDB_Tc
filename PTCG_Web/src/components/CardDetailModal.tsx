@@ -33,6 +33,11 @@ export default function CardDetailModal({
   const [inventoryQuantity, setInventoryQuantity] = useState(1);
   const [inventoryCondition, setInventoryCondition] = useState('near-mint');
   const [inventoryNotes, setInventoryNotes] = useState('');
+
+  // Helper function to format image path from CardID
+  const getImagePath = (cardId: number) => {
+    return `hk${cardId.toString().padStart(8, '0')}.png`;
+  };
   const [purchaseCost, setPurchaseCost] = useState<number | undefined>(undefined);
   const [marketPrice, setMarketPrice] = useState<number | undefined>(undefined);
   
@@ -530,7 +535,7 @@ export default function CardDetailModal({
             <div className="aspect-[5/7] bg-gray-100 rounded-xl overflow-hidden mb-6 shadow-lg">
               {selectedVersion.ImageURL ? (
                 <img
-                  src={selectedVersion.ImageURL}
+                  src={`/cards/${getImagePath(selectedVersion.CardID)}`}
                   alt={selectedVersion.Name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -1011,7 +1016,7 @@ export default function CardDetailModal({
               {selectedVersion.ImageURL && (
                 <div className="pt-4 border-t">
                   <a
-                    href={selectedVersion.ImageURL}
+                    href={`/cards/${getImagePath(selectedVersion.CardID)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center space-x-3 text-blue-600 hover:text-blue-800 text-base font-medium"
@@ -1179,7 +1184,7 @@ export default function CardDetailModal({
                     }`}>
                       {card.OriginalImageURL || card.ImageURL ? (
                         <img
-                          src={card.OriginalImageURL || card.ImageURL}
+                          src={`/cards/${getImagePath(card.CardID)}`}
                           alt={card.Name}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -1215,7 +1220,7 @@ export default function CardDetailModal({
                       }`}>
                         {versionCard.OriginalImageURL || versionCard.ImageURL ? (
                           <img
-                            src={versionCard.OriginalImageURL || versionCard.ImageURL}
+                            src={`/cards/${getImagePath(versionCard.CardID)}`}
                             alt={versionCard.Name}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -1312,7 +1317,7 @@ export default function CardDetailModal({
                       >
                         {relatedCard.ImageURL ? (
                           <img
-                            src={relatedCard.ImageURL}
+                            src={`/cards/${getImagePath(relatedCard.CardID)}`}
                             alt={relatedCard.Name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           />

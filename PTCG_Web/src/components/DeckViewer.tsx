@@ -33,6 +33,11 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [zoomOut, setZoomOut] = useState(false);
 
+  // Helper function to format image path from CardID
+  const getImagePath = (cardId: number) => {
+    return `hk${cardId.toString().padStart(8, '0')}.png`;
+  };
+
   // Filter cards based on search and type
   const filteredCards = deck.cards.filter(card => {
     // Search filter
@@ -367,7 +372,7 @@ export default function DeckViewer({ deck, onClose, onEdit }: DeckViewerProps) {
                     <div className="aspect-[5/7] bg-gray-100 overflow-hidden relative">
                       {card.ImageURL ? (
                         <img
-                          src={card.ImageURL}
+                          src={`/cards/${getImagePath(card.CardID)}`}
                           alt={card.Name}
                           className="w-full h-full object-cover"
                         />
@@ -529,13 +534,18 @@ interface DeckListItemProps {
 }
 
 function DeckListItem({ card }: DeckListItemProps) {
+  // Helper function to format image path from CardID
+  const getImagePath = (cardId: number) => {
+    return `hk${cardId.toString().padStart(8, '0')}.png`;
+  };
+
   return (
     <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
       <div className="flex items-center space-x-3">
         <div className="w-8 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
           {card.ImageURL ? (
             <img
-              src={card.ImageURL}
+              src={`/cards/${getImagePath(card.CardID)}`}
               alt={card.Name}
               className="w-full h-full object-cover"
             />

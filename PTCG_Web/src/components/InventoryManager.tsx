@@ -23,6 +23,11 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
   } = useInventory();
 
   const [isEditing, setIsEditing] = useState<string | null>(null);
+
+  // Helper function to format image path from CardID
+  const getImagePath = (cardId: number) => {
+    return `hk${cardId.toString().padStart(8, '0')}.png`;
+  };
   const [editQuantity, setEditQuantity] = useState<number>(1);
   const [editCondition, setEditCondition] = useState<string>('near-mint');
   const [editNotes, setEditNotes] = useState<string>('');
@@ -112,7 +117,7 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-shrink-0">
               <img
-                src={card.ImageURL}
+                src={`/cards/${getImagePath(card.CardID)}`}
                 alt={card.Name}
                 className="w-32 h-44 object-cover rounded-lg border"
                 onError={(e) => {
