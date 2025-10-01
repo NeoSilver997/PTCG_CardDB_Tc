@@ -59,6 +59,21 @@ interface DeckCard extends PTCGCard {
   quantity: number;
 }
 
+interface ConstructionDeck {
+  id?: string;
+  name: string;
+  description: string;
+  format: string;
+  cards: Array<{
+    cardId: number;
+    name: string;
+    quantity: number;
+    type: string;
+    expansion: string;
+    rarity: string;
+  }>;
+}
+
 // Helper function to fetch market prices
 const fetchMarketPrices = async (): Promise<{ [cardId: number]: number }> => {
   try {
@@ -96,6 +111,20 @@ const fetchMarketPrices = async (): Promise<{ [cardId: number]: number }> => {
   }
 };
 
+// Helper function to fetch all cards for alternative suggestions
+const fetchAllCards = async (): Promise<PTCGCard[]> => {
+  try {
+    const response = await fetch('/api/cards');
+    if (!response.ok) {
+      throw new Error('Failed to fetch cards');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching cards:', error);
+    return [];
+  }
+};
+
 // Helper functions for deck analysis
 const calculateDeckStats = async (deck: Deck) => {
   if (!deck.cards || deck.cards.length === 0) {
@@ -108,12 +137,26 @@ const calculateDeckStats = async (deck: Deck) => {
       speedRating: 0,
       powerLevel: 0,
       strategyFocus: 'Unknown',
-      effectDistribution: { 'Unknown': 100 }
+      effectDistribution: { 'Unknown': 100 },
+      cheaperAlternatives: []
     };
   }
 
-  // Fetch market prices
-  const marketPrices = await fetchMarketPrices();
+  // Fetch market prices and all available cards for alternative suggestions
+  const [marketPrices, allCards] = await Promise.all([
+    fetchMarketPrices(),
+    fetchAllCards()
+  ]);
+
+  // Create a map of card names to all their variants (different rarities)
+  const cardVariants = new Map<string, PTCGCard[]>();
+  allCards.forEach(card => {
+    const name = card.Name;
+    if (!cardVariants.has(name)) {
+      cardVariants.set(name, []);
+    }
+    cardVariants.get(name)!.push(card);
+  });
 
   // Fallback rarity-based prices (used when market data is unavailable)
   const rarityPrices: { [key: string]: number } = {
@@ -133,6 +176,15 @@ const calculateDeckStats = async (deck: Deck) => {
   let mostExpensiveCard = 'N/A';
   let highestPrice = 0;
   const cardPrices: { name: string, price: number }[] = [];
+  const cheaperAlternatives: { 
+    originalCard: string, 
+    originalPrice: number, 
+    alternativeCard: string, 
+    alternativePrice: number, 
+    savings: number,
+    cardId: number,
+    rarity: string
+  }[] = [];
 
   deck.cards.forEach(card => {
     let estimatedPrice = 0;
@@ -152,6 +204,57 @@ const calculateDeckStats = async (deck: Deck) => {
       if (card.Tier === 'S' || card.Tier === 'A') multiplier *= 2;
       
       estimatedPrice = basePrice * multiplier;
+    }
+    
+    // Look for cheaper alternatives with the same name
+    const variants = cardVariants.get(card.Name) || [];
+    const cheaperVariants = variants.filter(variant => {
+      // Only consider variants with lower rarity tier
+      const rarityOrder = ['C', 'U', 'R', 'RR', 'RRR', 'UR', 'HR', 'SR'];
+      const currentRarityIndex = rarityOrder.indexOf(card.Rarity);
+      const variantRarityIndex = rarityOrder.indexOf(variant.Rarity);
+      
+      return variantRarityIndex < currentRarityIndex && variant.CardID !== card.CardID;
+    });
+    
+    // Find the cheapest alternative
+    let cheapestAlternative: PTCGCard | null = null;
+    let cheapestPrice = Infinity;
+    
+    cheaperVariants.forEach(variant => {
+      let variantPrice = 0;
+      
+      if (marketPrices[variant.CardID]) {
+        variantPrice = marketPrices[variant.CardID];
+      } else {
+        const basePrice = rarityPrices[variant.Rarity] || 0.50;
+        let multiplier = 1;
+        if (variant.AbilityName && variant.AbilityName !== '無') multiplier *= 1.5;
+        if (variant.HP && parseInt(variant.HP) > 250) multiplier *= 1.3;
+        if (variant.CardType.includes('寶可夢') && variant.EvolutionStage.includes('基礎')) multiplier *= 1.2;
+        if (variant.Tier === 'S' || variant.Tier === 'A') multiplier *= 2;
+        
+        variantPrice = basePrice * multiplier;
+      }
+      
+      if (variantPrice < cheapestPrice) {
+        cheapestPrice = variantPrice;
+        cheapestAlternative = variant;
+      }
+    });
+    
+    // If we found a cheaper alternative, add it to the list
+    if (cheapestAlternative && cheapestPrice < estimatedPrice) {
+      const savings = (estimatedPrice - cheapestPrice) * card.quantity;
+      cheaperAlternatives.push({
+        originalCard: `${card.Name} (${card.Rarity})`,
+        originalPrice: estimatedPrice,
+        alternativeCard: `${cheapestAlternative.Name} (${cheapestAlternative.Rarity})`,
+        alternativePrice: cheapestPrice,
+        savings: savings,
+        cardId: cheapestAlternative.CardID,
+        rarity: cheapestAlternative.Rarity
+      });
     }
     
     const totalCardValue = estimatedPrice * card.quantity;
@@ -256,7 +359,8 @@ const calculateDeckStats = async (deck: Deck) => {
     speedRating: Math.round(speedRating),
     powerLevel: Math.round(powerLevel),
     strategyFocus,
-    effectDistribution
+    effectDistribution,
+    cheaperAlternatives: cheaperAlternatives.sort((a, b) => b.savings - a.savings)
   };
 };
 
@@ -299,6 +403,15 @@ export default function NewDeckStudio() {
   const [deckDescription, setDeckDescription] = useState('');
   const [deckFormat, setDeckFormat] = useState<'Standard' | 'Expanded' | 'Unlimited'>('Standard');
 
+  // Market prices state
+  const [marketPrices, setMarketPrices] = useState<{ [cardId: number]: number }>({});
+  const [deckStats, setDeckStats] = useState<any>(null);
+
+  // Construction decks state
+  const [constructionDecks, setConstructionDecks] = useState<ConstructionDeck[]>([]);
+  const [loadingConstruction, setLoadingConstruction] = useState(false);
+  const [currentTab, setCurrentTab] = useState<'my-decks' | 'construction'>('my-decks');
+
   // Initialize deck editing
   useEffect(() => {
     if (selectedDeck && currentView === 'builder') {
@@ -327,7 +440,7 @@ export default function NewDeckStudio() {
           let mainAttribute = deck.mainAttribute;
           
           // If mainAttribute is missing and deck has cards, calculate it
-          if (!mainAttribute || mainAttribute === 'Unknown') {
+          if ((!mainAttribute || mainAttribute === 'Unknown') && deck.cards && deck.cards.length > 0) {
             const pokemonCards = (deck.cards || []).filter((card: any) => 
               card.CardType && (
                 card.CardType.includes('寶可夢') || 
@@ -337,7 +450,6 @@ export default function NewDeckStudio() {
             );
             
             if (pokemonCards.length > 0) {
-              console.log(`Recalculating main attribute for deck: ${deck.name}`);
               mainAttribute = await calculateMainAttribute(pokemonCards);
             }
           }
@@ -366,6 +478,28 @@ export default function NewDeckStudio() {
       setLoading(false);
     }
   }, []);
+
+  const loadConstructionDecks = async () => {
+    setLoadingConstruction(true);
+    try {
+      const response = await fetch('/api/construction-decks');
+      if (response.ok) {
+        const data = await response.json();
+        // Add IDs to construction decks if they don't have them
+        const decksWithIds = data.map((deck: ConstructionDeck, index: number) => ({
+          ...deck,
+          id: deck.id || `construction_${index}_${deck.name.replace(/[^a-zA-Z0-9]/g, '_')}`
+        }));
+        setConstructionDecks(decksWithIds);
+      } else {
+        console.error('Failed to load construction decks');
+      }
+    } catch (error) {
+      console.error('Error loading construction decks:', error);
+    } finally {
+      setLoadingConstruction(false);
+    }
+  };
 
   // Deck Management Functions
   const createNewDeck = () => {
@@ -513,6 +647,112 @@ export default function NewDeckStudio() {
     URL.revokeObjectURL(url);
   };
 
+  const importConstructionDeck = async (constructionDeck: ConstructionDeck) => {
+    if (!constructionDeck || !constructionDeck.cards) {
+      alert('Invalid construction deck data. Cannot import.');
+      return;
+    }
+
+    try {
+      // Convert construction deck to user deck format
+      const response = await fetch('/api/cards');
+      const allCards = await response.json();
+      
+      console.log(`Importing deck: ${constructionDeck.name}`);
+      console.log(`Total cards in database: ${allCards.length}`);
+      console.log(`Construction deck has ${constructionDeck.cards.length} cards to import`);
+      
+      // Map construction deck cards to full card objects
+      const deckCards = constructionDeck.cards.map((constructionCard, index) => {
+        // Try multiple possible ID fields first
+        let fullCard = allCards.find((card: any) => 
+          card.CardID === constructionCard.cardId || 
+          parseInt(String(card.CardID)) === constructionCard.cardId
+        );
+        
+        // If not found by ID, try to match by name (most likely to work)
+        if (!fullCard) {
+          // Try exact match first
+          fullCard = allCards.find((card: any) => {
+            const cardName = (card.Name || card.name || '').trim();
+            const constructionName = (constructionCard.name || '').trim();
+            return cardName === constructionName;
+          });
+          
+          // If still not found, try more fuzzy matching
+          if (!fullCard) {
+            fullCard = allCards.find((card: any) => {
+              const cardName = (card.Name || card.name || '').toLowerCase().replace(/\s+/g, '');
+              const constructionName = (constructionCard.name || '').toLowerCase().replace(/\s+/g, '');
+              return cardName === constructionName || 
+                     cardName.includes(constructionName) || 
+                     constructionName.includes(cardName);
+            });
+            
+            if (fullCard) {
+              console.log(`Card matched by fuzzy name: "${constructionCard.name}" -> "${fullCard.Name}"`);
+            }
+          }
+          
+          if (fullCard) {
+            console.log(`✓ Card ${index + 1}: "${constructionCard.name}" matched by name to CardID ${fullCard.CardID}`);
+          }
+        } else {
+          console.log(`✓ Card ${index + 1}: "${constructionCard.name}" matched by ID ${constructionCard.cardId}`);
+        }
+        
+        if (!fullCard) {
+          console.warn(`✗ Card ${index + 1}: "${constructionCard.name}" (ID: ${constructionCard.cardId}) not found in database`);
+          return null;
+        }
+        
+        return {
+          ...fullCard,
+          quantity: constructionCard.quantity
+        };
+      }).filter(Boolean);
+
+      console.log(`Successfully mapped ${deckCards.length}/${constructionDeck.cards.length} cards`);
+
+      if (deckCards.length === 0) {
+        alert('No cards could be imported from this construction deck. The cards may not be available in the current database.');
+        return;
+      }
+
+      const newDeck = {
+        name: `${constructionDeck.name} (Imported)`,
+        description: constructionDeck.description,
+        format: constructionDeck.format,
+        cards: deckCards
+      };
+
+      // Save as user deck
+      const saveResponse = await fetch('/api/decks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newDeck),
+      });
+
+      if (saveResponse.ok) {
+        // Refresh user decks
+        loadDecks();
+        // Switch to manager view
+        setCurrentView('manager');
+        const successMessage = deckCards.length === constructionDeck.cards.length 
+          ? `✓ Successfully imported "${constructionDeck.name}" with all ${deckCards.length} cards!\n\nExpansion: ${constructionDeck.cards[0]?.expansion || 'Unknown'}\nFormat: ${constructionDeck.format}\nThe deck has been added to your deck collection.`
+          : `⚠ Partially imported "${constructionDeck.name}" - ${deckCards.length} of ${constructionDeck.cards.length} cards were found in the database.\n\nSome cards may not be available in the current card collection.`;
+        alert(successMessage);
+      } else {
+        throw new Error('Failed to save imported deck');
+      }
+    } catch (error) {
+      console.error('Error importing construction deck:', error);
+      alert('Failed to import construction deck. Please try again.');
+    }
+  };
+
   // Card Management Functions for Deck Building
   const addCardToDeck = (card: PTCGCard) => {
     setCurrentDeckCards(prev => {
@@ -550,19 +790,16 @@ export default function NewDeckStudio() {
 
   // Calculate main attribute based on most common Pokemon type
   const calculateMainAttribute = async (pokemonCards: DeckCard[]) => {
-    console.log('calculateMainAttribute called with', pokemonCards.length, 'Pokemon cards');
     if (pokemonCards.length === 0) return 'Unknown';
     
     const typeCount: { [key: string]: number } = {};
     
     // Check if we need to fetch card data for missing Type information
     const needsCardData = pokemonCards.some(card => !card.Type || card.Type === 'Unknown');
-    console.log('needsCardData:', needsCardData);
     let cardDataMap: { [key: number]: any } = {};
     
     if (needsCardData) {
       try {
-        console.log('Fetching card data for type lookup...');
         // Fetch all card data to lookup missing types
         const response = await fetch('/api/cards');
         if (response.ok) {
@@ -571,7 +808,6 @@ export default function NewDeckStudio() {
             map[card.CardID] = card;
             return map;
           }, {});
-          console.log('Fetched card data for', Object.keys(cardDataMap).length, 'cards');
         }
       } catch (error) {
         console.warn('Failed to fetch card data for type lookup:', error);
@@ -580,25 +816,20 @@ export default function NewDeckStudio() {
     
     pokemonCards.forEach(card => {
       let type = card.Type;
-      console.log('Processing card:', card.Name, 'Original Type:', type, 'CardID:', card.CardID);
       
       // If Type is missing or unknown, try to get it from the card database
       if (!type || type === 'Unknown') {
         const fullCardData = cardDataMap[card.CardID];
         type = fullCardData?.Type || fullCardData?.Attribute || 'Unknown';
-        console.log('  -> Looked up type:', type);
       }
       
       const quantity = card.quantity || 1;
       typeCount[type] = (typeCount[type] || 0) + quantity;
-      console.log('  -> Type count so far:', typeCount);
     });
     
     const mostCommonType = Object.entries(typeCount)
       .sort(([,a], [,b]) => b - a)[0]?.[0];
     
-    console.log('Final type count:', typeCount);
-    console.log('Most common type:', mostCommonType);
     return mostCommonType || 'Unknown';
   };
 
@@ -693,7 +924,21 @@ export default function NewDeckStudio() {
   useEffect(() => {
     loadDecks();
     loadCards();
+    loadConstructionDecks();
   }, [loadCards, loadDecks]);
+
+  // Load market prices on component mount
+  useEffect(() => {
+    const loadMarketPrices = async () => {
+      try {
+        const prices = await fetchMarketPrices();
+        setMarketPrices(prices);
+      } catch (error) {
+        console.error('Failed to load market prices:', error);
+      }
+    };
+    loadMarketPrices();
+  }, []);
 
   const extractFilterOptions = (cardData: PTCGCard[]) => {
     const abilityMap = new Map<string, number>();
@@ -984,6 +1229,20 @@ export default function NewDeckStudio() {
     });
   };
 
+  // Helper function to get top 5 most expensive cards from deck
+  const getTopExpensiveCards = (deck: Deck) => {
+    if (!deck.cards) return [];
+    
+    return deck.cards
+      .map(card => ({
+        ...card,
+        price: marketPrices[card.CardID] || 0
+      }))
+      .filter(card => card.price > 0)
+      .sort((a, b) => b.price - a.price)
+      .slice(0, 5);
+  };
+
   // Helper function to get energy cards from deck
   const getEnergyCards = (deck: Deck) => {
     if (!deck.cards) return [];
@@ -994,6 +1253,25 @@ export default function NewDeckStudio() {
         card.CardType.includes('能量')
       );
     });
+  };
+
+  // Get key card for deck icon (most expensive or rare card)
+  const getKeyCard = (deck: Deck) => {
+    if (!deck.cards || deck.cards.length === 0) return null;
+    
+    // Find the most expensive card first
+    let keyCard = deck.cards[0];
+    let maxValue = 0;
+    
+    deck.cards.forEach(card => {
+      const price = card.MarketPrice || card.fallbackPrice || 0;
+      if (price > maxValue) {
+        maxValue = price;
+        keyCard = card;
+      }
+    });
+    
+    return keyCard;
   };
 
   // Deck Manager View
@@ -1014,7 +1292,36 @@ export default function NewDeckStudio() {
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setCurrentTab('my-decks')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              currentTab === 'my-decks'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            My Decks ({decks.length})
+          </button>
+          <button
+            onClick={() => setCurrentTab('construction')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              currentTab === 'construction'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Construction Decks ({constructionDecks.length})
+          </button>
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      {currentTab === 'my-decks' ? (
+        <>
+          {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
           <div className="flex items-center justify-between">
@@ -1063,8 +1370,29 @@ export default function NewDeckStudio() {
             {/* Deck Header */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{deck.name}</h3>
+                <div className="flex items-start space-x-3 flex-1">
+                  {/* Key Card Image Icon */}
+                  <div className="flex-shrink-0">
+                    {(() => {
+                      const keyCard = getKeyCard(deck);
+                      return keyCard ? (
+                        <img 
+                          src={`/cards/hk${keyCard.CardID.toString().padStart(8, '0')}.png`}
+                          alt={keyCard.Name}
+                          className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-card.png';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
+                          <Package className="h-6 w-6 text-gray-400" />
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{deck.name}</h3>
                   <div className="flex items-center space-x-2">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                       deck.format === 'Standard' ? 'bg-green-100 text-green-800' :
@@ -1078,6 +1406,7 @@ export default function NewDeckStudio() {
                     }`}>
                       {deck.isValid ? 'Valid' : 'Invalid'}
                     </span>
+                  </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -1120,32 +1449,18 @@ export default function NewDeckStudio() {
             <div className="p-4">
               <div className="grid grid-cols-3 gap-3 mb-3">
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-gray-900">{deck.totalCards}</div>
-                  <div className="text-xs text-gray-500">Total Cards</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-semibold text-blue-600">{deck.pokemonCount} ({getBasicPokemon(deck).length})</div>
-                  <div className="text-xs text-gray-500">Pokemon (Basic)</div>
+                  <div className="text-lg font-semibold text-blue-600">{deck.pokemonCount} ({getTopExpensiveCards(deck).length})</div>
+                  <div className="text-xs text-gray-500">Pokemon (Top 5 Expensive)</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-semibold text-green-600">{deck.trainerCount}</div>
                   <div className="text-xs text-gray-500">Trainers</div>
                 </div>
-              </div>
-
-              {/* Energy Types */}
-              {getEnergyCards(deck).length > 0 && (
-                <div className="mb-3">
-                  <div className="text-xs font-medium text-gray-500 mb-2">Energy Types:</div>
-                  <div className="flex flex-wrap gap-1">
-                    {Array.from(new Set(getEnergyCards(deck).map(card => card.Type))).map((energyType, index) => (
-                      <div key={index} className="flex items-center bg-gray-100 rounded-full p-1">
-                        <EnergyIcon type={energyType} size="w-4 h-4" />
-                      </div>
-                    ))}
-                  </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-yellow-600">{deck.energyCount}</div>
+                  <div className="text-xs text-gray-500">Energy</div>
                 </div>
-              )}
+              </div>
 
 
 
@@ -1206,6 +1521,64 @@ export default function NewDeckStudio() {
           </div>
         ))}
       </div>
+        </>
+      ) : (
+        /* Construction Decks Tab */
+        <div className="space-y-6">
+          {loadingConstruction ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-600 mt-2">Loading construction decks...</p>
+            </div>
+          ) : constructionDecks.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Construction Decks</h3>
+              <p className="text-gray-600">Construction decks will appear here when available.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {constructionDecks.map((deck) => (
+                <div key={deck.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{deck.name}</h3>
+                    <p className="text-sm text-gray-600 mb-3">{deck.description}</p>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Format:</span>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          deck.format === 'Standard' ? 'bg-green-100 text-green-800' :
+                          deck.format === 'Expanded' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {deck.format}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Cards:</span>
+                        <span className="font-medium">{deck.cards.length}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Expansion:</span>
+                        <span className="font-medium">{deck.cards[0]?.expansion || 'Unknown'}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => importConstructionDeck(deck)}
+                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Import Deck</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
@@ -1326,8 +1699,8 @@ export default function NewDeckStudio() {
               <div className="text-xs text-gray-500">Total Cards</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{getBasicPokemon({ cards: currentDeckCards } as Deck).length}</div>
-              <div className="text-xs text-gray-500">Basic Pokemon</div>
+              <div className="text-2xl font-bold text-blue-600">{getTopExpensiveCards({ cards: currentDeckCards } as Deck).length}</div>
+              <div className="text-xs text-gray-500">Top Expensive</div>
             </div>
             <div className="text-center">
               <div className={`text-2xl font-bold ${currentDeckCards.reduce((sum, card) => sum + card.quantity, 0) === 60 ? 'text-green-600' : 'text-orange-600'}`}>
@@ -1372,14 +1745,14 @@ export default function NewDeckStudio() {
             )}
           </div>
           
-          {/* Basic Pokemon Summary */}
-          {getBasicPokemon({ cards: currentDeckCards } as Deck).length > 0 && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              <div className="text-sm font-medium text-blue-700 mb-2">Basic Pokemon ({getBasicPokemon({ cards: currentDeckCards } as Deck).length} types):</div>
+          {/* Top Expensive Cards Summary */}
+          {getTopExpensiveCards({ cards: currentDeckCards } as Deck).length > 0 && (
+            <div className="mb-4 p-3 bg-green-50 rounded-lg">
+              <div className="text-sm font-medium text-green-700 mb-2">Top Expensive Cards:</div>
               <div className="flex flex-wrap gap-2">
-                {getBasicPokemon({ cards: currentDeckCards } as Deck).slice(0, 6).map((pokemon, index) => (
-                  <span key={index} className="text-xs bg-white px-2 py-1 rounded text-blue-600 font-medium">
-                    {pokemon.Name} ×{pokemon.quantity}
+                {getTopExpensiveCards({ cards: currentDeckCards } as Deck).map((card, index) => (
+                  <span key={index} className="text-xs bg-white px-2 py-1 rounded text-green-600 font-medium">
+                    {card.Name} (${card.price.toFixed(2)})
                   </span>
                 ))}
               </div>
@@ -1390,9 +1763,12 @@ export default function NewDeckStudio() {
               <div key={`deck-${card.CardID}`} className="relative bg-gray-50 rounded-lg overflow-hidden border">
                 <div className="aspect-[3/4] bg-white">
                   <img
-                    src={card.ImageURL || `/cards/${card.CardID}.png`}
+                    src={card.ImageURL || `/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
                     alt={card.Name}
                     className="w-full h-full object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder-card.png';
+                    }}
                   />
                 </div>
                 <div className="p-2">
@@ -1433,12 +1809,11 @@ export default function NewDeckStudio() {
             {/* Card Image - Smaller size */}
             <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
               <img
-                src={card.ImageURL || `/cards/${card.CardID}.png`}
+                src={card.ImageURL || `/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
                 alt={card.Name}
                 className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
                 onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/cards/placeholder.png';
+                  e.currentTarget.src = '/placeholder-card.png';
                 }}
               />
               {/* Add to Deck Button */}
@@ -1602,6 +1977,29 @@ export default function NewDeckStudio() {
                   <span>Expensive ({deckStats.priceDistribution.expensive}%)</span>
                 </div>
               </div>
+              {/* Cheaper Alternatives */}
+              {deckStats.cheaperAlternatives && deckStats.cheaperAlternatives.length > 0 && (
+                <div className="border-t pt-2">
+                  <div className="text-xs text-gray-500 mb-2">💡 Cheaper Alternatives Found:</div>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {deckStats.cheaperAlternatives.slice(0, 3).map((alt, index) => (
+                      <div key={index} className="text-xs bg-blue-50 p-2 rounded">
+                        <div className="font-medium text-blue-700 truncate">{alt.originalCard}</div>
+                        <div className="text-green-600">→ {alt.alternativeCard}</div>
+                        <div className="text-green-700 font-semibold">Save: {formatPrice(alt.savings)}</div>
+                      </div>
+                    ))}
+                    {deckStats.cheaperAlternatives.length > 3 && (
+                      <div className="text-xs text-gray-500 text-center">
+                        +{deckStats.cheaperAlternatives.length - 3} more alternatives
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-green-600 font-semibold mt-1">
+                    Total Potential Savings: {formatPrice(deckStats.cheaperAlternatives.reduce((sum, alt) => sum + alt.savings, 0))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1939,33 +2337,40 @@ export default function NewDeckStudio() {
           </div>
         </div>
 
-        {/* Basic Pokemon List & Performance Metrics */}
+        {/* Top Expensive Cards & Performance Metrics */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Basic Pokemon List */}
+          {/* Top Expensive Cards */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Pokemon</h3>
-            {getBasicPokemon(selectedDeck).length > 0 ? (
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Expensive Cards</h3>
+            {getTopExpensiveCards(selectedDeck).length > 0 ? (
               <div className="space-y-3">
-                {getBasicPokemon(selectedDeck).map((pokemon, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                {getTopExpensiveCards(selectedDeck).map((card, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <span className="text-blue-600 font-bold text-sm">{pokemon.HP || '?'}</span>
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        <img
+                          src={card.ImageURL || `/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
+                          alt={card.Name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-card.png';
+                          }}
+                        />
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">{pokemon.Name}</div>
-                        <div className="text-sm text-gray-500">{pokemon.Type}</div>
+                        <div className="font-medium text-gray-900">{card.Name}</div>
+                        <div className="text-sm text-gray-500">{card.Rarity}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-blue-600">×{pokemon.quantity || 1}</div>
-                      <div className="text-xs text-gray-500">copies</div>
+                      <div className="font-semibold text-green-600">${card.price.toFixed(2)}</div>
+                      <div className="text-xs text-gray-500">market price</div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">No basic Pokemon found in this deck</p>
+              <p className="text-gray-500 text-center py-4">No market price data available</p>
             )}
           </div>
 
@@ -2015,6 +2420,77 @@ export default function NewDeckStudio() {
             </div>
           </div>
         </div>
+
+        {/* Cheaper Alternatives Detailed Section */}
+        {deckStats.cheaperAlternatives && deckStats.cheaperAlternatives.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">💰 Cost-Saving Alternatives</h3>
+            <div className="space-y-4">
+              {deckStats.cheaperAlternatives.map((alternative, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 bg-green-50">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{alternative.originalCard.Name}</div>
+                      <div className="text-sm text-gray-600">
+                        Replace: {alternative.originalCard.Rarity} → {alternative.alternativeCard.Rarity}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-green-600">
+                        -${alternative.savings.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-gray-500">per card</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                    <div className="bg-white rounded-lg p-3 border">
+                      <div className="text-sm font-medium text-gray-700 mb-2">Current Card</div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-600">Rarity: {alternative.originalCard.Rarity}</div>
+                        <div className="text-xs text-gray-600">
+                          Price: ${(alternative.originalCard.MarketPrice || alternative.originalCard.fallbackPrice || 0).toFixed(2)}
+                        </div>
+                        <div className="text-xs text-gray-600">Set: {alternative.originalCard.ExpansionName}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-green-100 rounded-lg p-3 border border-green-200">
+                      <div className="text-sm font-medium text-green-700 mb-2">Alternative Card</div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-green-600">Rarity: {alternative.alternativeCard.Rarity}</div>
+                        <div className="text-xs text-green-600">
+                          Price: ${(alternative.alternativeCard.MarketPrice || alternative.alternativeCard.fallbackPrice || 0).toFixed(2)}
+                        </div>
+                        <div className="text-xs text-green-600">Set: {alternative.alternativeCard.ExpansionName}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <div className="text-xs text-gray-600">
+                      Total savings for {alternative.originalCard.quantity} copies: 
+                      <span className="font-medium text-green-600 ml-1">
+                        ${(alternative.savings * alternative.originalCard.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mt-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-600">
+                    Total Potential Savings: ${deckStats.cheaperAlternatives.reduce((total, alt) => total + (alt.savings * alt.originalCard.quantity), 0).toFixed(2)}
+                  </div>
+                  <div className="text-xs text-blue-600 mt-1">
+                    By switching to lower rarity versions of the same cards
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
