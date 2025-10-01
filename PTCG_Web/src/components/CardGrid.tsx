@@ -11,10 +11,24 @@ interface CardGridProps {
   cardOnlyView?: boolean;
   onOpenInventory?: (card: PTCGCard) => void;
   onAddToInventory?: (cardId: number) => Promise<boolean>;
+  marketPrices?: {[cardId: string]: any[]};
 }
 
-export default function CardGrid({ cards, onCardClick, viewSize = 'medium', cardOnlyView = false, onOpenInventory, onAddToInventory }: CardGridProps) {
+export default function CardGrid({ cards, onCardClick, viewSize = 'medium', cardOnlyView = false, onOpenInventory, onAddToInventory, marketPrices }: CardGridProps) {
   const { t } = useI18n();
+
+  // Helper function to get market price for a card
+  const getCardMarketPrice = (cardId: number) => {
+    if (!marketPrices) return null;
+    const prices = marketPrices[cardId.toString()];
+    if (!prices || prices.length === 0) return null;
+    
+    // Get the most recent price
+    const sortedPrices = prices.sort((a: any, b: any) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+    return sortedPrices[0];
+  };
 
   // Define grid classes based on view size and card-only mode
   const getGridClasses = () => {
@@ -65,6 +79,7 @@ export default function CardGrid({ cards, onCardClick, viewSize = 'medium', card
           cardOnlyView={cardOnlyView}
           onOpenInventory={onOpenInventory ? () => onOpenInventory(card) : undefined}
           onAddToInventory={onAddToInventory}
+          marketPrice={getCardMarketPrice(card.CardID)}
         />
       ))}
     </div>

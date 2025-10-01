@@ -1076,6 +1076,7 @@ export default function Home() {
               cardOnlyView={cardOnlyView}
               onOpenInventory={handleCardClick}
               onAddToInventory={handleAddToInventory}
+              marketPrices={marketPrices}
             />
           </div>
         </div>

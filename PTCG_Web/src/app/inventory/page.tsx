@@ -42,7 +42,7 @@ export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [conditionFilter, setConditionFilter] = useState('');
   const [showStats, setShowStats] = useState(false);
-  const [sortBy, setSortBy] = useState<'name' | 'id' | 'rarity' | 'tier' | 'quantity' | 'value'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'id' | 'rarity' | 'tier' | 'quantity' | 'value' | 'expansion' | 'type'>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [viewSize, setViewSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [filtersVisible, setFiltersVisible] = useState(true);
@@ -93,6 +93,25 @@ export default function InventoryPage() {
       case 'D': return 'bg-gray-200 text-gray-600';
       default: return 'bg-gray-100 text-gray-600';
     }
+  };
+
+  // Rarity order helper function
+  const getRarityOrder = (rarity?: string) => {
+    const rarityOrder: { [key: string]: number } = {
+      'C': 1, 'Common': 1,
+      'U': 2, 'Uncommon': 2,
+      'R': 3, 'Rare': 3,
+      'RR': 4, 'Double Rare': 4,
+      'RRR': 5, 'Triple Rare': 5,
+      'SR': 6, 'Secret Rare': 6,
+      'UR': 7, 'Ultra Rare': 7,
+      'HR': 8, 'Hyper Rare': 8,
+      'AR': 9, 'Art Rare': 9,
+      'SAR': 10, 'Special Art Rare': 10,
+      'MUR': 11, 'Master Ultra Rare': 11,
+      'PR': 12, 'Promo': 12
+    };
+    return rarityOrder[rarity || ''] || 0;
   };
 
   // Auto-hide filters functionality
@@ -172,10 +191,16 @@ export default function InventoryPage() {
           comparison = cardA.CardID - cardB.CardID;
           break;
         case 'rarity':
-          comparison = cardA.Rarity.localeCompare(cardB.Rarity);
+          comparison = getRarityOrder(cardA.Rarity) - getRarityOrder(cardB.Rarity);
           break;
         case 'tier':
           comparison = (cardA.Tier || '').localeCompare(cardB.Tier || '');
+          break;
+        case 'expansion':
+          comparison = (cardA.ExpansionName || '').localeCompare(cardB.ExpansionName || '');
+          break;
+        case 'type':
+          comparison = (cardA.CardType || '').localeCompare(cardB.CardType || '');
           break;
         case 'quantity':
           comparison = a.quantity - b.quantity;
@@ -325,11 +350,13 @@ export default function InventoryPage() {
               <label className="text-xs font-medium text-gray-700">Sort:</label>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                 className="px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-xs"
               >
                 <option value="name">Name</option>
                 <option value="id">Card ID</option>
+                <option value="expansion">Expansion</option>
+                <option value="type">Card Type</option>
                 <option value="rarity">Rarity</option>
                 <option value="tier">Tier</option>
                 <option value="quantity">Quantity</option>
@@ -598,7 +625,7 @@ export default function InventoryPage() {
 
           {/* Inventory Cards Grid */}
           <div className="mt-6">
-            {filteredInventory.length === 0 ? (
+            {sortedInventory.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">No cards found</h3>
@@ -614,7 +641,7 @@ export default function InventoryPage() {
                   ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
                   : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
               }`}>
-                {filteredInventory.map((item) => {
+                {sortedInventory.map((item) => {
                   const card = cards.find(c => c.CardID === item.CardID);
                   if (!card) return null;
                   

@@ -2,6 +2,8 @@
 
 import { PTCGCard } from '../types/card';
 import { getCardImageSrc, PLACEHOLDER_IMAGE_PATH } from '../utils/imageUtils';
+import { getCurrencySymbol } from '../utils/currency';
+import { DollarSign } from 'lucide-react';
 import InventoryButton from './InventoryButton';
 
 interface CardItemProps {
@@ -11,9 +13,10 @@ interface CardItemProps {
   cardOnlyView?: boolean;
   onOpenInventory?: () => void;
   onAddToInventory?: (cardId: number) => Promise<boolean>;
+  marketPrice?: any; // Market price passed from parent to avoid individual API calls
 }
 
-export default function CardItem({ card, onClick, viewSize = 'medium', cardOnlyView = false, onOpenInventory, onAddToInventory }: CardItemProps) {
+export default function CardItem({ card, onClick, viewSize = 'medium', cardOnlyView = false, onOpenInventory, onAddToInventory, marketPrice }: CardItemProps) {
   if (cardOnlyView) {
     return (
       <div
@@ -31,6 +34,13 @@ export default function CardItem({ card, onClick, viewSize = 'medium', cardOnlyV
               e.currentTarget.src = PLACEHOLDER_IMAGE_PATH;
             }}
           />
+          
+          {/* Market Price Overlay for Card-Only View */}
+          {marketPrice && (
+            <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-md text-xs font-semibold shadow-md">
+              {getCurrencySymbol(marketPrice.currency)}{marketPrice.price.toFixed(0)}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -53,9 +63,22 @@ export default function CardItem({ card, onClick, viewSize = 'medium', cardOnlyV
       </div>
       
       <div className="p-4">
-        <h3 className="font-semibold text-gray-900 text-base leading-tight mb-3">
-          {card.Name}
-        </h3>
+        {/* Card Name and Market Price Header */}
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="font-semibold text-gray-900 text-base leading-tight flex-1 mr-2">
+            {card.Name}
+          </h3>
+          
+          {/* Market Price Badge */}
+          {marketPrice && (
+            <div className="flex items-center space-x-1 bg-green-50 px-2 py-1 rounded-md border border-green-200 flex-shrink-0">
+              <DollarSign className="h-3 w-3 text-green-600" />
+              <span className="text-xs font-semibold text-green-800">
+                {getCurrencySymbol(marketPrice.currency)}{marketPrice.price.toFixed(0)}
+              </span>
+            </div>
+          )}
+        </div>
         
         <InventoryButton cardId={card.CardID} onOpenInventory={onOpenInventory} onAddToInventory={onAddToInventory} />
       </div>

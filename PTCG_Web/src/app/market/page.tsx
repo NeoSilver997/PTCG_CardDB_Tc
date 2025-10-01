@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { Search, Plus, TrendingUp, TrendingDown, Minus, Clock, X } from 'lucide-react';
+import { Search, Plus, TrendingUp, TrendingDown, Minus, Clock, X, BarChart3, PieChart, Activity, DollarSign, Users, Package, Star, Award } from 'lucide-react';
 import { PTCGCard } from '../../types/card';
 import { MarketPrice, MarketCard } from '../../types/market';
 import { getDefaultCurrencyForCard, getCurrencySymbol } from '../../utils/currency';
@@ -50,9 +50,11 @@ export default function MarketPage() {
 
   const loadCards = async () => {
     try {
-      const response = await fetch('/api/cards?details=true');
+      const response = await fetch('/api/cards?detail=true');
       if (response.ok) {
         const data = await response.json();
+        console.log('Debug: cards loaded:', data.length);
+        console.log('Sample card:', data[0]);
         setCards(data);
       }
     } catch (error) {
@@ -66,6 +68,7 @@ export default function MarketPage() {
       const response = await fetch('/api/market-prices?format=raw');
       if (response.ok) {
         const rawData = await response.json();
+        console.log('Debug: raw market data:', Object.keys(rawData).length, 'cards with prices');
         // Convert raw data to flat array of market prices
         const allPrices: MarketPrice[] = [];
         Object.entries(rawData).forEach(([cardId, prices]) => {
@@ -73,6 +76,8 @@ export default function MarketPage() {
             allPrices.push(...prices);
           }
         });
+        console.log('Debug: marketPrices loaded:', allPrices.length);
+        console.log('Sample market price:', allPrices[0]);
         setMarketPrices(allPrices);
         console.log('Loaded', allPrices.length, 'market price entries from market-prices.json');
       }
@@ -254,6 +259,185 @@ export default function MarketPage() {
     });
   }, [cards, marketPrices, searchTerm, sortBy]);
 
+  // Calculate comprehensive market statistics
+  const marketStats = useMemo(() => {
+    // Group market prices by cardId for calculations
+    const pricesByCardId = new Map<number, MarketPrice[]>();
+    marketPrices.forEach(price => {
+      const cardId = price.cardId;
+      if (!pricesByCardId.has(cardId)) {
+        pricesByCardId.set(cardId, []);
+      }
+      pricesByCardId.get(cardId)!.push(price);
+    });
+
+    // Calculate market cards for statistics (similar to filteredMarketCards but for stats only)
+    const marketCardsForStats: MarketCard[] = [];
+    pricesByCardId.forEach((cardPrices, cardId) => {
+      const cardData = cards.find(card => card.CardID === cardId);
+      const sortedPrices = cardPrices.sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const recentPrices = sortedPrices.filter(price => 
+        new Date(price.date) >= thirtyDaysAgo
+      );
+      
+      const avgPrice = recentPrices.length > 0
+        ? recentPrices.reduce((sum, price) => sum + price.price, 0) / recentPrices.length
+        : sortedPrices[0]?.price || 0;
+
+      let priceChange: { amount: number; percentage: number; direction: 'up' | 'down' | 'stable' } | undefined = undefined;
+      if (sortedPrices.length >= 2) {
+        const currentPrice = sortedPrices[0].price;
+        const previousPrice = sortedPrices[1].price;
+        const change = currentPrice - previousPrice;
+        const percentage = previousPrice > 0 ? (change / previousPrice) * 100 : 0;
+        
+        priceChange = {
+          amount: change,
+          percentage,
+          direction: (change > 0 ? 'up' : change < 0 ? 'down' : 'stable') as 'up' | 'down' | 'stable'
+        };
+      }
+
+      const cardName = cardData?.Name || sortedPrices[0]?.metadata?.cardName || `Card #${cardId}`;
+      const expansionName = cardData?.ExpansionName || sortedPrices[0]?.metadata?.expansionCode || 'Unknown';
+
+      const marketCard: MarketCard = {
+        CardID: cardId,
+        Name: cardName,
+        ExpansionName: expansionName,
+        ImageURL: cardData?.ImageURL || `/cards/hk${cardId.toString().padStart(8, '0')}.png`,
+        averagePrice: avgPrice,
+        priceChange,
+        marketPrices: sortedPrices,
+        // Add other required fields with defaults
+        EvolutionStage: cardData?.EvolutionStage || '',
+        CardType: cardData?.CardType || 'Unknown',
+        HP: cardData?.HP || '',
+        Type: cardData?.Type || '',
+        AbilityName: cardData?.AbilityName || '',
+        AbilityEffect: cardData?.AbilityEffect || '',
+        Skill1Name: cardData?.Skill1Name || '',
+        Skill1Energy: cardData?.Skill1Energy || '',
+        Skill1Damage: cardData?.Skill1Damage || '',
+        Skill1Effect: cardData?.Skill1Effect || '',
+        Skill2Name: cardData?.Skill2Name || '',
+        Skill2Energy: cardData?.Skill2Energy || '',
+        Skill2Damage: cardData?.Skill2Damage || '',
+        Skill2Effect: cardData?.Skill2Effect || '',
+        Weakness: cardData?.Weakness || '',
+        WeaknessType: cardData?.WeaknessType || '',
+        Resistance: cardData?.Resistance || '',
+        ResistanceType: cardData?.ResistanceType || '',
+        RetreatCost: cardData?.RetreatCost || '',
+        CollectorNumber: cardData?.CollectorNumber || '',
+        Rarity: cardData?.Rarity || '',
+        RegulationMark: cardData?.RegulationMark || '',
+        ExpansionCode: cardData?.ExpansionCode || '',
+        Illustrator: cardData?.Illustrator || '',
+        Artist: cardData?.Artist || '',
+        SpecialTag: cardData?.SpecialTag || '',
+        Evolution: cardData?.Evolution || '',
+        PrimaryEffectType: cardData?.PrimaryEffectType || '',
+        SpecialEffectType: cardData?.SpecialEffectType || '',
+        AbilityStats: cardData?.AbilityStats || '',
+        Tier: cardData?.Tier || '',
+        Score: cardData?.Score || '',
+        ScoreBreakdown: cardData?.ScoreBreakdown || '',
+        OriginalImageURL: cardData?.OriginalImageURL || '',
+        priceUpdated: sortedPrices[0]?.updatedAt
+      };
+
+      marketCardsForStats.push(marketCard);
+    });
+
+    const totalCards = marketCardsForStats.length;
+    const totalPrices = marketPrices.length;
+    
+    // Price statistics
+    const prices = marketPrices.map(p => p.price);
+    const avgPrice = prices.length > 0 ? prices.reduce((sum, price) => sum + price, 0) / prices.length : 0;
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+    
+    // Currency distribution
+    const currencyCount = new Map<string, number>();
+    marketPrices.forEach(price => {
+      currencyCount.set(price.currency, (currencyCount.get(price.currency) || 0) + 1);
+    });
+    
+    // Condition distribution
+    const conditionCount = new Map<string, number>();
+    marketPrices.forEach(price => {
+      conditionCount.set(price.condition, (conditionCount.get(price.condition) || 0) + 1);
+    });
+    
+    // Recent activity (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentPrices = marketPrices.filter(price => new Date(price.date) >= sevenDaysAgo);
+    
+    // Price range distribution
+    const priceRanges = {
+      'Under $5': prices.filter(p => p < 5).length,
+      '$5-25': prices.filter(p => p >= 5 && p < 25).length,
+      '$25-100': prices.filter(p => p >= 25 && p < 100).length,
+      '$100-500': prices.filter(p => p >= 100 && p < 500).length,
+      'Over $500': prices.filter(p => p >= 500).length
+    };
+    
+    // Cards with price changes
+    const cardsWithChanges = marketCardsForStats.filter(card => card.priceChange);
+    const priceIncreases = cardsWithChanges.filter(card => card.priceChange?.direction === 'up').length;
+    const priceDecreases = cardsWithChanges.filter(card => card.priceChange?.direction === 'down').length;
+    
+    // Top movers
+    const topGainers = marketCardsForStats
+      .filter(card => card.priceChange?.direction === 'up')
+      .sort((a, b) => (b.priceChange?.percentage || 0) - (a.priceChange?.percentage || 0))
+      .slice(0, 3);
+      
+    const topLosers = marketCardsForStats
+      .filter(card => card.priceChange?.direction === 'down')
+      .sort((a, b) => (a.priceChange?.percentage || 0) - (b.priceChange?.percentage || 0))
+      .slice(0, 3);
+    
+    // Most expensive cards
+    const mostExpensive = marketCardsForStats
+      .sort((a, b) => (b.averagePrice || 0) - (a.averagePrice || 0))
+      .slice(0, 5);
+    
+    // Debug: Log the most expensive cards data
+    console.log('Most expensive cards:', mostExpensive.map(card => ({
+      cardId: card.CardID,
+      name: card.Name,
+      imageURL: card.ImageURL,
+      averagePrice: card.averagePrice
+    })));
+    
+    return {
+      totalCards,
+      totalPrices,
+      avgPrice,
+      minPrice,
+      maxPrice,
+      currencyCount,
+      conditionCount,
+      recentPrices: recentPrices.length,
+      priceRanges,
+      priceIncreases,
+      priceDecreases,
+      topGainers,
+      topLosers,
+      mostExpensive
+    };
+  }, [cards, marketPrices]);
+
   const handleDeletePrice = async (cardId: number, date: string) => {
     try {
       const response = await fetch(`/api/market-prices?cardId=${cardId}&date=${encodeURIComponent(date)}`, {
@@ -299,6 +483,277 @@ export default function MarketPage() {
               <Plus size={16} />
               Add Price
             </button>
+          </div>
+        </div>
+
+        {/* Market Statistics Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          {/* Overview Stats */}
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-blue-900">Market Overview</h3>
+              <BarChart3 className="h-8 w-8 text-blue-600" />
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-blue-700 text-sm">Total Cards</span>
+                <span className="font-bold text-blue-900">{marketStats.totalCards.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-blue-700 text-sm">Price Entries</span>
+                <span className="font-bold text-blue-900">{marketStats.totalPrices.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-blue-700 text-sm">Avg Price</span>
+                <span className="font-bold text-blue-900">HK${marketStats.avgPrice.toFixed(0)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Price Range Stats */}
+          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-green-900">Price Ranges</h3>
+              <DollarSign className="h-8 w-8 text-green-600" />
+            </div>
+            <div className="space-y-2">
+              {Object.entries(marketStats.priceRanges).map(([range, count]) => (
+                <div key={range} className="flex justify-between items-center text-sm">
+                  <span className="text-green-700">{range}</span>
+                  <span className="font-semibold text-green-900">{count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Market Activity */}
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-purple-900">Market Activity</h3>
+              <Activity className="h-8 w-8 text-purple-600" />
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-purple-700 text-sm">Recent (7d)</span>
+                <span className="font-bold text-purple-900">{marketStats.recentPrices}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-purple-700 text-sm flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  Increases
+                </span>
+                <span className="font-bold text-green-600">{marketStats.priceIncreases}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-purple-700 text-sm flex items-center gap-1">
+                  <TrendingDown className="h-3 w-3" />
+                  Decreases
+                </span>
+                <span className="font-bold text-red-600">{marketStats.priceDecreases}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Price Extremes */}
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-orange-900">Price Range</h3>
+              <Star className="h-8 w-8 text-orange-600" />
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-orange-700 text-sm">Minimum</span>
+                <span className="font-bold text-orange-900">HK${marketStats.minPrice.toFixed(0)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-orange-700 text-sm">Maximum</span>
+                <span className="font-bold text-orange-900">HK${marketStats.maxPrice.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-orange-700 text-sm">Range</span>
+                <span className="font-bold text-orange-900">HK${(marketStats.maxPrice - marketStats.minPrice).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Movers and Most Expensive */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Top Gainers */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Top Gainers</h3>
+              <TrendingUp className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="space-y-3">
+              {marketStats.topGainers.length > 0 ? (
+                marketStats.topGainers.map((card) => (
+                  <div key={card.CardID} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Image
+                        src={card.ImageURL}
+                        alt={card.Name}
+                        width={40}
+                        height={56}
+                        className="rounded object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-card.png';
+                        }}
+                      />
+                      <div>
+                        <div className="font-medium text-sm text-gray-900 truncate max-w-32">{card.Name}</div>
+                        <div className="text-xs text-gray-600">HK${card.averagePrice?.toFixed(0)}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-green-600">
+                        +{card.priceChange?.percentage.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-500 text-center py-4">No price increases found</div>
+              )}
+            </div>
+          </div>
+
+          {/* Top Losers */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Top Losers</h3>
+              <TrendingDown className="h-6 w-6 text-red-600" />
+            </div>
+            <div className="space-y-3">
+              {marketStats.topLosers.length > 0 ? (
+                marketStats.topLosers.map((card) => (
+                  <div key={card.CardID} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Image
+                        src={card.ImageURL}
+                        alt={card.Name}
+                        width={40}
+                        height={56}
+                        className="rounded object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-card.png';
+                        }}
+                      />
+                      <div>
+                        <div className="font-medium text-sm text-gray-900 truncate max-w-32">{card.Name}</div>
+                        <div className="text-xs text-gray-600">HK${card.averagePrice?.toFixed(0)}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-red-600">
+                        {card.priceChange?.percentage.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-500 text-center py-4">No price decreases found</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Most Expensive Cards */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Most Expensive Cards</h3>
+            <Award className="h-6 w-6 text-yellow-600" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {marketStats.mostExpensive.map((card, index) => (
+              <div key={card.CardID} className="relative bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-4 border border-yellow-200">
+                <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                  {index + 1}
+                </div>
+                <div className="flex flex-col items-center space-y-2">
+                  <img
+                    src={card.ImageURL}
+                    alt={card.Name}
+                    width={80}
+                    height={112}
+                    className="rounded object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      console.log(`Image failed to load: ${card.ImageURL} for card: ${card.Name}`);
+                      target.src = '/placeholder-card.png';
+                    }}
+                  />
+                  <div className="text-center">
+                    <div className="font-medium text-sm text-gray-900 truncate max-w-full">{card.Name}</div>
+                    <div className="text-lg font-bold text-yellow-700">HK${card.averagePrice?.toLocaleString()}</div>
+                    <div className="text-xs text-gray-600">{card.ExpansionName}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Currency and Condition Distribution */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Currency Distribution */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Currency Distribution</h3>
+              <PieChart className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="space-y-3">
+              {Array.from(marketStats.currencyCount.entries())
+                .sort(([,a], [,b]) => b - a)
+                .map(([currency, count]) => {
+                  const percentage = (count / marketStats.totalPrices * 100).toFixed(1);
+                  return (
+                    <div key={currency} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm font-medium">{getCurrencySymbol(currency)} {currency}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold">{count.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">{percentage}%</div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+
+          {/* Condition Distribution */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Card Condition Distribution</h3>
+              <Package className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="space-y-3">
+              {Array.from(marketStats.conditionCount.entries())
+                .sort(([,a], [,b]) => b - a)
+                .map(([condition, count]) => {
+                  const percentage = (count / marketStats.totalPrices * 100).toFixed(1);
+                  const colorClass = condition === 'Near Mint' ? 'bg-green-500' : 
+                                   condition === 'Lightly Played' ? 'bg-yellow-500' :
+                                   condition === 'Moderately Played' ? 'bg-orange-500' :
+                                   condition === 'Heavily Played' ? 'bg-red-500' : 'bg-gray-500';
+                  return (
+                    <div key={condition} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 ${colorClass} rounded-full`}></div>
+                        <span className="text-sm font-medium">{condition}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold">{count.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">{percentage}%</div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         </div>
 
