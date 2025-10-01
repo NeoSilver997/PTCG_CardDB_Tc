@@ -325,6 +325,17 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
     }
   };
 
+  // Helper function to calculate type coverage
+  const calculateTypeCoverage = (cards: SimpleDeckCard[]): string[] => {
+    const types = new Set<string>();
+    cards.forEach(card => {
+      if (card.CardType === 'Pokémon' && card.Type) {
+        types.add(card.Type);
+      }
+    });
+    return Array.from(types).sort();
+  };
+
   // Deck Summary Calculations
   const getDeckSummary = useMemo(() => {
     // Don't calculate if market prices aren't loaded yet
@@ -340,7 +351,9 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
           totalDamage: 0,
           averageDamage: 0,
           maxDamage: 0,
-          damageCards: []
+          damageCards: [],
+          typeCoverage: [],
+          energyEfficiency: 0
         },
         turnItems: {
           firstTurn: [],
@@ -361,7 +374,9 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
         totalDamage: 0,
         averageDamage: 0,
         maxDamage: 0,
-        damageCards: [] as { card: SimpleDeckCard, damage: number }[]
+        damageCards: [] as { card: SimpleDeckCard, damage: number, skillName: string, energyCost: string, effectiveness: number, estimatedDPS: number }[],
+        typeCoverage: [] as string[],
+        energyEfficiency: 0
       },
       turnItems: {
         firstTurn: [] as SimpleDeckCard[],
@@ -413,41 +428,155 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
 
     summary.totalSavings = summary.totalPrice - summary.cheaperTotalPrice;
 
-    // Key cards (S/A tier Pokemon and important trainers)
-    summary.keyCards = deck.cards.filter(card =>
-      (card.CardType === 'Pokémon' && (card.Tier === 'S' || card.Tier === 'A')) ||
-      (card.CardType === 'Trainer' && (card.AbilityName?.includes('Search') || card.AbilityName?.includes('Draw')))
-    ).sort((a, b) => {
+    // Enhanced Key cards detection
+    summary.keyCards = deck.cards.filter(card => {
+      // S/A tier Pokemon
+      if (card.CardType === 'Pokémon' && (card.Tier === 'S' || card.Tier === 'A')) {
+        return true;
+      }
+
+      // Important trainers (searchers, draw cards, supporters)
+      if (card.CardType === 'Trainer') {
+        const importantAbilities = [
+          'Search', 'Draw', 'Supporter', 'Stadium', 'Tool', 'Item'
+        ];
+        const hasImportantAbility = importantAbilities.some(ability =>
+          card.AbilityName?.includes(ability) ||
+          card.AbilityEffect?.includes(ability) ||
+          card.PrimaryEffectType?.includes(ability)
+        );
+
+        // Specific important cards
+        const importantCardNames = [
+          'Professor', 'Boss', 'Nest Ball', 'Quick Ball', 'Ultra Ball',
+          'Switch', 'Energy Retrieval', 'Potion', 'Switch Potion'
+        ];
+        const isImportantCard = importantCardNames.some(name =>
+          card.Name.includes(name)
+        );
+
+        if (hasImportantAbility || isImportantCard) {
+          return true;
+        }
+      }
+
+      // High HP Basic Pokemon (potential starters)
+      if (card.CardType === 'Pokémon' &&
+          card.EvolutionStage === 'Basic' &&
+          card.HP &&
+          parseInt(card.HP) >= 100) {
+        return true;
+      }
+
+      // Pokemon with powerful abilities
+      if (card.CardType === 'Pokémon' &&
+          (card.AbilityName?.includes('VSTAR') ||
+           card.AbilityName?.includes('VMAX') ||
+           card.AbilityName?.includes('ex') ||
+           card.SpecialTag?.includes('Ancient'))) {
+        return true;
+      }
+
+      return false;
+    }).sort((a, b) => {
+      // Sort by priority: S tier first, then A tier, then others
       const tierOrder = { 'S': 0, 'A': 1, 'B': 2, 'C': 3, 'D': 4 };
       const aTier = tierOrder[a.Tier as keyof typeof tierOrder] ?? 5;
       const bTier = tierOrder[b.Tier as keyof typeof tierOrder] ?? 5;
-      return aTier - bTier;
+
+      if (aTier !== bTier) return aTier - bTier;
+
+      // Within same tier, prioritize Pokemon over Trainers
+      if (a.CardType === 'Pokémon' && b.CardType !== 'Pokémon') return -1;
+      if (b.CardType === 'Pokémon' && a.CardType !== 'Pokémon') return 1;
+
+      // Sort by HP for Pokemon
+      if (a.CardType === 'Pokémon' && b.CardType === 'Pokémon') {
+        const aHP = parseInt(a.HP || '0');
+        const bHP = parseInt(b.HP || '0');
+        return bHP - aHP;
+      }
+
+      return 0;
     });
 
-    // Damage analysis
-    const damageData: { card: SimpleDeckCard, damage: number }[] = [];
+    // Enhanced Damage Analysis
+    const damageData: {
+      card: SimpleDeckCard,
+      damage: number,
+      skillName: string,
+      energyCost: string,
+      effectiveness: number,
+      estimatedDPS: number
+    }[] = [];
+
     deck.cards.forEach(card => {
       if (card.CardType === 'Pokémon') {
-        let maxDamage = 0;
-        if (card.Skill1Damage && card.Skill1Damage !== '') {
-          const damage1 = parseInt(card.Skill1Damage.replace(/\D/g, '')) || 0;
-          maxDamage = Math.max(maxDamage, damage1);
-        }
-        if (card.Skill2Damage && card.Skill2Damage !== '') {
-          const damage2 = parseInt(card.Skill2Damage.replace(/\D/g, '')) || 0;
-          maxDamage = Math.max(maxDamage, damage2);
-        }
-        if (maxDamage > 0) {
-          damageData.push({ card, damage: maxDamage });
-          summary.damageAnalysis.totalDamage += maxDamage * card.quantity;
-        }
+        // Analyze both skills
+        const skills = [
+          { name: card.Skill1Name, damage: card.Skill1Damage, energy: card.Skill1Energy },
+          { name: card.Skill2Name, damage: card.Skill2Damage, energy: card.Skill2Energy }
+        ];
+
+        skills.forEach(skill => {
+          if (skill.damage && skill.damage !== '' && skill.name && skill.name !== '') {
+            const baseDamage = parseInt(skill.damage.replace(/\D/g, '')) || 0;
+
+            if (baseDamage > 0) {
+              // Calculate type effectiveness multiplier (simplified)
+              let effectiveness = 1.0;
+              if (card.Type && card.WeaknessType) {
+                // Basic type matching - in a real implementation, you'd have a full type chart
+                const typeMatch = card.Type === card.WeaknessType ||
+                                (card.Type === 'Fire' && card.WeaknessType === 'Water') ||
+                                (card.Type === 'Water' && card.WeaknessType === 'Electric') ||
+                                (card.Type === 'Electric' && card.WeaknessType === 'Ground');
+                if (typeMatch) effectiveness = 2.0;
+              }
+
+              // Calculate energy cost (simplified - count energy symbols)
+              const energySymbols = (skill.energy || '').match(/\{[^}]+\}/g) || [];
+              const energyCost = energySymbols.length;
+
+              // Estimate DPS (Damage Per Energy)
+              const estimatedDPS = energyCost > 0 ? baseDamage / energyCost : baseDamage;
+
+              damageData.push({
+                card,
+                damage: Math.round(baseDamage * effectiveness),
+                skillName: skill.name,
+                energyCost: skill.energy || '0',
+                effectiveness,
+                estimatedDPS: Math.round(estimatedDPS * 10) / 10
+              });
+            }
+          }
+        });
       }
     });
 
-    summary.damageAnalysis.damageCards = damageData.sort((a, b) => b.damage - a.damage);
-    summary.damageAnalysis.maxDamage = Math.max(...damageData.map(d => d.damage), 0);
-    summary.damageAnalysis.averageDamage = damageData.length > 0 ?
-      summary.damageAnalysis.totalDamage / deck.cards.reduce((sum, card) => sum + card.quantity, 0) : 0;
+    // Sort by damage and keep only the best skill per card
+    const bestSkillsPerCard = new Map<number, typeof damageData[0]>();
+    damageData.forEach(skillData => {
+      const existing = bestSkillsPerCard.get(skillData.card.CardID);
+      if (!existing || skillData.damage > existing.damage) {
+        bestSkillsPerCard.set(skillData.card.CardID, skillData);
+      }
+    });
+
+    const finalDamageData = Array.from(bestSkillsPerCard.values())
+      .sort((a, b) => b.damage - a.damage);
+
+    summary.damageAnalysis = {
+      totalDamage: finalDamageData.reduce((sum, data) => sum + (data.damage * data.card.quantity), 0),
+      averageDamage: finalDamageData.length > 0 ?
+        finalDamageData.reduce((sum, data) => sum + data.damage, 0) / finalDamageData.length : 0,
+      maxDamage: Math.max(...finalDamageData.map(d => d.damage), 0),
+      damageCards: finalDamageData.slice(0, 8), // Show top 8 damage cards
+      typeCoverage: calculateTypeCoverage(deck.cards),
+      energyEfficiency: finalDamageData.length > 0 ?
+        finalDamageData.reduce((sum, data) => sum + data.estimatedDPS, 0) / finalDamageData.length : 0
+    };
 
     // Turn-based items categorization
     deck.cards.forEach(card => {
@@ -653,30 +782,77 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
               )}
             </div>
 
-            {/* Key Cards */}
+            {/* Enhanced Key Cards */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center mb-4">
                 <Star className="w-5 h-5 text-yellow-500 mr-2" />
                 <h3 className="text-lg font-semibold">關鍵卡牌</h3>
               </div>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="space-y-2 max-h-64 overflow-y-auto">
                 {getDeckSummary.keyCards.length === 0 ? (
                   <p className="text-gray-500 text-sm">無關鍵卡牌</p>
                 ) : (
-                  getDeckSummary.keyCards.map(card => (
-                    <div key={card.CardID} className="flex items-center justify-between bg-gray-50 rounded p-2">
-                      <div className="flex items-center">
-                        {card.Tier && getTierIcon(card.Tier)}
-                        <span className="ml-2 text-sm font-medium">{card.Name}</span>
+                  getDeckSummary.keyCards.map(card => {
+                    // Determine key card type
+                    let keyType = '';
+                    let keyIcon: React.ReactNode = null;
+                    let keyColor = 'text-gray-600';
+
+                    if (card.Tier === 'S' || card.Tier === 'A') {
+                      keyType = `Tier ${card.Tier} 寶可夢`;
+                      keyIcon = getTierIcon(card.Tier);
+                      keyColor = card.Tier === 'S' ? 'text-yellow-600' : 'text-green-600';
+                    } else if (card.CardType === 'Trainer' && (card.AbilityName?.includes('Search') || card.AbilityName?.includes('Draw'))) {
+                      keyType = '搜尋/抽牌卡';
+                      keyIcon = <Search className="w-4 h-4 text-blue-500" />;
+                      keyColor = 'text-blue-600';
+                    } else if (card.CardType === 'Pokémon' && card.EvolutionStage === 'Basic' && parseInt(card.HP || '0') >= 100) {
+                      keyType = '高HP基礎寶可夢';
+                      keyIcon = <Heart className="w-4 h-4 text-red-500" />;
+                      keyColor = 'text-red-600';
+                    } else if (card.CardType === 'Trainer' && ['Professor', 'Boss', 'Nest Ball', 'Quick Ball'].some(name => card.Name.includes(name))) {
+                      keyType = '重要訓練家卡';
+                      keyIcon = <Package className="w-4 h-4 text-purple-500" />;
+                      keyColor = 'text-purple-600';
+                    } else if (card.AbilityName?.includes('VSTAR') || card.AbilityName?.includes('VMAX') || card.AbilityName?.includes('ex')) {
+                      keyType = '特殊能力卡';
+                      keyIcon = <Zap className="w-4 h-4 text-orange-500" />;
+                      keyColor = 'text-orange-600';
+                    }
+
+                    return (
+                      <div key={card.CardID} className="bg-gray-50 rounded p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center flex-1 min-w-0">
+                            {keyIcon && <span className="mr-2 flex-shrink-0">{keyIcon}</span>}
+                            <div className="min-w-0 flex-1">
+                              <span className="text-sm font-medium truncate block">{card.Name}</span>
+                              <span className={`text-xs ${keyColor}`}>{keyType}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center ml-2 flex-shrink-0">
+                            {card.HP && card.CardType === 'Pokémon' && (
+                              <span className="text-xs text-gray-500 mr-2">HP: {card.HP}</span>
+                            )}
+                            <span className="text-sm text-gray-600">x{card.quantity}</span>
+                          </div>
+                        </div>
+                        {card.CardType === 'Pokémon' && (card.Skill1Damage || card.Skill2Damage) && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            最高傷害: {Math.max(
+                              parseInt(card.Skill1Damage?.replace(/\D/g, '') || '0'),
+                              parseInt(card.Skill2Damage?.replace(/\D/g, '') || '0')
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <span className="text-sm text-gray-600">x{card.quantity}</span>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
 
-            {/* Damage Analysis */}
+            {/* Enhanced Damage Analysis */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center mb-4">
                 <Target className="w-5 h-5 text-red-500 mr-2" />
@@ -691,13 +867,51 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                   <p className="text-sm text-gray-600">最高傷害</p>
                   <p className="text-2xl font-bold text-red-600">{getDeckSummary.damageAnalysis.maxDamage}</p>
                 </div>
+                <div>
+                  <p className="text-sm text-gray-600">能量效率</p>
+                  <p className="text-lg font-bold text-blue-600">{getDeckSummary.damageAnalysis.energyEfficiency.toFixed(1)} DPS</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">屬性覆蓋</p>
+                  <p className="text-lg font-bold text-purple-600">{getDeckSummary.damageAnalysis.typeCoverage.length} 種</p>
+                </div>
               </div>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                <p className="text-sm font-medium">高傷害卡牌:</p>
-                {getDeckSummary.damageAnalysis.damageCards.slice(0, 5).map(({ card, damage }) => (
-                  <div key={card.CardID} className="flex justify-between text-sm">
-                    <span>{card.Name}</span>
-                    <span className="font-medium text-red-600">{damage}</span>
+
+              {/* Type Coverage */}
+              {getDeckSummary.damageAnalysis.typeCoverage.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-sm font-medium mb-2">屬性覆蓋:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {getDeckSummary.damageAnalysis.typeCoverage.map(type => (
+                      <span key={type} className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                        {type}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* High Damage Cards with Details */}
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                <p className="text-sm font-medium">高傷害技能 (前8名):</p>
+                {getDeckSummary.damageAnalysis.damageCards.slice(0, 8).map((skillData, index) => (
+                  <div key={`${skillData.card.CardID}-${skillData.skillName}`} className="bg-gray-50 rounded p-2">
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium truncate block">{skillData.card.Name}</span>
+                        <span className="text-xs text-gray-600">{skillData.skillName}</span>
+                      </div>
+                      <div className="text-right ml-2">
+                        <span className="text-sm font-bold text-red-600">{skillData.damage}</span>
+                        {skillData.effectiveness > 1 && (
+                          <span className="text-xs text-orange-600 ml-1">×{skillData.effectiveness}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>能量: {skillData.energyCost}</span>
+                      <span>DPS: {skillData.estimatedDPS}</span>
+                    </div>
                   </div>
                 ))}
               </div>

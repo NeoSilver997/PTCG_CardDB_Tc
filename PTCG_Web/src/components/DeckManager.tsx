@@ -163,6 +163,11 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
   };
 
   const importConstructionDeck = async (constructionDeck: ConstructionDeck) => {
+    if (!constructionDeck || !constructionDeck.cards) {
+      alert('Invalid construction deck data. Cannot import.');
+      return;
+    }
+
     try {
       // Convert construction deck to user deck format
       const response = await fetch('/api/cards');
@@ -264,6 +269,10 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
   };
 
   const generateDeckList = (deck: Deck): string => {
+    if (!deck || !deck.cards) {
+      return 'Invalid deck data';
+    }
+
     let deckList = `${deck.name}\n`;
     deckList += `Format: ${deck.format}\n`;
     deckList += `Total Cards: ${deck.totalCards}\n\n`;
@@ -329,6 +338,9 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
 
   const filteredConstructionDecks = constructionDecks
     .filter(deck => {
+      // Skip undefined/null decks
+      if (!deck || !deck.cards) return false;
+
       // Search filter for construction decks
       if (searchTerm && !deck.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
           !deck.description.toLowerCase().includes(searchTerm.toLowerCase())) {
@@ -347,8 +359,8 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
         case 'name':
           return a.name.localeCompare(b.name);
         case 'cards':
-          const totalCardsA = a.cards.reduce((sum, card) => sum + card.quantity, 0);
-          const totalCardsB = b.cards.reduce((sum, card) => sum + card.quantity, 0);
+          const totalCardsA = a.cards?.reduce((sum, card) => sum + card.quantity, 0) || 0;
+          const totalCardsB = b.cards?.reduce((sum, card) => sum + card.quantity, 0) || 0;
           return totalCardsB - totalCardsA;
         case 'created':
         case 'updated':
@@ -512,7 +524,7 @@ export default function DeckManager({ onCreateDeck, onEditDeck }: DeckManagerPro
                   {filteredConstructionDecks.length !== constructionDecks.length && ` (${constructionDecks.length} total)`}
                 </span>
                 <span>
-                  Total cards: <strong>{filteredConstructionDecks.reduce((sum, deck) => sum + deck.cards.reduce((cardSum, card) => cardSum + card.quantity, 0), 0)}</strong>
+                  Total cards: <strong>{filteredConstructionDecks.reduce((sum, deck) => sum + (deck.cards?.reduce((cardSum, card) => cardSum + card.quantity, 0) || 0), 0)}</strong>
                 </span>
               </div>
             </div>
@@ -677,6 +689,10 @@ interface ConstructionDeckCardProps {
 }
 
 function ConstructionDeckCard({ deck, onImport }: ConstructionDeckCardProps) {
+  if (!deck || !deck.cards) {
+    return null; // Skip rendering if deck or cards are undefined
+  }
+
   const totalCards = deck.cards.reduce((sum, card) => sum + card.quantity, 0);
   const pokemonCount = deck.cards.filter(card => card.type === '寶可夢').reduce((sum, card) => sum + card.quantity, 0);
   const trainerCount = deck.cards.filter(card => card.type === '物品' || card.type === '支援' || card.type === '場地').reduce((sum, card) => sum + card.quantity, 0);
@@ -689,7 +705,7 @@ function ConstructionDeckCard({ deck, onImport }: ConstructionDeckCardProps) {
     if (nameMatch) return nameMatch[1];
     
     // Get most common expansion from cards
-    const expansions = deck.cards.map(card => card.expansion).filter(Boolean);
+    const expansions = deck.cards?.map(card => card.expansion).filter(Boolean) || [];
     if (expansions.length > 0) {
       const expansionCounts = expansions.reduce((acc: Record<string, number>, exp) => {
         acc[exp] = (acc[exp] || 0) + 1;
