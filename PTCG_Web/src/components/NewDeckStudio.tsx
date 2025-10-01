@@ -1640,7 +1640,7 @@ export default function NewDeckStudio() {
                 <div className="grid grid-cols-3 gap-2">
                   {(() => {
                     // Calculate composition
-                    const basicPokemonCount = getBasicPokemon(deck).length;
+                    const basicPokemonCount = getBasicPokemon(deck).reduce((sum, card) => sum + card.quantity, 0);
                     const supporterCards = deck.cards?.filter(card =>
                       card.CardType && card.CardType.includes('支援者')
                     ).reduce((sum, card) => sum + card.quantity, 0) || 0;
@@ -1649,6 +1649,7 @@ export default function NewDeckStudio() {
                     ).reduce((sum, card) => sum + card.quantity, 0) || 0;
                     const totalTrainer = supporterCards + itemCards;
                     const energyCards = getEnergyCards(deck);
+                    const totalEnergy = energyCards.reduce((sum, card) => sum + card.quantity, 0);
                     const energyTypes = new Set(energyCards.map(card => {
                       if (card.Name.includes('【') && card.Name.includes('】')) {
                         const match = card.Name.match(/【(.+?)】/);
@@ -1669,7 +1670,7 @@ export default function NewDeckStudio() {
                           <div className="text-xs text-green-600">Trainer ({supporterCards},{itemCards})</div>
                         </div>
                         <div className="text-center p-2 bg-yellow-50 rounded-lg border border-yellow-200">
-                          <div className="text-lg font-bold text-yellow-600">{deck.energyCount}</div>
+                          <div className="text-lg font-bold text-yellow-600">{totalEnergy}</div>
                           <div className="text-xs text-yellow-600">Energy ({energyTypeCount})</div>
                         </div>
                       </>
