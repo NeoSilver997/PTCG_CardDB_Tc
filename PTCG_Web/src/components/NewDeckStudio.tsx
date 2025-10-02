@@ -403,6 +403,9 @@ export default function NewDeckStudio() {
   const [deckDescription, setDeckDescription] = useState('');
   const [deckFormat, setDeckFormat] = useState<'Standard' | 'Expanded' | 'Unlimited'>('Standard');
 
+  // Card version navigation state
+  const [cardVersions, setCardVersions] = useState<{ [cardName: string]: number }>({});
+
   // Market prices state
   const [marketPrices, setMarketPrices] = useState<{ [cardId: number]: number }>({});
   const [deckStats, setDeckStats] = useState<any>(null);
@@ -966,6 +969,41 @@ export default function NewDeckStudio() {
     });
   };
 
+  // Card version navigation functions
+  const getCardVersions = (cardName: string) => {
+    return cards.filter(card => card.Name === cardName);
+  };
+
+  const getCurrentCardVersion = (cardName: string) => {
+    const versions = getCardVersions(cardName);
+    const currentIndex = cardVersions[cardName] || 0;
+    return versions[currentIndex] || versions[0];
+  };
+
+  const navigateCardVersion = (cardName: string, direction: 'prev' | 'next') => {
+    const versions = getCardVersions(cardName);
+    console.log('navigateCardVersion called:', { cardName, direction, versionsCount: versions.length });
+    if (versions.length <= 1) {
+      console.log('Only one version, not navigating');
+      return;
+    }
+
+    const currentIndex = cardVersions[cardName] || 0;
+    let newIndex;
+
+    if (direction === 'prev') {
+      newIndex = currentIndex > 0 ? currentIndex - 1 : versions.length - 1;
+    } else {
+      newIndex = currentIndex < versions.length - 1 ? currentIndex + 1 : 0;
+    }
+
+    console.log('Navigating', cardName, direction, 'from', currentIndex, 'to', newIndex);
+    setCardVersions(prev => ({
+      ...prev,
+      [cardName]: newIndex
+    }));
+  };
+
   const removeCardFromDeck = (cardId: number) => {
     setCurrentDeckCards(prev => {
       const existing = prev.find(c => c.CardID === cardId);
@@ -1258,7 +1296,12 @@ export default function NewDeckStudio() {
       return sortDirection === 'desc' ? -comparison : comparison;
     });
 
-    setFilteredCards(sorted);
+    // Deduplicate by card name to avoid duplicate keys in rendering
+    const deduplicated = sorted.filter((card, index, self) => 
+      index === self.findIndex(c => c.Name === card.Name)
+    );
+
+    setFilteredCards(deduplicated);
   }, [cards, searchTerm, filters, sortBy, sortDirection]);
 
   useEffect(() => {
@@ -2066,40 +2109,87 @@ export default function NewDeckStudio() {
 
       {/* Card Grid - Using smaller images like Home page */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-        {filteredCards && filteredCards.length > 0 ? filteredCards.slice(0, 48).map((card) => (
+        {filteredCards && filteredCards.length > 0 ? filteredCards.slice(0, 48).map((card) => {
+          const cardVersionsArray = getCardVersions(card.Name);
+          const currentVersionIndex = cardVersions[card.Name] || 0;
+          const hasMultipleVersions = cardVersionsArray && cardVersionsArray.length > 1;
+          
+          // Get the current version of this card to display
+          const currentCardVersion = hasMultipleVersions ? cardVersionsArray[currentVersionIndex] : card;
+          
+          // Debug logging for all cards with multiple versions
+          if (hasMultipleVersions) {
+            console.log('Card with multiple versions:', {
+              cardName: card.Name,
+              versionsCount: cardVersionsArray.length,
+              currentVersionIndex,
+              currentCardId: currentCardVersion?.CardID,
+              hasNavigationButtons: true
+            });
+          }
+          
+          return (
           <div
-            key={card.CardID}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer group"
+            key={`card-${card.CardID}-${currentVersionIndex}`}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer group relative"
           >
+            {/* Version Navigation Buttons - Top Center */}
+            {hasMultipleVersions && (
+              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded px-2 py-1 z-10">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateCardVersion(card.Name, 'prev');
+                    }}
+                    className="bg-gray-600 text-white px-2 py-0.5 rounded text-xs font-bold hover:bg-gray-700 shadow-md border border-white"
+                    title="Previous version"
+                  >
+                    ‹‹
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateCardVersion(card.Name, 'next');
+                    }}
+                    className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-bold hover:bg-blue-700 shadow-md border border-white"
+                    title="Next version"
+                  >
+                    ››
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Card Image - Smaller size */}
             <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
               <img
-                src={`/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
-                alt={card.Name}
+                src={`/cards/hk${currentCardVersion.CardID.toString().padStart(8, '0')}.png`}
+                alt={currentCardVersion.Name}
                 className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
                 onError={(e) => {
-                  e.currentTarget.src = card.ImageURL || '/placeholder-card.png';
+                  e.currentTarget.src = currentCardVersion.ImageURL || '/placeholder-card.png';
                 }}
               />
-              {/* Add to Deck Buttons */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
+              {/* Add to Deck Buttons - Bottom Center */}
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-end justify-center pb-2">
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-1">
                   <button 
-                    onClick={() => addCardsToDeck(card, 1)}
+                    onClick={() => addCardsToDeck(currentCardVersion, 1)}
                     className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-blue-700"
                     title="Add 1 copy"
                   >
                     +1
                   </button>
                   <button 
-                    onClick={() => addCardsToDeck(card, 2)}
+                    onClick={() => addCardsToDeck(currentCardVersion, 2)}
                     className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-green-700"
                     title="Add 2 copies"
                   >
                     +2
                   </button>
                   <button 
-                    onClick={() => addCardsToDeck(card, 3)}
+                    onClick={() => addCardsToDeck(currentCardVersion, 3)}
                     className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-purple-700"
                     title="Add 3 copies"
                   >
@@ -2111,33 +2201,39 @@ export default function NewDeckStudio() {
 
             {/* Card Info */}
             <div className="p-2">
-              <h3 className="text-xs font-medium text-gray-900 truncate mb-1">{card.Name}</h3>
+              {/* Version Indicator */}
+              {hasMultipleVersions && (
+                <div className="text-xs text-gray-500 text-center mb-1">
+                  {currentVersionIndex + 1}/{cardVersionsArray.length}
+                </div>
+              )}
+              <h3 className="text-xs font-medium text-gray-900 truncate mb-1">{currentCardVersion.Name}</h3>
               <div className="flex items-center justify-between mb-2">
-                <span className={`px-1.5 py-0.5 text-xs rounded-full ${getAttributeColor(card.Type)}`}>
-                  {card.Type}
+                <span className={`px-1.5 py-0.5 text-xs rounded-full ${getAttributeColor(currentCardVersion.Type)}`}>
+                  {currentCardVersion.Type}
                 </span>
-                {card.HP && (
-                  <span className="text-xs text-gray-500">{card.HP} HP</span>
+                {currentCardVersion.HP && (
+                  <span className="text-xs text-gray-500">{currentCardVersion.HP} HP</span>
                 )}
               </div>
               {/* Quick Add Buttons */}
               <div className="flex space-x-1">
                 <button
-                  onClick={() => addCardsToDeck(card, 1)}
+                  onClick={() => addCardsToDeck(currentCardVersion, 1)}
                   className="flex-1 px-1 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors flex items-center justify-center"
                   title="Add 1 copy"
                 >
                   +1
                 </button>
                 <button
-                  onClick={() => addCardsToDeck(card, 2)}
+                  onClick={() => addCardsToDeck(currentCardVersion, 2)}
                   className="flex-1 px-1 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors flex items-center justify-center"
                   title="Add 2 copies"
                 >
                   +2
                 </button>
                 <button
-                  onClick={() => addCardsToDeck(card, 3)}
+                  onClick={() => addCardsToDeck(currentCardVersion, 3)}
                   className="flex-1 px-1 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 transition-colors flex items-center justify-center"
                   title="Add 3 copies"
                 >
@@ -2146,7 +2242,8 @@ export default function NewDeckStudio() {
               </div>
             </div>
           </div>
-        )) : (
+        );
+        }) : (
           <div className="col-span-full text-center py-12">
             <p className="text-gray-500">No cards found. Try adjusting your search criteria.</p>
           </div>
