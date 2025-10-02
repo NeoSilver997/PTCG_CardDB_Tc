@@ -123,6 +123,85 @@ Regularly backup the `data/` directory to preserve your inventory.
 
 ## 🐛 Troubleshooting
 
+### Docker Won't Start
+
+#### Quick Diagnostic
+Run the included diagnostic script:
+```bash
+chmod +x docker-diagnostic.sh
+./docker-diagnostic.sh
+```
+
+#### Manual Checks
+```bash
+# Check if Docker is installed
+docker --version
+
+# Check if Docker service is running
+sudo systemctl status docker
+```
+
+#### 2. Start Docker Service
+```bash
+# Start Docker service
+sudo systemctl start docker
+
+# Enable Docker to start on boot
+sudo systemctl enable docker
+```
+
+#### 3. Check Docker Permissions
+```bash
+# Add your user to docker group (log out and back in after)
+sudo usermod -aG docker $USER
+
+# Or run with sudo
+sudo docker --version
+```
+
+#### 4. Check Available Resources
+```bash
+# Check memory
+free -h
+
+# Check disk space
+df -h
+
+# Check if port 3000 is available
+netstat -tlnp | grep :3000
+```
+
+#### 5. Clean Up and Retry
+```bash
+# Stop all containers
+docker stop $(docker ps -aq)
+
+# Remove all containers
+docker rm $(docker ps -aq)
+
+# Remove unused images
+docker image prune -f
+
+# Try starting again
+docker-compose up -d
+```
+
+### Application Won't Start in Docker
+
+#### Check Container Logs
+```bash
+# View container logs
+docker-compose logs -f ptcg-card-search
+
+# Or check specific container
+docker logs ptcg-card-search
+```
+
+#### Common Issues:
+- **Port already in use**: Change port in `docker-compose.yml`
+- **Memory issues**: Reduce `NODE_OPTIONS=--max-old-space-size=256`
+- **Missing volumes**: Ensure `data/` and `cards/` directories exist
+
 ### Application Won't Start
 1. Check Node.js v20.x is installed
 2. Verify port 3000 is not in use

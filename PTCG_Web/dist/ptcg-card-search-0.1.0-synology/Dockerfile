@@ -4,9 +4,10 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for image processing
+# Install system dependencies for image processing and health checks
 RUN apk add --no-cache \
     libc6-compat \
+    wget \
     && rm -rf /var/cache/apk/*
 
 # Copy package files
@@ -34,7 +35,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/api/test-currency || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/test-currency || exit 1
 
 # Start the application
 CMD ["npm", "start"]

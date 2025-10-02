@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-09-28T03:17:59.415Z",
+  "totalDecksProcessed": 2,
+  "successfulImports": 2,
+  "errors": [],
+  "importedDecks": [
+    {
+      "name": "挑戰牌組 超級耿鬼ex",
+      "cardCount": 25,
+      "matchStats": {
+        "totalCards": 25,
+        "matchedCards": 25,
+        "unmatchedCards": 0
+      }
+    },
+    {
+      "name": "挑戰牌組 超級蒂安希ex",
+      "cardCount": 24,
+      "matchStats": {
+        "totalCards": 24,
+        "matchedCards": 24,
+        "unmatchedCards": 0
+      }
+    }
+  ]
+}
