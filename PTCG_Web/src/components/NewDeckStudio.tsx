@@ -114,7 +114,7 @@ const fetchMarketPrices = async (): Promise<{ [cardId: number]: number }> => {
 // Helper function to fetch all cards for alternative suggestions
 const fetchAllCards = async (): Promise<PTCGCard[]> => {
   try {
-    const response = await fetch('/api/cards');
+    const response = await fetch('/api/cards?detail=true');
     if (!response.ok) {
       throw new Error('Failed to fetch cards');
     }
@@ -681,7 +681,7 @@ export default function NewDeckStudio() {
 
     try {
       // Convert construction deck to user deck format
-      const response = await fetch('/api/cards');
+      const response = await fetch('/api/cards?detail=true');
       const allCards = await response.json();
       
       console.log(`Importing deck: ${constructionDeck.name}`);
@@ -815,7 +815,7 @@ export default function NewDeckStudio() {
       console.log(`Importing deck with ${cardEntries.length} card entries`);
 
       // Fetch all cards from database
-      const response = await fetch('/api/cards');
+      const response = await fetch('/api/cards?detail=true');
       const allCards = await response.json();
 
       console.log(`Database contains ${allCards.length} cards`);
@@ -1036,7 +1036,7 @@ export default function NewDeckStudio() {
     if (needsCardData) {
       try {
         // Fetch all card data to lookup missing types
-        const response = await fetch('/api/cards');
+        const response = await fetch('/api/cards?detail=true');
         if (response.ok) {
           const allCards = await response.json();
           cardDataMap = allCards.reduce((map: any, card: any) => {
@@ -1135,7 +1135,7 @@ export default function NewDeckStudio() {
 
   const loadCards = useCallback(async () => {
     try {
-      const response = await fetch('/api/cards');
+      const response = await fetch('/api/cards?detail=true');
       const data = await response.json();
       
       // Sort by ID (keep all card types including energy)
