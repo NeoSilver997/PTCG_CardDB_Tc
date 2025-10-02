@@ -1004,6 +1004,19 @@ export default function NewDeckStudio() {
     }));
   };
 
+  // Function to change version of a card already in the deck
+  const changeDeckCardVersion = (oldCardId: number, newCardVersion: PTCGCard) => {
+    setCurrentDeckCards(prev => {
+      return prev.map(card => {
+        if (card.CardID === oldCardId) {
+          // Replace with new version but keep quantity
+          return { ...newCardVersion, quantity: card.quantity };
+        }
+        return card;
+      });
+    });
+  };
+
   const removeCardFromDeck = (cardId: number) => {
     setCurrentDeckCards(prev => {
       const existing = prev.find(c => c.CardID === cardId);
@@ -2046,39 +2059,95 @@ export default function NewDeckStudio() {
             </div>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-            {currentDeckCards.map((card) => (
-              <div key={`deck-${card.CardID}`} className="relative bg-gray-50 rounded-lg overflow-hidden border">
+            {currentDeckCards.map((card) => {
+              const cardVersionsArray = getCardVersions(card.Name);
+              const currentVersionIndex = cardVersions[card.Name] || 0;
+              const hasMultipleVersions = cardVersionsArray && cardVersionsArray.length > 1;
+              
+              // Get the current version of this card to display
+              const currentCardVersion = hasMultipleVersions ? cardVersionsArray[currentVersionIndex] : card;
+              
+              return (
+              <div key={`deck-${card.CardID}`} className="relative bg-gray-50 rounded-lg overflow-hidden border group">
+                {/* Version Navigation Buttons - Top Center */}
+                {hasMultipleVersions && (
+                  <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded px-2 py-1 z-10">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const versions = getCardVersions(card.Name);
+                          const currentIndex = cardVersions[card.Name] || 0;
+                          const newIndex = currentIndex > 0 ? currentIndex - 1 : versions.length - 1;
+                          const newVersion = versions[newIndex];
+                          if (newVersion) {
+                            changeDeckCardVersion(card.CardID, newVersion);
+                            setCardVersions(prev => ({
+                              ...prev,
+                              [card.Name]: newIndex
+                            }));
+                          }
+                        }}
+                        className="bg-gray-600 text-white px-2 py-0.5 rounded text-xs font-bold hover:bg-gray-700 shadow-md border border-white"
+                        title="Previous version"
+                      >
+                        ‹‹
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const versions = getCardVersions(card.Name);
+                          const currentIndex = cardVersions[card.Name] || 0;
+                          const newIndex = currentIndex < versions.length - 1 ? currentIndex + 1 : 0;
+                          const newVersion = versions[newIndex];
+                          if (newVersion) {
+                            changeDeckCardVersion(card.CardID, newVersion);
+                            setCardVersions(prev => ({
+                              ...prev,
+                              [card.Name]: newIndex
+                            }));
+                          }
+                        }}
+                        className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-bold hover:bg-blue-700 shadow-md border border-white"
+                        title="Next version"
+                      >
+                        ››
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="aspect-[3/4] bg-white">
                   <img
-                    src={`/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
-                    alt={card.Name}
+                    src={`/cards/hk${currentCardVersion.CardID.toString().padStart(8, '0')}.png`}
+                    alt={currentCardVersion.Name}
                     className="w-full h-full object-contain"
                     onError={(e) => {
-                      e.currentTarget.src = card.ImageURL || '/placeholder-card.png';
+                      e.currentTarget.src = currentCardVersion.ImageURL || '/placeholder-card.png';
                     }}
                   />
                 </div>
                 <div className="p-2">
-                  <div className="text-xs font-medium text-gray-900 truncate">{card.Name}</div>
+                  <div className="text-xs font-medium text-gray-900 truncate">{currentCardVersion.Name}</div>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-xs text-gray-500">Qty: {card.quantity}</span>
                     <div className="flex space-x-1">
                       <button
-                        onClick={() => addCardsToDeck(card, 1)}
+                        onClick={() => addCardsToDeck(currentCardVersion, 1)}
                         className="p-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
                         title="Add 1 copy"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
                       <button
-                        onClick={() => addCardsToDeck(card, 2)}
+                        onClick={() => addCardsToDeck(currentCardVersion, 2)}
                         className="p-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 transition-colors"
                         title="Add 2 copies"
                       >
                         +2
                       </button>
                       <button
-                        onClick={() => addCardsToDeck(card, 3)}
+                        onClick={() => addCardsToDeck(currentCardVersion, 3)}
                         className="p-1 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors"
                         title="Add 3 copies"
                       >
@@ -2102,7 +2171,8 @@ export default function NewDeckStudio() {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
