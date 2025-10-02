@@ -221,7 +221,7 @@ const calculateDeckStats = async (deck: Deck) => {
     let cheapestAlternative: PTCGCard | null = null;
     let cheapestPrice = Infinity;
     
-    cheaperVariants.forEach(variant => {
+    cheaperVariants.forEach((variant: PTCGCard) => {
       let variantPrice = 0;
       
       if (marketPrices[variant.CardID]) {
@@ -249,11 +249,11 @@ const calculateDeckStats = async (deck: Deck) => {
       cheaperAlternatives.push({
         originalCard: `${card.Name} (${card.Rarity})`,
         originalPrice: estimatedPrice,
-        alternativeCard: `${cheapestAlternative.Name} (${cheapestAlternative.Rarity})`,
+        alternativeCard: `${(cheapestAlternative as PTCGCard).Name} (${(cheapestAlternative as PTCGCard).Rarity})`,
         alternativePrice: cheapestPrice,
         savings: savings,
-        cardId: cheapestAlternative.CardID,
-        rarity: cheapestAlternative.Rarity
+        cardId: (cheapestAlternative as PTCGCard).CardID,
+        rarity: (cheapestAlternative as PTCGCard).Rarity
       });
     }
     
@@ -894,9 +894,16 @@ export default function NewDeckStudio() {
       )).reduce((sum, card) => sum + card.quantity, 0);
 
       const newDeck = {
+        id: `imported-${Date.now()}`, // Generate a unique ID
         name: deckName,
         description: `Imported from text format with ${deckCards.length} unique cards`,
         format: 'Standard' as const,
+        totalCards: totalCards,
+        pokemonCount: pokemonCount,
+        trainerCount: trainerCount,
+        energyCount: energyCount,
+        isValid: true, // Assume imported decks are valid
+        updatedAt: new Date().toISOString(),
         cards: deckCards
       };
 
@@ -918,6 +925,7 @@ export default function NewDeckStudio() {
           ? `✓ Successfully imported "${deckName}" with all ${deckCards.length} cards!\n\nTotal Cards: ${totalCards}\nPokémon: ${pokemonCount}\nTrainers: ${trainerCount}\nEnergy: ${energyCount}`
           : `⚠ Partially imported "${deckName}" - ${deckCards.length} of ${cardEntries.length} cards were found in the database.\n\nImported: ${totalCards} total cards\nPokémon: ${pokemonCount}, Trainers: ${trainerCount}, Energy: ${energyCount}`;
         alert(successMessage);
+        return newDeck; // Return the imported deck
       } else {
         throw new Error('Failed to save imported deck');
       }
@@ -1077,9 +1085,8 @@ export default function NewDeckStudio() {
       const response = await fetch('/api/cards');
       const data = await response.json();
       
-      // Filter out energy cards and sort by ID
+      // Sort by ID (keep all card types including energy)
       const filteredData = data
-        .filter((card: PTCGCard) => !card.CardType.includes('能量') && !card.CardType.toLowerCase().includes('energy'))
         .sort((a: PTCGCard, b: PTCGCard) => {
           const aId = parseInt(String(a.CardID).replace(/\D/g, '')) || 0;
           const bId = parseInt(String(b.CardID).replace(/\D/g, '')) || 0;
@@ -1437,7 +1444,7 @@ export default function NewDeckStudio() {
     let maxValue = 0;
     
     deck.cards.forEach(card => {
-      const price = card.MarketPrice || card.fallbackPrice || 0;
+      const price = marketPrices[card.CardID] || 0;
       if (price > maxValue) {
         maxValue = price;
         keyCard = card;
@@ -1640,38 +1647,40 @@ export default function NewDeckStudio() {
                 <div className="grid grid-cols-3 gap-2">
                   {(() => {
                     // Calculate composition
+                    const PokemonCount = deck.cards?.filter(card =>
+                      card.CardType && card.CardType==='寶可夢'
+                    ).reduce((sum, card) => sum + card.quantity, 0) || 0;
+
                     const basicPokemonCount = getBasicPokemon(deck).reduce((sum, card) => sum + card.quantity, 0);
+                    const energyCards = getEnergyCards(deck);
+                    const totalEnergy = energyCards.reduce((sum, card) => sum + card.quantity, 0);
+                    const totalTrainer = deck.totalCards - PokemonCount - totalEnergy;
                     const supporterCards = deck.cards?.filter(card =>
                       card.CardType && card.CardType.includes('支援者')
                     ).reduce((sum, card) => sum + card.quantity, 0) || 0;
                     const itemCards = deck.cards?.filter(card =>
-                      card.CardType && card.CardType.includes('物品')
+                      card.CardType && card.CardType === '物品卡'
                     ).reduce((sum, card) => sum + card.quantity, 0) || 0;
-                    const totalTrainer = supporterCards + itemCards;
-                    const energyCards = getEnergyCards(deck);
-                    const totalEnergy = energyCards.reduce((sum, card) => sum + card.quantity, 0);
-                    const energyTypes = new Set(energyCards.map(card => {
-                      if (card.Name.includes('【') && card.Name.includes('】')) {
-                        const match = card.Name.match(/【(.+?)】/);
-                        return match ? match[1] : card.Type || 'Unknown';
-                      }
-                      return card.Type || 'Unknown';
-                    }));
-                    const energyTypeCount = energyTypes.size;
+
+                    const energyTypes = deck.cards?.filter(card =>
+                      card.CardType && card.CardType.includes('能量卡')
+                    ).reduce((sum, card) => sum + (1), 0) || 0;
+                    
+                    const energyTypeCount = energyTypes;
 
                     return (
                       <>
                         <div className="text-center p-2 bg-blue-50 rounded-lg border border-blue-200">
-                          <div className="text-lg font-bold text-blue-600">{basicPokemonCount}</div>
-                          <div className="text-xs text-blue-600">Basic Pokémon</div>
+                          <div className="text-lg font-bold text-blue-600">{PokemonCount}({basicPokemonCount})</div>
+                          <div className="text-xs text-blue-600"> Pokémon(Basic)</div>
                         </div>
                         <div className="text-center p-2 bg-green-50 rounded-lg border border-green-200">
-                          <div className="text-lg font-bold text-green-600">{totalTrainer}</div>
-                          <div className="text-xs text-green-600">Trainer ({supporterCards},{itemCards})</div>
+                          <div className="text-lg font-bold text-green-600">{totalTrainer} ({supporterCards},{itemCards})</div>
+                          <div className="text-xs text-green-600">Trainer (Supporter, Item)</div>
                         </div>
                         <div className="text-center p-2 bg-yellow-50 rounded-lg border border-yellow-200">
-                          <div className="text-lg font-bold text-yellow-600">{totalEnergy}</div>
-                          <div className="text-xs text-yellow-600">Energy ({energyTypeCount})</div>
+                          <div className="text-lg font-bold text-yellow-600">{totalEnergy}({energyTypeCount})</div>
+                          <div className="text-xs text-yellow-600">Energy (Type)</div>
                         </div>
                       </>
                     );
@@ -1860,9 +1869,12 @@ export default function NewDeckStudio() {
             >
               <option value="">All Card Types</option>
               <option value="寶可夢">Pokemon</option>
-              <option value="物品">Item</option>
-              <option value="支援">Supporter</option>
-              <option value="場地">Stadium</option>
+              <option value="物品卡">Item</option>
+              <option value="支援者卡">Supporter</option>
+              <option value="競技場卡">Stadium</option>
+              <option value="基本能量卡">Basic Energy</option>
+              <option value="特殊能量卡">Special Energy</option>
+              <option value="寶可夢道具">Pokemon Tool</option>
             </select>
 
             <select
