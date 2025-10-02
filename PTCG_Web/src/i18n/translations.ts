@@ -111,6 +111,12 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     cards: 'Cards',
     decks: 'Decks',
     settings: 'Settings',
+    nav: {
+      home: 'Home',
+      deckBuilder: 'Deck Builder',
+      inventory: 'Inventory',
+      market: 'Market'
+    },
     standard: 'Standard',
     expanded: 'Expanded',
     unlimited: 'Unlimited',
@@ -291,7 +297,13 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     inventoryValue: '收藏价值',
     condition: '品相',
     notes: '备注',
-    dateAdded: '添加日期'
+    dateAdded: '添加日期',
+    nav: {
+      home: '首页',
+      deckBuilder: '牌组构建器',
+      inventory: '收藏',
+      market: '市场'
+    }
   },
   'zh-tw': {
     loading: '正在載入PTCG卡牌...',
@@ -403,6 +415,12 @@ const translations: Record<'en' | 'zh' | 'zh-tw', TranslationStrings> = {
     cards: '卡牌',
     decks: '牌組',
     settings: '設定',
+    nav: {
+      home: '首頁',
+      deckBuilder: '牌組建立器',
+      inventory: '收藏',
+      market: '市場'
+    },
     standard: '標準',
     expanded: '擴展',
     unlimited: '無限制',

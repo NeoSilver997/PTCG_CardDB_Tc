@@ -140,6 +140,12 @@ export interface TranslationStrings {
   cards: string;
   decks: string;
   settings: string;
+  nav: {
+    home: string;
+    deckBuilder: string;
+    inventory: string;
+    market: string;
+  };
   
   // Deck formats
   standard: string;
