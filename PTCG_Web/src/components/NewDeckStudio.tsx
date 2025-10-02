@@ -951,6 +951,21 @@ export default function NewDeckStudio() {
     });
   };
 
+  const addCardsToDeck = (card: PTCGCard, count: number) => {
+    setCurrentDeckCards(prev => {
+      const existing = prev.find(c => c.CardID === card.CardID);
+      if (existing) {
+        return prev.map(c => 
+          c.CardID === card.CardID 
+            ? { ...c, quantity: Math.min(c.quantity + count, 4) }
+            : c
+        );
+      } else {
+        return [...prev, { ...card, quantity: Math.min(count, 4) }];
+      }
+    });
+  };
+
   const removeCardFromDeck = (cardId: number) => {
     setCurrentDeckCards(prev => {
       const existing = prev.find(c => c.CardID === cardId);
@@ -2006,6 +2021,27 @@ export default function NewDeckStudio() {
                     <span className="text-xs text-gray-500">Qty: {card.quantity}</span>
                     <div className="flex space-x-1">
                       <button
+                        onClick={() => addCardsToDeck(card, 1)}
+                        className="p-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
+                        title="Add 1 copy"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => addCardsToDeck(card, 2)}
+                        className="p-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 transition-colors"
+                        title="Add 2 copies"
+                      >
+                        +2
+                      </button>
+                      <button
+                        onClick={() => addCardsToDeck(card, 3)}
+                        className="p-1 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors"
+                        title="Add 3 copies"
+                      >
+                        +3
+                      </button>
+                      <button
                         onClick={() => removeCardFromDeck(card.CardID)}
                         className="p-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
                         title="Remove one"
@@ -2045,14 +2081,31 @@ export default function NewDeckStudio() {
                   e.currentTarget.src = '/placeholder-card.png';
                 }}
               />
-              {/* Add to Deck Button */}
+              {/* Add to Deck Buttons */}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
-                <button 
-                  onClick={() => addCardToDeck(card)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-blue-700"
-                >
-                  Add to Deck
-                </button>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-1">
+                  <button 
+                    onClick={() => addCardsToDeck(card, 1)}
+                    className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-blue-700"
+                    title="Add 1 copy"
+                  >
+                    +1
+                  </button>
+                  <button 
+                    onClick={() => addCardsToDeck(card, 2)}
+                    className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-green-700"
+                    title="Add 2 copies"
+                  >
+                    +2
+                  </button>
+                  <button 
+                    onClick={() => addCardsToDeck(card, 3)}
+                    className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium hover:bg-purple-700"
+                    title="Add 3 copies"
+                  >
+                    +3
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2067,14 +2120,30 @@ export default function NewDeckStudio() {
                   <span className="text-xs text-gray-500">{card.HP} HP</span>
                 )}
               </div>
-              {/* Quick Add Button */}
-              <button
-                onClick={() => addCardToDeck(card)}
-                className="w-full px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Add</span>
-              </button>
+              {/* Quick Add Buttons */}
+              <div className="flex space-x-1">
+                <button
+                  onClick={() => addCardsToDeck(card, 1)}
+                  className="flex-1 px-1 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  title="Add 1 copy"
+                >
+                  +1
+                </button>
+                <button
+                  onClick={() => addCardsToDeck(card, 2)}
+                  className="flex-1 px-1 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors flex items-center justify-center"
+                  title="Add 2 copies"
+                >
+                  +2
+                </button>
+                <button
+                  onClick={() => addCardsToDeck(card, 3)}
+                  className="flex-1 px-1 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 transition-colors flex items-center justify-center"
+                  title="Add 3 copies"
+                >
+                  +3
+                </button>
+              </div>
             </div>
           </div>
         )) : (
