@@ -2007,11 +2007,11 @@ export default function NewDeckStudio() {
               <div key={`deck-${card.CardID}`} className="relative bg-gray-50 rounded-lg overflow-hidden border">
                 <div className="aspect-[3/4] bg-white">
                   <img
-                    src={card.ImageURL || `/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
+                    src={`/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
                     alt={card.Name}
                     className="w-full h-full object-contain"
                     onError={(e) => {
-                      e.currentTarget.src = '/placeholder-card.png';
+                      e.currentTarget.src = card.ImageURL || '/placeholder-card.png';
                     }}
                   />
                 </div>
@@ -2074,11 +2074,11 @@ export default function NewDeckStudio() {
             {/* Card Image - Smaller size */}
             <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
               <img
-                src={card.ImageURL || `/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
+                src={`/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
                 alt={card.Name}
                 className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
                 onError={(e) => {
-                  e.currentTarget.src = '/placeholder-card.png';
+                  e.currentTarget.src = card.ImageURL || '/placeholder-card.png';
                 }}
               />
               {/* Add to Deck Buttons */}
@@ -2647,11 +2647,11 @@ export default function NewDeckStudio() {
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center overflow-hidden">
                         <img
-                          src={card.ImageURL || `/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
+                          src={`/cards/hk${card.CardID.toString().padStart(8, '0')}.png`}
                           alt={card.Name}
                           className="w-full h-full object-contain"
                           onError={(e) => {
-                            e.currentTarget.src = '/placeholder-card.png';
+                            e.currentTarget.src = card.ImageURL || '/placeholder-card.png';
                           }}
                         />
                       </div>

@@ -533,23 +533,14 @@ export default function CardDetailModal({
               : 'xl:w-2/5 p-8'
           }`}>
             <div className="aspect-[5/7] bg-gray-100 rounded-xl overflow-hidden mb-6 shadow-lg">
-              {selectedVersion.ImageURL ? (
-                <img
-                  src={`/cards/${getImagePath(selectedVersion.CardID)}`}
-                  alt={selectedVersion.Name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = '/placeholder-card.svg';
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <div className="text-center">
-                    <div className="text-7xl mb-6">🎴</div>
-                    <div className="text-xl">No Image Available</div>
-                  </div>
-                </div>
-              )}
+              <img
+                src={`/cards/${getImagePath(selectedVersion.CardID)}`}
+                alt={selectedVersion.Name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = selectedVersion.ImageURL || '/placeholder-card.svg';
+                }}
+              />
             </div>
 
             {/* Basic Stats */}
@@ -1182,23 +1173,14 @@ export default function CardDetailModal({
                     <div className={`aspect-[5/7] bg-blue-100 border-2 rounded-lg overflow-hidden ${
                       selectedVersion.CardID === card.CardID ? 'border-blue-500' : 'border-blue-300 hover:border-blue-400'
                     }`}>
-                      {card.OriginalImageURL || card.ImageURL ? (
-                        <img
-                          src={`/cards/${getImagePath(card.CardID)}`}
-                          alt={card.Name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder-card.svg';
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <div className="text-center">
-                            <div className="text-4xl mb-2">🎴</div>
-                            <div className="text-xs">Current</div>
-                          </div>
-                        </div>
-                      )}
+                      <img
+                        src={`/cards/${getImagePath(card.CardID)}`}
+                        alt={card.Name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = card.OriginalImageURL || card.ImageURL || '/placeholder-card.svg';
+                        }}
+                      />
                     </div>
                     <div className={`absolute bottom-0 left-0 right-0 text-white text-xs py-1 px-2 text-center font-medium ${
                       selectedVersion.CardID === card.CardID ? 'bg-blue-500' : 'bg-blue-400'
@@ -1218,23 +1200,14 @@ export default function CardDetailModal({
                       <div className={`aspect-[5/7] bg-gray-100 border-2 rounded-lg overflow-hidden transition-colors ${
                         selectedVersion.CardID === versionCard.CardID ? 'border-blue-500' : 'border-gray-300 hover:border-gray-400'
                       }`}>
-                        {versionCard.OriginalImageURL || versionCard.ImageURL ? (
-                          <img
-                            src={`/cards/${getImagePath(versionCard.CardID)}`}
-                            alt={versionCard.Name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder-card.svg';
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            <div className="text-center">
-                              <div className="text-4xl mb-2">🎴</div>
-                              <div className="text-xs">V{versionPage * (versionsPerPage - 1) + index + 2}</div>
-                            </div>
-                          </div>
-                        )}
+                        <img
+                          src={`/cards/${getImagePath(versionCard.CardID)}`}
+                          alt={versionCard.Name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = versionCard.OriginalImageURL || versionCard.ImageURL || '/placeholder-card.svg';
+                          }}
+                        />
                       </div>
                       <div className={`absolute bottom-0 left-0 right-0 text-white text-xs py-1 px-2 text-center font-medium ${
                         selectedVersion.CardID === versionCard.CardID ? 'bg-blue-500' : 'bg-gray-700'
@@ -1315,17 +1288,14 @@ export default function CardDetailModal({
                         className="aspect-[5/7] bg-gray-200 rounded-lg mb-3 overflow-hidden cursor-pointer"
                         onClick={() => onCardClick(relatedCard)}
                       >
-                        {relatedCard.ImageURL ? (
-                          <img
-                            src={`/cards/${getImagePath(relatedCard.CardID)}`}
-                            alt={relatedCard.Name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">
-                            🎴
-                          </div>
-                        )}
+                        <img
+                          src={`/cards/${getImagePath(relatedCard.CardID)}`}
+                          alt={relatedCard.Name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          onError={(e) => {
+                            e.currentTarget.src = relatedCard.ImageURL || '/placeholder-card.svg';
+                          }}
+                        />
                       </div>
                       <h4 
                         className="font-medium text-gray-900 text-sm leading-tight line-clamp-2 mb-2 cursor-pointer hover:text-blue-600"
