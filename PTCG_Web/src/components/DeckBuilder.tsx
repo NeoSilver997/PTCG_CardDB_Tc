@@ -1149,9 +1149,9 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
               <SearchFiltersComponent
                 filters={filters}
                 onFiltersChange={setFilters}
-                cards={initialCards}
                 abilities={abilities}
                 effectTypes={effectTypes}
+                allOptions={{}}
               />
             </div>
 
