@@ -14,10 +14,7 @@ import { useInventory } from '../hooks/useInventory';
 export default function Home() {
   const { t } = useI18n();
   const [cards, setCards] = useState<PTCGCard[]>([]);
-  const [totalCards, setTotalCards] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [cardsPerPage, setCardsPerPage] = useState(50);
-
+  const [filteredCards, setFilteredCards] = useState<PTCGCard[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({
     ability: '',
     effectType: '',
@@ -39,12 +36,8 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // State for filter options
   const [abilities, setAbilities] = useState<AbilityOption[]>([]);
   const [effectTypes, setEffectTypes] = useState<EffectTypeOption[]>([]);
-  const [allFilterOptions, setAllFilterOptions] = useState<any>({});
-
   const [notification, setNotification] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'id' | 'rarity' | 'tier' | 'description'>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -82,450 +75,350 @@ export default function Home() {
     return sortedPrices[0];
   }, [marketPrices]);
 
-  const fetchCards = useCallback(async () => {
-    setLoading(true);
+  const loadCardData = useCallback(async () => {
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: cardsPerPage.toString(),
-        sortBy,
-        sortDirection,
-        searchTerm,
-      });
-
-      // Append filters to params
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) {
-          params.append(key, String(value));
-        }
-      });
-      
-      const response = await fetch(`/api/cards?${params.toString()}`);
+      const response = await fetch('/api/cards');
       const data = await response.json();
 
-      setCards(data.cards);
-      setTotalCards(data.total);
+      // Sort cards by CardID numerically in descending order to find the latest card
+      const sortedData = data.sort((a: PTCGCard, b: PTCGCard) => {
+        const aId = parseInt(String(a.CardID).replace(/\D/g, '')) || 0;
+        const bId = parseInt(String(b.CardID).replace(/\D/g, '')) || 0;
+        return bId - aId; // Descending order
+      });
+
+      setCards(sortedData);
+      extractFilterOptions(sortedData);
+
+      // Also load market prices
+      await loadMarketPrices();
+
+      // Find the latest card (first in sorted array) and set up initial filter
+      if (sortedData.length > 0) {
+        const latestCard = sortedData[0];
+        // Set initial search term to the latest card's CardID to show only that card
+        //setSearchTerm(latestCard.CardID);
+      }
     } catch (error) {
       console.error('Failed to load card data:', error);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, cardsPerPage, sortBy, sortDirection, searchTerm, filters]);
+  }, [loadMarketPrices]);
 
-  const fetchFilterOptions = useCallback(async () => {
-    try {
-      const response = await fetch('/api/cards/filters');
-      const data = await response.json();
-      setAllFilterOptions(data);
-      setAbilities(data.abilities || []);
-      setEffectTypes(data.effectTypes || []);
-    } catch (error) {
-      console.error('Failed to load filter options:', error);
-    }
-  }, []);
-
-  // Fetch initial data
+  // Auto-hide filters after 5 seconds of inactivity
   useEffect(() => {
-    fetchFilterOptions();
-    loadMarketPrices();
-  }, [fetchFilterOptions, loadMarketPrices]);
+    const startHideTimer = () => {
+      if (filterHideTimerRef.current) {
+        clearTimeout(filterHideTimerRef.current);
+      }
+      const timer = setTimeout(() => {
+        setFiltersVisible(false);
+      }, 5000);
+      filterHideTimerRef.current = timer;
+    };
 
-  // Fetch cards when dependencies change
-  useEffect(() => {
-    fetchCards();
-  }, [fetchCards]);
+    const resetHideTimer = () => {
+      if (filterHideTimerRef.current) {
+        clearTimeout(filterHideTimerRef.current);
+      }
+      setFiltersVisible(true);
+      startHideTimer();
+    };
 
-  const handleCardClick = (card: PTCGCard) => {
-    setSelectedCard(card);
+    // Start the timer initially
+    startHideTimer();
+
+    // Show filters on any user interaction
+    const handleUserActivity = () => {
+      resetHideTimer();
+    };
+
+    document.addEventListener('mousemove', handleUserActivity);
+    document.addEventListener('keypress', handleUserActivity);
+    document.addEventListener('click', handleUserActivity);
+
+    return () => {
+      if (filterHideTimerRef.current) {
+        clearTimeout(filterHideTimerRef.current);
+      }
+      document.removeEventListener('mousemove', handleUserActivity);
+      document.removeEventListener('keypress', handleUserActivity);
+      document.removeEventListener('click', handleUserActivity);
+    };
+  }, []); // Empty dependency array to run only once
+
+  const extractFilterOptions = (cardData: PTCGCard[]) => {
+    // Extract unique abilities
+    const abilityMap = new Map<string, number>();
+    const effectTypeMap = new Map<string, number>();
+
+    cardData.forEach(card => {
+      // Process abilities from both AbilityName and AbilityStats
+      const abilities = new Set<string>();
+
+      // Add ability name if it exists
+      if (card.AbilityName && card.AbilityName.trim() !== '' && card.AbilityName !== '無') {
+        abilities.add(card.AbilityName.trim());
+      }
+
+      // Add ability stats if they exist
+      if (card.AbilityStats && card.AbilityStats !== '無') {
+        const cardAbilities = card.AbilityStats.split(',').map(a => a.trim());
+        cardAbilities.forEach(ability => {
+          if (ability && ability !== '無') {
+            abilities.add(ability);
+          }
+        });
+      }
+
+      // Count unique abilities
+      abilities.forEach(ability => {
+        abilityMap.set(ability, (abilityMap.get(ability) || 0) + 1);
+      });
+
+      // Process effect types
+      if (card.PrimaryEffectType) {
+        const effects = card.PrimaryEffectType.split(',').map(e => e.trim());
+        effects.forEach(effect => {
+          effectTypeMap.set(effect, (effectTypeMap.get(effect) || 0) + 1);
+        });
+      }
+
+      if (card.SpecialEffectType && card.SpecialEffectType !== '無') {
+        const effects = card.SpecialEffectType.split(',').map(e => e.trim());
+        effects.forEach(effect => {
+          effectTypeMap.set(effect, (effectTypeMap.get(effect) || 0) + 1);
+        });
+      }
+    });
+
+    setAbilities(
+      Array.from(abilityMap.entries())
+        .map(([value, count]) => ({ value, label: value, count }))
+        .sort((a, b) => b.count - a.count)
+    );
+
+    setEffectTypes(
+      Array.from(effectTypeMap.entries())
+        .map(([value, count]) => ({ value, label: value, count }))
+        .sort((a, b) => b.count - a.count)
+    );
   };
 
-  // The rest of the component logic (handleAddToDeck, getRelatedCards, etc.) remains largely the same,
-  // but it will now operate on the `cards` state which is paginated and filtered by the backend.
-  // Note: getRelatedCards might need to be moved to the backend for efficiency with a large dataset.
+  const applyFilters = useCallback(() => {
+    let filtered = cards;
 
-    // Helper function to check if a card is basic energy
-    const isBasicEnergy = (card: PTCGCard): boolean => {
-        // Basic energy cards have specific names and are energy type
-        const basicEnergyNames = [
-          '草能量', '炎能量', '水能量', '雷能量', '超能量', '鬥能量', '惡能量', '鋼能量', '妖精能量',
-          'Grass Energy', 'Fire Energy', 'Water Energy', 'Lightning Energy', 'Psychic Energy',
-          'Fighting Energy', 'Darkness Energy', 'Metal Energy', 'Fairy Energy'
-        ];
+    // Exclude energy cards from display
+    filtered = filtered.filter(card => !card.CardType.includes('能量') && !card.CardType.toLowerCase().includes('energy'));
 
-        return card.CardType.includes('能量') &&
-               (basicEnergyNames.includes(card.Name) || card.Name.includes('基本') || card.Name.includes('Basic'));
-      };
-    
-      // Get maximum allowed quantity for a card
-      const getMaxQuantity = (card: PTCGCard): number => {
-        return isBasicEnergy(card) ? 99 : 4; // Unlimited basic energy, 4 for others
-      };
-    
-      const handleAddToDeck = async (card: PTCGCard, quantity: number = 1) => {
-        // Get existing decks from server or localStorage
-        let existingDecks = [];
-        try {
-          const response = await fetch('/api/decks');
-          if (response.ok) {
-            existingDecks = await response.json();
-          } else {
-            throw new Error('Server unavailable');
-          }
-        } catch (error) {
-          // Fallback to localStorage
-          existingDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
+    // Apply search term
+    if (searchTerm) {
+      filtered = filtered.filter(card =>
+        (
+          card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          String(card.CardID).toLowerCase().includes(searchTerm.toLowerCase()) ||
+          card.Skill1Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          card.Skill2Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          card.AbilityEffect.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }
+
+    // Apply ability filter
+    if (filters.ability) {
+      filtered = filtered.filter(card => {
+        // Check AbilityName
+        if (card.AbilityName && card.AbilityName.includes(filters.ability)) {
+          return true;
         }
-
-        // Get the current/latest deck or create a new one
-        let currentDeck = existingDecks.find((deck: any) => deck.id === 'quick-add') || {
-          id: 'quick-add',
-          name: 'Quick Add Deck',
-          format: 'Standard',
-          description: 'Cards quickly added from card browser',
-          cards: [],
-          totalCards: 0,
-          pokemonCount: 0,
-          trainerCount: 0,
-          energyCount: 0,
-          isValid: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-    
-        // Check if card already exists in deck
-        const existingCardIndex = currentDeck.cards.findIndex((c: any) => c.CardID === card.CardID);
-        const maxQuantity = getMaxQuantity(card);
-
-        if (existingCardIndex >= 0) {
-          // Update quantity (respecting card-specific limits)
-          const existingCard = currentDeck.cards[existingCardIndex] as any;
-          const newQuantity = Math.min(existingCard.quantity + quantity, maxQuantity);
-          existingCard.quantity = newQuantity;
-        } else {
-          // Add new card to deck
-          const deckCard = { ...card, quantity: Math.min(quantity, maxQuantity) };
-          (currentDeck.cards as any[]).push(deckCard);
+        // Check AbilityStats
+        if (card.AbilityStats && card.AbilityStats.includes(filters.ability)) {
+          return true;
         }
-    
-        // Recalculate deck stats
-        currentDeck.totalCards = currentDeck.cards.reduce((sum: number, c: any) => sum + c.quantity, 0);
-        currentDeck.pokemonCount = currentDeck.cards
-          .filter((c: any) => c.CardType.includes('寶可夢') || c.CardType.toLowerCase().includes('pokemon'))
-          .reduce((sum: number, c: any) => sum + c.quantity, 0);
-        currentDeck.trainerCount = currentDeck.cards
-          .filter((c: any) => c.CardType.includes('物品') || c.CardType.includes('支援') || c.CardType.includes('場地'))
-          .reduce((sum: number, c: any) => sum + c.quantity, 0);
-        currentDeck.energyCount = currentDeck.cards
-          .filter((c: any) => c.CardType.includes('能量'))
-          .reduce((sum: number, c: any) => sum + c.quantity, 0);
+        return false;
+      });
+    }
 
-        // Basic validation
-        currentDeck.isValid = currentDeck.totalCards === 60;
-        currentDeck.updatedAt = new Date();
+    // Apply effect type filter
+    if (filters.effectType) {
+      filtered = filtered.filter(card =>
+        (
+          (card.PrimaryEffectType && card.PrimaryEffectType.includes(filters.effectType)) ||
+          (card.SpecialEffectType && card.SpecialEffectType.includes(filters.effectType))
+        )
+      );
+    }
 
-        try {
-          // Save to server
-          const response = await fetch('/api/decks', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(currentDeck),
-          });
+    // Apply card type filter
+    if (filters.cardType) {
+      filtered = filtered.filter(card => card.CardType === filters.cardType);
+    }
 
-          if (!response.ok) {
-            throw new Error('Server save failed');
-          }
-        } catch (error) {
-          console.error('Error saving to server:', error);
-          // Fallback to localStorage
-          const localDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
-          const deckIndex = localDecks.findIndex((deck: any) => deck.id === 'quick-add');
-          if (deckIndex >= 0) {
-            localDecks[deckIndex] = currentDeck;
-          } else {
-            localDecks.push(currentDeck);
-          }
-          localStorage.setItem('ptcg_decks', JSON.stringify(localDecks));
-        }
+    // Apply rarity filter
+    if (filters.rarity) {
+      filtered = filtered.filter(card =>
+        card.Rarity === filters.rarity
+      );
+    }
 
-        // Show notification
-        setNotification(`Added ${quantity}x ${card.Name} to Quick Add Deck (${currentDeck.totalCards}/60 cards)`);
-        setTimeout(() => setNotification(null), 3000);
-      };
+    // Apply tier filter
+    if (filters.tier) {
+      filtered = filtered.filter(card =>
+         card.Tier === filters.tier
+      );
+    }
 
-      const getRelatedCards = (card: PTCGCard): PTCGCard[] => {
-        if (!card) return [];
+    // Apply attribute filter
+    if (filters.attribute) {
+      filtered = filtered.filter(card =>
+         card.Type === filters.attribute
+      );
+    }
 
-        const relatedCards: PTCGCard[] = [];
-        const usedCardIds = new Set([card.CardID]);
+    // Apply weakness type filter
+    if (filters.weaknessType) {
+      filtered = filtered.filter(card =>
+         card.WeaknessType === filters.weaknessType
+      );
+    }
 
-        // Helper function to add cards without duplicates
-        const addCards = (cardsToAdd: PTCGCard[]) => {
-          for (const c of cardsToAdd) {
-            if (!usedCardIds.has(c.CardID)) {
-              relatedCards.push(c);
-              usedCardIds.add(c.CardID);
-              if (relatedCards.length >= 6) break;
-            }
-          }
-        };
+    // Apply resistance type filter
+    if (filters.resistanceType) {
+      filtered = filtered.filter(card =>
+         card.ResistanceType === filters.resistanceType
+      );
+    }
 
-        // 1. Same type (highest priority)
-        if (card.Type) {
-          const sameTypeCards = cards.filter(c =>
-            c.CardID !== card.CardID &&
-            c.Type === card.Type
+    // Apply regulation filter
+    if (filters.regulation) {
+      filtered = filtered.filter(card =>
+         card.RegulationMark === filters.regulation
+      );
+    }
+
+    // Apply expansion filter
+    if (filters.expansion) {
+      filtered = filtered.filter(card => {
+        // Handle composite key format: "ExpansionName|ExpansionCode"
+        if (filters.expansion.includes('|')) {
+          const [filterName, filterCode] = filters.expansion.split('|');
+          return (
+            (filterName && card.ExpansionName === filterName) ||
+            (filterCode && card.ExpansionCode === filterCode)
           );
-          addCards(sameTypeCards);
         }
+        // Fallback for simple values (backward compatibility)
+        return (card.ExpansionCode === filters.expansion || card.ExpansionName === filters.expansion);
+      });
+    }
 
-        if (relatedCards.length >= 6) return relatedCards;
+    // Apply no retreat filter (only for Pokemon cards)
+    if (filters.noRetreat) {
+      filtered = filtered.filter(card =>
+        isPokemonCard(card) && (!card.RetreatCost || card.RetreatCost.trim() === '' || card.RetreatCost === '0')
+      );
+    }
 
-        // 2. Same evolution family (same base name)
-        const baseName = card.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim();
-        if (baseName) {
-          const familyCards = cards.filter(c =>
-            c.CardID !== card.CardID &&
-            !usedCardIds.has(c.CardID)  &&
-            c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
-          );
-          addCards(familyCards);
+    // Apply no resistance filter (only for Pokemon cards)
+    if (filters.noResistance) {
+      filtered = filtered.filter(card =>
+        isPokemonCard(card) && (!card.ResistanceType || card.ResistanceType.trim() === '')
+      );
+    }
+
+    // Apply no weakness filter (only for Pokemon cards)
+    if (filters.noWeakness) {
+      filtered = filtered.filter(card =>
+        isPokemonCard(card) && (!card.WeaknessType || card.WeaknessType.trim() === '')
+      );
+    }
+
+    // Apply special Pokemon type filter when any special filter is active
+    if (filters.specialPokemonType && (filters.noRetreat || filters.noResistance || filters.noWeakness)) {
+      filtered = filtered.filter(card =>
+        isPokemonCard(card) && card.Type === filters.specialPokemonType
+      );
+    }
+
+    // Apply owned filter
+    if (filters.owned && filters.owned !== 'all') {
+      if (filters.owned === 'owned') {
+        filtered = filtered.filter(card => getTotalQuantity(card.CardID) > 0);
+      } else if (filters.owned === 'unowned') {
+        filtered = filtered.filter(card => getTotalQuantity(card.CardID) === 0);
+      }
+    }
+
+    // Apply price range filter
+    if (filters.priceRange && filters.priceRange !== 'all') {
+      filtered = filtered.filter(card => {
+        const marketPrice = getCardMarketPrice(card.CardID);
+        const price = marketPrice?.price || 0;
+
+        switch (filters.priceRange) {
+          case 'low': // Under $10
+            return price > 0 && price < 10;
+          case 'medium': // $10-$50
+            return price >= 10 && price <= 50;
+          case 'high': // Over $50
+            return price > 50;
+          case 'no-price': // No price data
+            return price === 0 || !marketPrice;
+          default:
+            return true;
         }
+      });
+    }
 
-        if (relatedCards.length >= 6) return relatedCards;
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = a.Name.localeCompare(b.Name);
+          break;
+        case 'id':
+          comparison = parseInt(String(a.CardID)) - parseInt(String(b.CardID));
+          break;
+        case 'rarity':
+          comparison = a.Rarity.localeCompare(b.Rarity);
+          break;
+        case 'tier':
+          comparison = (a.Tier || '').localeCompare(b.Tier || '');
+          break;
+        case 'description':
+          const aDesc = [a.Skill1Effect, a.Skill2Effect, a.AbilityEffect].filter(Boolean).join(' ');
+          const bDesc = [b.Skill1Effect, b.Skill2Effect, b.AbilityEffect].filter(Boolean).join(' ');
+          comparison = aDesc.localeCompare(bDesc);
+          break;
+        default:
+          comparison = 0;
+      }
 
-        // 2.5. Complementary Pokemon pairs (like Lunatone/Solrock, Latios/Latias, etc.)
-        const complementaryPairs: { [key: string]: string[] } = {
-          '月石': ['太陽岩'],
-          '太陽岩': ['月石'],
-          '拉帝亞斯': ['拉帝歐斯'],
-          '拉帝歐斯': ['拉帝亞斯'],
-          '利歐路': ['路卡利歐'],
-          '瑪納霏': ['瑪納菲'],
-          // Add more complementary pairs as needed
-        };
+      return sortDirection === 'desc' ? -comparison : comparison;
+    });
 
-        if (complementaryPairs[card.Name]) {
-          const pairCards = cards.filter(c =>
-            c.CardID !== card.CardID &&
-            !usedCardIds.has(c.CardID) &&
-            complementaryPairs[card.Name].includes(c.Name)
-          );
-          addCards(pairCards);
-        }
+    setFilteredCards(sorted);
+  }, [cards, searchTerm, filters, sortBy, sortDirection, getTotalQuantity, getCardMarketPrice]);
 
-        if (relatedCards.length >= 6) return relatedCards;
+  const addAllToInventory = useCallback(async () => {
+    if (filteredCards.length === 0) {
+      setNotification('No cards to add to inventory');
+      return;
+    }
 
-        // 2.6. Same evolution stage (Basic, Stage 1, Stage 2, etc.)
-        if (card.Evolution) {
-          const evolutionCards = cards.filter(c =>
-            c.CardID !== card.CardID &&
-            !usedCardIds.has(c.CardID) &&
-            c.Evolution === card.Evolution
-          );
-          addCards(evolutionCards);
-        }
+    setAddingAllToInventory(true);
+    let successCount = 0;
+    let errorCount = 0;
 
-        if (relatedCards.length >= 6) return relatedCards;
-
-        // 2.7. Evolution chain progression (Basic -> Stage 1, Stage 1 -> Stage 2, etc.)
-        if (card.Evolution && card.Name) {
-          const baseName = card.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim();
-          let evolutionChainCards: PTCGCard[] = [];
-
-          if (card.Evolution === 'Basic') {
-            // For Basic cards, find their Stage 1 evolutions
-            evolutionChainCards = cards.filter(c =>
-              c.CardID !== card.CardID &&
-              !usedCardIds.has(c.CardID) &&
-              c.Evolution === 'Stage 1' &&
-              c.Name.replace(/|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
-            );
-          } else if (card.Evolution === 'Stage 1') {
-            // For Stage 1 cards, find their Basic forms and Stage 2 evolutions
-            const basicCards = cards.filter(c =>
-              c.CardID !== card.CardID &&
-              !usedCardIds.has(c.CardID) &&
-              c.Evolution === 'Basic' &&
-              c.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
-            );
-            const stage2Cards = cards.filter(c =>
-              c.CardID !== card.CardID &&
-              !usedCardIds.has(c.CardID) &&
-              c.Evolution === 'Stage 2' &&
-              c.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
-            );
-            evolutionChainCards = [...basicCards, ...stage2Cards];
-          } else if (card.Evolution === 'Stage 2') {
-            // For Stage 2 cards, find their Stage 1 forms
-            evolutionChainCards = cards.filter(c =>
-              c.CardID !== card.CardID &&
-              !usedCardIds.has(c.CardID) &&
-              c.Evolution === 'Stage 1' &&
-              c.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
-            );
-          }
-
-          addCards(evolutionChainCards);
-        }
-
-        if (relatedCards.length >= 6) return relatedCards;
-
-        // 2.75. Same ability themes (more flexible ability matching)
-        if (card.AbilityStats) {
-          const cardAbilityThemes = card.AbilityStats.split(',').map(a => a.trim().toLowerCase());
-          const abilityThemeCards = cards.filter(c => {
-            if (c.CardID === card.CardID || usedCardIds.has(c.CardID)  || !c.AbilityStats) {
-              return false;
-            }
-
-            const otherAbilityThemes = c.AbilityStats.split(',').map(a => a.trim().toLowerCase());
-
-            // Check for partial matches in ability themes
-            return cardAbilityThemes.some(cardTheme =>
-              otherAbilityThemes.some(otherTheme =>
-                cardTheme.includes(otherTheme) || otherTheme.includes(cardTheme) ||
-                // Check for similar ability categories
-                (cardTheme.includes('傷害') && otherTheme.includes('傷害')) ||
-                (cardTheme.includes('防禦') && otherTheme.includes('防禦')) ||
-                (cardTheme.includes('狀態') && otherTheme.includes('狀態')) ||
-                (cardTheme.includes('回復') && otherTheme.includes('回復'))
-              )
-            );
-          });
-          addCards(abilityThemeCards);
-        }
-
-        if (relatedCards.length >= 6) return relatedCards;
-
-        // 3.5. Cards with special effect keywords (like 「XXX」 patterns)
-        const specialEffectKeywords = [
-          '「', '」', // Japanese quote marks
-          '不能', '可以', '必須', // Modal verbs
-          '每次', '每回', // Frequency words
-          '對手', '我方', // Player references
-          '場上', '牌庫', '棄牌區', // Location references
-          '選擇', '查看', '抽', // Action words
-          '回復', '治療', // Healing terms
-          '交換', '進化', // Evolution terms
-          '阻擋', '防禦', // Defense terms
-        ];
-
-        const cardEffectText = [
-          card.Skill1Effect,
-          card.Skill2Effect,
-          card.AbilityEffect
-        ].filter(effect => effect).join(' ');
-
-        // Find special keywords in the current card's effects
-        const matchingKeywords = specialEffectKeywords.filter(keyword =>
-          cardEffectText.includes(keyword)
-        );
-
-        if (matchingKeywords.length > 0) {
-          const specialEffectCards = cards.filter(c => {
-            if (c.CardID === card.CardID || usedCardIds.has(c.CardID) ) {
-              return false;
-            }
-
-            const otherEffectText = [
-              c.Skill1Effect,
-              c.Skill2Effect,
-              c.AbilityEffect
-            ].filter(effect => effect).join(' ');
-
-            // Check if other card has any of the same special keywords
-            return matchingKeywords.some(keyword =>
-              otherEffectText.includes(keyword)
-            );
-          });
-          addCards(specialEffectCards);
-        }
-
-        if (relatedCards.length >= 6) return relatedCards;
-
-        // 4. Same skill names
-        const skillNames = [
-          card.Skill1Name,
-          card.Skill2Name
-        ].filter(name => name && name.trim() !== '');
-
-        if (skillNames.length > 0) {
-          const sameSkillCards = cards.filter(c =>
-            c.CardID !== card.CardID &&
-            !usedCardIds.has(c.CardID) &&
-            (skillNames.includes(c.Skill1Name) || skillNames.includes(c.Skill2Name))
-          );
-          addCards(sameSkillCards);
-        }
-
-        if (relatedCards.length >= 6) return relatedCards;
-
-        // 4. Effects containing keywords from original card
-        const effectKeywords = [
-          ...(card.Skill1Effect ? card.Skill1Effect.split(/\s+/) : []),
-          ...(card.Skill2Effect ? card.Skill2Effect.split(/\s+/) : []),
-          ...(card.AbilityEffect ? card.AbilityEffect.split(/\s+/) : [])
-        ].filter(word => word.length > 2); // Only meaningful keywords
-
-        if (effectKeywords.length > 0) {
-          const effectCards = cards.filter(c => {
-            if (c.CardID === card.CardID || usedCardIds.has(c.CardID) ) {
-              return false;
-            }
-
-            const cardEffects = [
-              c.Skill1Effect,
-              c.Skill2Effect,
-              c.AbilityEffect
-            ].filter(effect => effect).join(' ');
-
-            return effectKeywords.some(keyword =>
-              cardEffects.includes(keyword)
-            );
-          });
-          addCards(effectCards);
-        }
-
-        if (relatedCards.length >= 6) return relatedCards;
-
-        // 5. Fallback: same ability or effect type (original logic)
-        const fallbackCards = cards.filter(c => {
-          if (c.CardID === card.CardID || usedCardIds.has(c.CardID) ) {
-            return false;
-          }
-
-          // Same ability (check both AbilityName and AbilityStats)
-          if ((card.AbilityName && c.AbilityName && card.AbilityName === c.AbilityName) ||
-              (card.AbilityStats && c.AbilityStats)) {
-            if (card.AbilityName && c.AbilityName && card.AbilityName === c.AbilityName) return true;
-            if (card.AbilityStats && c.AbilityStats) {
-              const cardAbilities = card.AbilityStats.split(',').map(a => a.trim());
-              const otherAbilities = c.AbilityStats.split(',').map(a => a.trim());
-              if (cardAbilities.some(a => otherAbilities.includes(a))) return true;
-            }
-          }
-
-          // Same effect type
-          if (card.PrimaryEffectType && c.PrimaryEffectType) {
-            const cardEffects = card.PrimaryEffectType.split(',').map(e => e.trim());
-            const otherEffects = c.PrimaryEffectType.split(',').map(e => e.trim());
-            if (cardEffects.some(e => otherEffects.includes(e))) return true;
-          }
-
-          return false;
-        });
-
-        addCards(fallbackCards);
-
-        return relatedCards;
-      };
-
-      const handleAddToInventory = useCallback(async (cardId: number): Promise<boolean> => {
+    try {
+      // Add each card to inventory with default values
+      for (const card of filteredCards) {
         try {
           const success = await addToInventory(
-            cardId,
+            parseInt(String(card.CardID)),
             1, // Default quantity of 1
             'Near Mint', // Default condition
             undefined, // No notes
@@ -533,23 +426,448 @@ export default function Home() {
             undefined // No market price
           );
           if (success) {
-            setNotification('Card added to inventory successfully!');
-            // Clear notification after 3 seconds
-            setTimeout(() => setNotification(null), 3000);
+            successCount++;
           } else {
-            setNotification('Failed to add card to inventory');
-            setTimeout(() => setNotification(null), 3000);
+            errorCount++;
           }
-          return success;
         } catch (error) {
-          console.error('Error adding card to inventory:', error);
-          setNotification('Error adding card to inventory');
-          setTimeout(() => setNotification(null), 3000);
+          console.error(`Failed to add card ${card.CardID} to inventory:`, error);
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        setNotification(`Successfully added ${successCount} cards to inventory${errorCount > 0 ? ` (${errorCount} failed)` : ''}`);
+      } else {
+        setNotification('Failed to add any cards to inventory');
+      }
+    } catch (error) {
+      console.error('Error adding cards to inventory:', error);
+      setNotification('Error adding cards to inventory');
+    } finally {
+      setAddingAllToInventory(false);
+    }
+  }, [filteredCards, addToInventory]);
+
+  const handleAddToInventory = useCallback(async (cardId: number): Promise<boolean> => {
+    try {
+      const success = await addToInventory(
+        cardId,
+        1, // Default quantity of 1
+        'Near Mint', // Default condition
+        undefined, // No notes
+        undefined, // No purchase cost
+        undefined // No market price
+      );
+      if (success) {
+        setNotification('Card added to inventory successfully!');
+        // Clear notification after 3 seconds
+        setTimeout(() => setNotification(null), 3000);
+      } else {
+        setNotification('Failed to add card to inventory');
+        setTimeout(() => setNotification(null), 3000);
+      }
+      return success;
+    } catch (error) {
+      console.error('Error adding card to inventory:', error);
+      setNotification('Error adding card to inventory');
+      setTimeout(() => setNotification(null), 3000);
+      return false;
+    }
+  }, [addToInventory]);
+
+  useEffect(() => {
+    loadCardData();
+  }, [loadCardData]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [cards, filters, searchTerm, applyFilters]);
+
+  const handleCardClick = (card: PTCGCard) => {
+    setSelectedCard(card);
+  };
+
+  // Helper function to check if a card is basic energy
+  const isBasicEnergy = (card: PTCGCard): boolean => {
+    // Basic energy cards have specific names and are energy type
+    const basicEnergyNames = [
+      '草能量', '炎能量', '水能量', '雷能量', '超能量', '鬥能量', '惡能量', '鋼能量', '妖精能量',
+      'Grass Energy', 'Fire Energy', 'Water Energy', 'Lightning Energy', 'Psychic Energy',
+      'Fighting Energy', 'Darkness Energy', 'Metal Energy', 'Fairy Energy'
+    ];
+    
+    return card.CardType.includes('能量') &&
+           (basicEnergyNames.includes(card.Name) || card.Name.includes('基本') || card.Name.includes('Basic'));
+  };
+
+  // Get maximum allowed quantity for a card
+  const getMaxQuantity = (card: PTCGCard): number => {
+    return isBasicEnergy(card) ? 99 : 4; // Unlimited basic energy, 4 for others
+  };
+
+  const handleAddToDeck = async (card: PTCGCard, quantity: number = 1) => {
+    // Get existing decks from server or localStorage
+    let existingDecks = [];
+    try {
+      const response = await fetch('/api/decks');
+      if (response.ok) {
+        existingDecks = await response.json();
+      } else {
+        throw new Error('Server unavailable');
+      }
+    } catch (error) {
+      // Fallback to localStorage
+      existingDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
+    }
+    
+    // Get the current/latest deck or create a new one
+    let currentDeck = existingDecks.find((deck: any) => deck.id === 'quick-add') || {
+      id: 'quick-add',
+      name: 'Quick Add Deck',
+      format: 'Standard',
+      description: 'Cards quickly added from card browser',
+      cards: [],
+      totalCards: 0,
+      pokemonCount: 0,
+      trainerCount: 0,
+      energyCount: 0,
+      isValid: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Check if card already exists in deck
+    const existingCardIndex = currentDeck.cards.findIndex((c: any) => c.CardID === card.CardID);
+    const maxQuantity = getMaxQuantity(card);
+    
+    if (existingCardIndex >= 0) {
+      // Update quantity (respecting card-specific limits)
+      const existingCard = currentDeck.cards[existingCardIndex] as any;
+      const newQuantity = Math.min(existingCard.quantity + quantity, maxQuantity);
+      existingCard.quantity = newQuantity;
+    } else {
+      // Add new card to deck
+      const deckCard = { ...card, quantity: Math.min(quantity, maxQuantity) };
+      (currentDeck.cards as any[]).push(deckCard);
+    }
+
+    // Recalculate deck stats
+    currentDeck.totalCards = currentDeck.cards.reduce((sum: number, c: any) => sum + c.quantity, 0);
+    currentDeck.pokemonCount = currentDeck.cards
+      .filter((c: any) => c.CardType.includes('寶可夢') || c.CardType.toLowerCase().includes('pokemon'))
+      .reduce((sum: number, c: any) => sum + c.quantity, 0);
+    currentDeck.trainerCount = currentDeck.cards
+      .filter((c: any) => c.CardType.includes('物品') || c.CardType.includes('支援') || c.CardType.includes('場地'))
+      .reduce((sum: number, c: any) => sum + c.quantity, 0);
+    currentDeck.energyCount = currentDeck.cards
+      .filter((c: any) => c.CardType.includes('能量'))
+      .reduce((sum: number, c: any) => sum + c.quantity, 0);
+
+    // Basic validation
+    currentDeck.isValid = currentDeck.totalCards === 60;
+    currentDeck.updatedAt = new Date();
+
+    try {
+      // Save to server
+      const response = await fetch('/api/decks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(currentDeck),
+      });
+
+      if (!response.ok) {
+        throw new Error('Server save failed');
+      }
+    } catch (error) {
+      console.error('Error saving to server:', error);
+      // Fallback to localStorage
+      const localDecks = JSON.parse(localStorage.getItem('ptcg_decks') || '[]');
+      const deckIndex = localDecks.findIndex((deck: any) => deck.id === 'quick-add');
+      if (deckIndex >= 0) {
+        localDecks[deckIndex] = currentDeck;
+      } else {
+        localDecks.push(currentDeck);
+      }
+      localStorage.setItem('ptcg_decks', JSON.stringify(localDecks));
+    }
+
+    // Show notification
+    setNotification(`Added ${quantity}x ${card.Name} to Quick Add Deck (${currentDeck.totalCards}/60 cards)`);
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const getRelatedCards = (card: PTCGCard): PTCGCard[] => {
+    if (!card) return [];
+
+    const relatedCards: PTCGCard[] = [];
+    const usedCardIds = new Set([card.CardID]);
+
+    // Helper function to add cards without duplicates
+    const addCards = (cardsToAdd: PTCGCard[]) => {
+      for (const c of cardsToAdd) {
+        if (!usedCardIds.has(c.CardID)) {
+          relatedCards.push(c);
+          usedCardIds.add(c.CardID);
+          if (relatedCards.length >= 6) break;
+        }
+      }
+    };
+
+    // 1. Same type (highest priority)
+    if (card.Type) {
+      const sameTypeCards = cards.filter(c =>
+        c.CardID !== card.CardID &&
+        c.Type === card.Type
+      );
+      addCards(sameTypeCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 2. Same evolution family (same base name)
+    const baseName = card.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim();
+    if (baseName) {
+      const familyCards = cards.filter(c =>
+        c.CardID !== card.CardID &&
+        !usedCardIds.has(c.CardID)  &&
+        c.Name.replace(/V|VMAX|VSTAR|GX|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+      );
+      addCards(familyCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 2.5. Complementary Pokemon pairs (like Lunatone/Solrock, Latios/Latias, etc.)
+    const complementaryPairs: { [key: string]: string[] } = {
+      '月石': ['太陽岩'],
+      '太陽岩': ['月石'],
+      '拉帝亞斯': ['拉帝歐斯'],
+      '拉帝歐斯': ['拉帝亞斯'],
+      '利歐路': ['路卡利歐'],
+      '瑪納霏': ['瑪納菲'],
+      // Add more complementary pairs as needed
+    };
+
+    if (complementaryPairs[card.Name]) {
+      const pairCards = cards.filter(c =>
+        c.CardID !== card.CardID &&
+        !usedCardIds.has(c.CardID) &&
+        complementaryPairs[card.Name].includes(c.Name)
+      );
+      addCards(pairCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 2.6. Same evolution stage (Basic, Stage 1, Stage 2, etc.)
+    if (card.Evolution) {
+      const evolutionCards = cards.filter(c =>
+        c.CardID !== card.CardID &&
+        !usedCardIds.has(c.CardID) &&
+        c.Evolution === card.Evolution
+      );
+      addCards(evolutionCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 2.7. Evolution chain progression (Basic -> Stage 1, Stage 1 -> Stage 2, etc.)
+    if (card.Evolution && card.Name) {
+      const baseName = card.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim();
+      let evolutionChainCards: PTCGCard[] = [];
+
+      if (card.Evolution === 'Basic') {
+        // For Basic cards, find their Stage 1 evolutions
+        evolutionChainCards = cards.filter(c =>
+          c.CardID !== card.CardID &&
+          !usedCardIds.has(c.CardID) &&
+          c.Evolution === 'Stage 1' &&
+          c.Name.replace(/|EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+        );
+      } else if (card.Evolution === 'Stage 1') {
+        // For Stage 1 cards, find their Basic forms and Stage 2 evolutions
+        const basicCards = cards.filter(c =>
+          c.CardID !== card.CardID &&
+          !usedCardIds.has(c.CardID) &&
+          c.Evolution === 'Basic' &&
+          c.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+        );
+        const stage2Cards = cards.filter(c =>
+          c.CardID !== card.CardID &&
+          !usedCardIds.has(c.CardID) &&
+          c.Evolution === 'Stage 2' &&
+          c.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+        );
+        evolutionChainCards = [...basicCards, ...stage2Cards];
+      } else if (card.Evolution === 'Stage 2') {
+        // For Stage 2 cards, find their Stage 1 forms
+        evolutionChainCards = cards.filter(c =>
+          c.CardID !== card.CardID &&
+          !usedCardIds.has(c.CardID) &&
+          c.Evolution === 'Stage 1' &&
+          c.Name.replace(/EX|♂|♀|\s+|\d+$/g, '').trim() === baseName
+        );
+      }
+
+      addCards(evolutionChainCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 2.75. Same ability themes (more flexible ability matching)
+    if (card.AbilityStats) {
+      const cardAbilityThemes = card.AbilityStats.split(',').map(a => a.trim().toLowerCase());
+      const abilityThemeCards = cards.filter(c => {
+        if (c.CardID === card.CardID || usedCardIds.has(c.CardID)  || !c.AbilityStats) {
           return false;
         }
-      }, [addToInventory]);
 
-  if (loading && cards.length === 0) {
+        const otherAbilityThemes = c.AbilityStats.split(',').map(a => a.trim().toLowerCase());
+
+        // Check for partial matches in ability themes
+        return cardAbilityThemes.some(cardTheme =>
+          otherAbilityThemes.some(otherTheme =>
+            cardTheme.includes(otherTheme) || otherTheme.includes(cardTheme) ||
+            // Check for similar ability categories
+            (cardTheme.includes('傷害') && otherTheme.includes('傷害')) ||
+            (cardTheme.includes('防禦') && otherTheme.includes('防禦')) ||
+            (cardTheme.includes('狀態') && otherTheme.includes('狀態')) ||
+            (cardTheme.includes('回復') && otherTheme.includes('回復'))
+          )
+        );
+      });
+      addCards(abilityThemeCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 3.5. Cards with special effect keywords (like 「XXX」 patterns)
+    const specialEffectKeywords = [
+      '「', '」', // Japanese quote marks
+      '不能', '可以', '必須', // Modal verbs
+      '每次', '每回', // Frequency words
+      '對手', '我方', // Player references
+      '場上', '牌庫', '棄牌區', // Location references
+      '選擇', '查看', '抽', // Action words
+      '回復', '治療', // Healing terms
+      '交換', '進化', // Evolution terms
+      '阻擋', '防禦', // Defense terms
+    ];
+
+    const cardEffectText = [
+      card.Skill1Effect,
+      card.Skill2Effect,
+      card.AbilityEffect
+    ].filter(effect => effect).join(' ');
+
+    // Find special keywords in the current card's effects
+    const matchingKeywords = specialEffectKeywords.filter(keyword =>
+      cardEffectText.includes(keyword)
+    );
+
+    if (matchingKeywords.length > 0) {
+      const specialEffectCards = cards.filter(c => {
+        if (c.CardID === card.CardID || usedCardIds.has(c.CardID) ) {
+          return false;
+        }
+
+        const otherEffectText = [
+          c.Skill1Effect,
+          c.Skill2Effect,
+          c.AbilityEffect
+        ].filter(effect => effect).join(' ');
+
+        // Check if other card has any of the same special keywords
+        return matchingKeywords.some(keyword =>
+          otherEffectText.includes(keyword)
+        );
+      });
+      addCards(specialEffectCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 4. Same skill names
+    const skillNames = [
+      card.Skill1Name,
+      card.Skill2Name
+    ].filter(name => name && name.trim() !== '');
+
+    if (skillNames.length > 0) {
+      const sameSkillCards = cards.filter(c =>
+        c.CardID !== card.CardID &&
+        !usedCardIds.has(c.CardID) &&
+        (skillNames.includes(c.Skill1Name) || skillNames.includes(c.Skill2Name))
+      );
+      addCards(sameSkillCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 4. Effects containing keywords from original card
+    const effectKeywords = [
+      ...(card.Skill1Effect ? card.Skill1Effect.split(/\s+/) : []),
+      ...(card.Skill2Effect ? card.Skill2Effect.split(/\s+/) : []),
+      ...(card.AbilityEffect ? card.AbilityEffect.split(/\s+/) : [])
+    ].filter(word => word.length > 2); // Only meaningful keywords
+
+    if (effectKeywords.length > 0) {
+      const effectCards = cards.filter(c => {
+        if (c.CardID === card.CardID || usedCardIds.has(c.CardID) ) {
+          return false;
+        }
+
+        const cardEffects = [
+          c.Skill1Effect,
+          c.Skill2Effect,
+          c.AbilityEffect
+        ].filter(effect => effect).join(' ');
+
+        return effectKeywords.some(keyword =>
+          cardEffects.includes(keyword)
+        );
+      });
+      addCards(effectCards);
+    }
+
+    if (relatedCards.length >= 6) return relatedCards;
+
+    // 5. Fallback: same ability or effect type (original logic)
+    const fallbackCards = cards.filter(c => {
+      if (c.CardID === card.CardID || usedCardIds.has(c.CardID) ) {
+        return false;
+      }
+
+      // Same ability (check both AbilityName and AbilityStats)
+      if ((card.AbilityName && c.AbilityName && card.AbilityName === c.AbilityName) ||
+          (card.AbilityStats && c.AbilityStats)) {
+        if (card.AbilityName && c.AbilityName && card.AbilityName === c.AbilityName) return true;
+        if (card.AbilityStats && c.AbilityStats) {
+          const cardAbilities = card.AbilityStats.split(',').map(a => a.trim());
+          const otherAbilities = c.AbilityStats.split(',').map(a => a.trim());
+          if (cardAbilities.some(a => otherAbilities.includes(a))) return true;
+        }
+      }
+
+      // Same effect type
+      if (card.PrimaryEffectType && c.PrimaryEffectType) {
+        const cardEffects = card.PrimaryEffectType.split(',').map(e => e.trim());
+        const otherEffects = c.PrimaryEffectType.split(',').map(e => e.trim());
+        if (cardEffects.some(e => otherEffects.includes(e))) return true;
+      }
+
+      return false;
+    });
+
+    addCards(fallbackCards);
+
+    return relatedCards;
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-xl">{t.loading}</div>
@@ -559,7 +877,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header - Mobile Optimized */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -606,7 +924,7 @@ export default function Home() {
                 <span>Debug</span>
               </a>
               <div className="text-sm sm:text-base text-gray-500">
-                {totalCards} {t.results}
+                {filteredCards.length} {t.results}
               </div>
             </div>
           </div>
@@ -614,7 +932,9 @@ export default function Home() {
       </header>
 
       <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
-        {/* Controls */}
+
+
+        {/* Sort and View Controls - Compact */}
         <div className="mb-4 bg-white rounded-lg shadow-sm border p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex items-center space-x-2">
@@ -673,6 +993,34 @@ export default function Home() {
                 </button>
               </div>
             </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCardOnlyView(!cardOnlyView)}
+                className={`px-3 py-1 text-xs rounded transition-colors ${
+                  cardOnlyView
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                title={cardOnlyView ? "Show Full Cards" : "Card Only View"}
+              >
+                {cardOnlyView ? "Full" : "Card Only"}
+              </button>
+              <button
+                onClick={addAllToInventory}
+                disabled={addingAllToInventory || filteredCards.length === 0}
+                className={`px-3 py-1 text-xs rounded transition-colors flex items-center space-x-1 ${
+                  addingAllToInventory
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    : filteredCards.length === 0
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
+                title={`Add all ${filteredCards.length} search results to inventory`}
+              >
+                <Package className="h-3 w-3" />
+                <span>{addingAllToInventory ? 'Adding...' : 'Add All'}</span>
+              </button>
+            </div>
           </div>
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -685,29 +1033,51 @@ export default function Home() {
             />
           </div>
           <div className="text-xs text-gray-500">
-            {totalCards} {t.results}
+            {filteredCards.length} {t.results}
           </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
-          {/* Filters Sidebar */}
-          <div className="lg:w-64 lg:flex-shrink-0">
-            <div className="lg:sticky lg:top-6">
+          {/* Filters Sidebar - Auto-hide and Compact */}
+          <div className={`lg:flex-shrink-0 transition-all duration-300 ${
+            filtersVisible
+              ? 'lg:w-64 w-full opacity-100 translate-x-0'
+              : 'lg:w-12 w-0 opacity-0 -translate-x-full lg:translate-x-0'
+          }`}>
+            <div className="lg:sticky lg:top-6 relative">
+              {!filtersVisible && (
+                <button
+                  onClick={() => setFiltersVisible(true)}
+                  className="absolute left-2 top-4 z-10 bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+                  title="Show Filters"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
+              <div
+                className={`transition-all duration-300 ${filtersVisible ? 'block' : 'hidden'}`}
+                onMouseEnter={() => {
+                  if (filterHideTimerRef.current) {
+                    clearTimeout(filterHideTimerRef.current);
+                  }
+                  setFiltersVisible(true);
+                }}
+              >
                 <SearchFiltersComponent
                   filters={filters}
                   onFiltersChange={setFilters}
                   abilities={abilities}
                   effectTypes={effectTypes}
-                  cards={[]} // Pass empty array as it's no longer used for extraction
-                  allOptions={allFilterOptions}
+                  cards={cards}
                 />
+              </div>
             </div>
           </div>
 
           {/* Card Grid */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0">{/* min-w-0 prevents flex item from overflowing */}
             <CardGrid
-              cards={cards}
+              cards={filteredCards}
               onCardClick={handleCardClick}
               viewSize={viewSize}
               cardOnlyView={cardOnlyView}
@@ -715,24 +1085,6 @@ export default function Home() {
               onAddToInventory={handleAddToInventory}
               marketPrices={marketPrices}
             />
-             {/* Pagination Controls */}
-            <div className="flex justify-center items-center space-x-4 mt-8">
-                <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-                >
-                    Previous
-                </button>
-                <span>Page {currentPage} of {Math.ceil(totalCards / cardsPerPage)}</span>
-                <button
-                    onClick={() => setCurrentPage(p => p + 1)}
-                    disabled={currentPage * cardsPerPage >= totalCards}
-                    className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-                >
-                    Next
-                </button>
-            </div>
           </div>
         </div>
       </div>
@@ -744,7 +1096,7 @@ export default function Home() {
           relatedCards={getRelatedCards(selectedCard)}
           onClose={() => setSelectedCard(null)}
           onCardClick={handleCardClick}
-          allCards={cards} // This should be refactored to fetch related cards from backend
+          allCards={cards}
           onAddToDeck={handleAddToDeck}
         />
       )}
