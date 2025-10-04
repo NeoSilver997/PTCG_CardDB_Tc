@@ -79,20 +79,20 @@ export default function Home() {
     try {
       const response = await fetch('/api/cards');
       const data = await response.json();
-      
+
       // Sort cards by CardID numerically in descending order to find the latest card
       const sortedData = data.sort((a: PTCGCard, b: PTCGCard) => {
         const aId = parseInt(String(a.CardID).replace(/\D/g, '')) || 0;
         const bId = parseInt(String(b.CardID).replace(/\D/g, '')) || 0;
         return bId - aId; // Descending order
       });
-      
+
       setCards(sortedData);
       extractFilterOptions(sortedData);
-      
+
       // Also load market prices
       await loadMarketPrices();
-      
+
       // Find the latest card (first in sorted array) and set up initial filter
       if (sortedData.length > 0) {
         const latestCard = sortedData[0];
@@ -156,12 +156,12 @@ export default function Home() {
     cardData.forEach(card => {
       // Process abilities from both AbilityName and AbilityStats
       const abilities = new Set<string>();
-      
+
       // Add ability name if it exists
       if (card.AbilityName && card.AbilityName.trim() !== '' && card.AbilityName !== '無') {
         abilities.add(card.AbilityName.trim());
       }
-      
+
       // Add ability stats if they exist
       if (card.AbilityStats && card.AbilityStats !== '無') {
         const cardAbilities = card.AbilityStats.split(',').map(a => a.trim());
@@ -171,7 +171,7 @@ export default function Home() {
           }
         });
       }
-      
+
       // Count unique abilities
       abilities.forEach(ability => {
         abilityMap.set(ability, (abilityMap.get(ability) || 0) + 1);
@@ -355,7 +355,7 @@ export default function Home() {
       filtered = filtered.filter(card => {
         const marketPrice = getCardMarketPrice(card.CardID);
         const price = marketPrice?.price || 0;
-        
+
         switch (filters.priceRange) {
           case 'low': // Under $10
             return price > 0 && price < 10;
@@ -396,7 +396,7 @@ export default function Home() {
         default:
           comparison = 0;
       }
-      
+
       return sortDirection === 'desc' ? -comparison : comparison;
     });
 
@@ -493,11 +493,11 @@ export default function Home() {
     // Basic energy cards have specific names and are energy type
     const basicEnergyNames = [
       '草能量', '炎能量', '水能量', '雷能量', '超能量', '鬥能量', '惡能量', '鋼能量', '妖精能量',
-      'Grass Energy', 'Fire Energy', 'Water Energy', 'Lightning Energy', 'Psychic Energy', 
+      'Grass Energy', 'Fire Energy', 'Water Energy', 'Lightning Energy', 'Psychic Energy',
       'Fighting Energy', 'Darkness Energy', 'Metal Energy', 'Fairy Energy'
     ];
     
-    return card.CardType.includes('能量') && 
+    return card.CardType.includes('能量') &&
            (basicEnergyNames.includes(card.Name) || card.Name.includes('基本') || card.Name.includes('Basic'));
   };
 
@@ -563,7 +563,7 @@ export default function Home() {
     currentDeck.energyCount = currentDeck.cards
       .filter((c: any) => c.CardType.includes('能量'))
       .reduce((sum: number, c: any) => sum + c.quantity, 0);
-    
+
     // Basic validation
     currentDeck.isValid = currentDeck.totalCards === 60;
     currentDeck.updatedAt = new Date();
@@ -620,7 +620,7 @@ export default function Home() {
     if (card.Type) {
       const sameTypeCards = cards.filter(c =>
         c.CardID !== card.CardID &&
-        c.Type === card.Type 
+        c.Type === card.Type
       );
       addCards(sameTypeCards);
     }
@@ -932,7 +932,7 @@ export default function Home() {
       </header>
 
       <div className="max-w-8xl mx-auto px-2 sm:px-2 lg:px-2 py-2 sm:py-2">
-        
+
 
         {/* Sort and View Controls - Compact */}
         <div className="mb-4 bg-white rounded-lg shadow-sm border p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -997,8 +997,8 @@ export default function Home() {
               <button
                 onClick={() => setCardOnlyView(!cardOnlyView)}
                 className={`px-3 py-1 text-xs rounded transition-colors ${
-                  cardOnlyView 
-                    ? 'bg-purple-500 text-white' 
+                  cardOnlyView
+                    ? 'bg-purple-500 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
                 title={cardOnlyView ? "Show Full Cards" : "Card Only View"}
@@ -1040,8 +1040,8 @@ export default function Home() {
         <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
           {/* Filters Sidebar - Auto-hide and Compact */}
           <div className={`lg:flex-shrink-0 transition-all duration-300 ${
-            filtersVisible 
-              ? 'lg:w-64 w-full opacity-100 translate-x-0' 
+            filtersVisible
+              ? 'lg:w-64 w-full opacity-100 translate-x-0'
               : 'lg:w-12 w-0 opacity-0 -translate-x-full lg:translate-x-0'
           }`}>
             <div className="lg:sticky lg:top-6 relative">
@@ -1054,7 +1054,7 @@ export default function Home() {
                   <ChevronRight className="h-4 w-4" />
                 </button>
               )}
-              <div 
+              <div
                 className={`transition-all duration-300 ${filtersVisible ? 'block' : 'hidden'}`}
                 onMouseEnter={() => {
                   if (filterHideTimerRef.current) {

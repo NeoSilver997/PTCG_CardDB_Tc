@@ -52,16 +52,16 @@ export default function SearchFiltersComponent({
   // Helper function to create filter options with counts, sorted by count descending
   const createFilterOptions = (field: keyof PTCGCard, excludeEnergy: boolean = true) => {
     const countMap = new Map<string, number>();
-    
+
     cards.forEach(card => {
       if (excludeEnergy && card.CardType.includes('能量')) return;
-      
+
       const value = card[field] as string;
       if (value && value.trim() !== '') {
         countMap.set(value, (countMap.get(value) || 0) + 1);
       }
     });
-    
+
     return Array.from(countMap.entries())
       .map(([value, count]) => ({ value, count }))
       .sort((a, b) => b.count - a.count); // Sort by count descending
@@ -73,22 +73,22 @@ export default function SearchFiltersComponent({
   const tierOptions = createFilterOptions('Tier');
   const attributeOptions = createFilterOptions('Type');
   const regulationOptions = createFilterOptions('RegulationMark');
-  
+
   // Handle expansions (combine ExpansionName and ExpansionCode, sort by CardID)
   const createExpansionOptions = () => {
     const expansionMap = new Map<string, { count: number; minCardId: number; displayName: string; code: string; name: string }>();
-    
+
     cards.forEach(card => {
       if (card.CardType.includes('能量')) return;
-      
+
       const expansionName = card.ExpansionName?.trim();
       const expansionCode = card.ExpansionCode?.trim();
-      
+
       if (expansionName && expansionName !== '' && expansionCode && expansionCode !== '') {
         // Create combined display format: "Name (Code)"
         const displayName = `${expansionName} (${expansionCode})`;
         const key = `${expansionName}|${expansionCode}`; // Use unique key for mapping
-        
+
         const existing = expansionMap.get(key);
         expansionMap.set(key, {
           count: (existing?.count || 0) + 1,
@@ -121,19 +121,19 @@ export default function SearchFiltersComponent({
         });
       }
     });
-    
+
     return Array.from(expansionMap.entries())
-      .map(([key, data]) => ({ 
+      .map(([key, data]) => ({
         value: key, // Use the key for filtering
         displayName: data.displayName,
-        count: data.count, 
-        minCardId: data.minCardId 
+        count: data.count,
+        minCardId: data.minCardId
       }))
       .sort((a, b) => b.minCardId - a.minCardId); // Sort by minimum CardID ascending
   };
-  
+
   const expansionOptions = createExpansionOptions();
-    
+
   const weaknessTypeOptions = createFilterOptions('WeaknessType');
   const resistanceTypeOptions = createFilterOptions('ResistanceType');
 
