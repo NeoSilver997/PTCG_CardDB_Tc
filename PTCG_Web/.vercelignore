@@ -5,8 +5,9 @@ cards/
 *.jpeg
 *.gif
 
-# Keep source/ for CSV data (needed for API)
-# source/  <-- Commented out so CSV files are included
+# Explicitly include source/ directory for CSV data (needed for API)
+!source/
+!source/*.csv
 
 # Exclude scripts and tools (be specific instead of *.js)
 scripts/

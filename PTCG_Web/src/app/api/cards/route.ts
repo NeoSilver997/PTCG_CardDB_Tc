@@ -14,10 +14,14 @@ export async function GET(request: NextRequest) {
     const csvFilename = isDetail ? 'cards_output_all_mega.csv' : 'mega_card.csv';
     const csvPath = path.join(process.cwd(), 'source', csvFilename);
 
+    console.log('API Request:', { csvFilename, csvPath, cwd: process.cwd() });
+    console.log('File exists:', fs.existsSync(csvPath));
+
     // Check if file exists
     if (!fs.existsSync(csvPath)) {
+      console.error(`File not found: ${csvPath}`);
       return NextResponse.json(
-        { error: `${csvFilename} file not found` },
+        { error: `${csvFilename} file not found at ${csvPath}` },
         { status: 404 }
       );
     }
