@@ -34,7 +34,7 @@ import {
   DollarSign,
   Sparkles
 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+// import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { PTCGCard, SearchFilters, AbilityOption, EffectTypeOption } from '../types/card';
 
 interface Deck {
@@ -2613,65 +2613,30 @@ export default function NewDeckStudio() {
             </div>
           </div>
 
-          {/* All Card Types Breakdown - Pie Chart */}
+          {/* All Card Types Breakdown - Simple Text Display */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">All Card Types</h3>
-            
-            {/* Pie Chart */}
-            <div className="h-64 mb-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={Array.from(new Set(selectedDeck.cards?.map(card => card.CardType) || [])).map((cardType, index) => {
-                      const count = selectedDeck.cards?.filter(card => card.CardType === cardType).reduce((sum, card) => sum + card.quantity, 0) || 0;
-                      const percentage = selectedDeck.totalCards > 0 ? (count / selectedDeck.totalCards * 100) : 0;
-                      
-                      return {
-                        name: cardType,
-                        value: count,
-                        percentage: percentage.toFixed(1),
-                        color: cardType.includes('寶可夢') || cardType.toLowerCase().includes('pokemon') ? '#3B82F6' :
-                               cardType.includes('物品') || cardType.toLowerCase().includes('item') ? '#10B981' :
-                               cardType.includes('支援') || cardType.toLowerCase().includes('supporter') ? '#8B5CF6' :
-                               cardType.includes('場地') || cardType.toLowerCase().includes('stadium') ? '#F59E0B' :
-                               cardType.includes('能量') || cardType.toLowerCase().includes('energy') ? '#EAB308' :
-                               '#6B7280'
-                      };
-                    })}
-                    dataKey="value"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    paddingAngle={2}
-                  >
-                    {Array.from(new Set(selectedDeck.cards?.map(card => card.CardType) || [])).map((cardType, index) => {
-                      const color = cardType.includes('寶可夢') || cardType.toLowerCase().includes('pokemon') ? '#3B82F6' :
-                                   cardType.includes('物品') || cardType.toLowerCase().includes('item') ? '#10B981' :
-                                   cardType.includes('支援') || cardType.toLowerCase().includes('supporter') ? '#8B5CF6' :
-                                   cardType.includes('場地') || cardType.toLowerCase().includes('stadium') ? '#F59E0B' :
-                                   cardType.includes('能量') || cardType.toLowerCase().includes('energy') ? '#EAB308' :
-                                   '#6B7280';
-                      return <Cell key={`cell-${index}`} fill={color} />;
-                    })}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: any, name: string, props: any) => [
-                      `${value} cards (${props.payload.percentage}%)`,
-                      name
-                    ]}
-                  />
-                  <Legend 
-                    verticalAlign="bottom"
-                    height={36}
-                    formatter={(value: string, entry: any) => (
-                      <span style={{ color: entry.color, fontSize: '12px' }}>
-                        {value} ({entry.payload.value})
-                      </span>
-                    )}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+
+            {/* Simple Text Breakdown */}
+            <div className="space-y-2">
+              {Array.from(new Set(selectedDeck.cards?.map(card => card.CardType) || [])).map((cardType, index) => {
+                const count = selectedDeck.cards?.filter(card => card.CardType === cardType).reduce((sum, card) => sum + card.quantity, 0) || 0;
+                const percentage = selectedDeck.totalCards > 0 ? (count / selectedDeck.totalCards * 100) : 0;
+
+                const colorClass = cardType.includes('寶可夢') || cardType.toLowerCase().includes('pokemon') ? 'text-blue-600' :
+                                 cardType.includes('物品') || cardType.toLowerCase().includes('item') ? 'text-green-600' :
+                                 cardType.includes('支援') || cardType.toLowerCase().includes('supporter') ? 'text-purple-600' :
+                                 cardType.includes('場地') || cardType.toLowerCase().includes('stadium') ? 'text-yellow-600' :
+                                 cardType.includes('能量') || cardType.toLowerCase().includes('energy') ? 'text-yellow-500' :
+                                 'text-gray-600';
+
+                return (
+                  <div key={cardType} className="flex justify-between items-center py-1">
+                    <span className={`font-medium ${colorClass}`}>{cardType}</span>
+                    <span className="text-gray-600">{count} cards ({percentage.toFixed(1)}%)</span>
+                  </div>
+                );
+              })}
             </div>
             
             {/* Energy Types Breakdown */}
