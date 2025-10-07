@@ -4,9 +4,9 @@ from bs4 import BeautifulSoup
 import sys
 import re
 
-HTML_DIR = r'c:\Users\schan15\SCCode\PTCG_CardDB_Tc\html_pages'
-HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages'
-OUTPUT_CSV = 'cards_output_all_mega.csv'  # Changed name to reflect all cards
+HTML_DIR = r'X:\Document\PokemonDBByjules\PTCG_CardDB_Tc\html_pages\M2'
+#HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages'
+OUTPUT_CSV = 'cards_output_all_mega_m2.csv'  # Changed name to reflect all cards
 
 def get_energy_type_from_url(url):
     """Extract energy type name from image URL"""
