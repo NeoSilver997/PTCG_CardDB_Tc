@@ -6,7 +6,7 @@ import re
 
 HTML_DIR = r'c:\Users\schan15\SCCode\PTCG_CardDB_Tc\html_pages'
 HTML_DIR = r'X:\Document\PokemonDBDownload\html_pages'
-OUTPUT_CSV = 'cards_output_all_mega.csv'  # Changed name to reflect all cards
+OUTPUT_CSV = 'cards_output_all_m2_1.csv'  # Changed name to reflect all cards
 
 def get_energy_type_from_url(url):
     """Extract energy type name from image URL"""
@@ -114,7 +114,7 @@ def extract_card_fields(html, file_path):
         skill2_damage = ''
         skill2_effect = ''
         skill2_cost = ''  # New field
-        
+        subtypes = []
         skill_info = soup.find('div', class_='skillInformation')
         if skill_info:
             skills = skill_info.find_all('div', class_='skill')
@@ -126,6 +126,11 @@ def extract_card_fields(html, file_path):
                     skill_name = name_elem.get_text(strip=True)
                     effect_elem = skill.find('p', class_='skillEffect')
                     effect_text = effect_elem.get_text(strip=True) if effect_elem else ''
+                    
+                    # Skip this entire div if skill1 contains 太晶
+                    if current_skill == 0 and '太晶' in skill_name:
+                        subtypes.append('太晶')
+                        continue
                     
                     # Check if this is an ability
                     if '[特性]' in skill_name:
@@ -246,7 +251,7 @@ def extract_card_fields(html, file_path):
             evolution = ' → '.join(evolution_names)
 
         # Enhanced subtypes handling
-        subtypes = []
+        
         if 'ex' in name.lower():
             subtypes.append('ex')
         if '太晶' in name or (skill1_name and '太晶' in skill1_name) or (skill2_name and '太晶' in skill2_name):
