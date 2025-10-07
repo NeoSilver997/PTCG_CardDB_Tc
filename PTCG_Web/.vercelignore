@@ -8,13 +8,36 @@ cards/
 # Keep source/ for CSV data (needed for API)
 # source/  <-- Commented out so CSV files are included
 
-# Exclude scripts and tools
+# Exclude local card images since we use official API images
+cards/
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# Keep source/ for CSV data (needed for API)
+# source/  <-- Commented out so CSV files are included
+
+# Exclude scripts and tools (be specific instead of *.js)
 scripts/
-*.js
+batch-download.js
+clean-names.js
+debug-browser-sort.js
+download-images.js
+download-missing-images-batch.js
+download-missing-images.js
+example-deck.js
+test-currency.ts
+test-page.js
+test-sorting.js
+transform-market-prices.js
+web_scraping_summary.txt
+
+# Keep these JS files (needed for build)
+!src/i18n/translations.js
 !next.config.js
 !jest.config.js
 !jest.setup.js
-!src/i18n/translations.js
 
 # Exclude documentation and logs
 *.md
