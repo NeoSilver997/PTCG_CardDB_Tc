@@ -29,13 +29,13 @@ The unified PTCG processing system that combines all merge and rating functional
 
 ```bash
 # Smart merge duplicate cards
-python ptcg_processor.py merge input.csv output.csv
+python ptcg_processor.py merge cards_output_all_m2_1.csv cards_output_all_m2_merge.csv
 
 # Rate cards with comprehensive scoring
-python ptcg_processor.py rate input.csv output.csv
+python ptcg_processor.py rate cards_output_all_m2_merge.csv ards_output_all_m2_rate.csv
 
 # Complete pipeline: merge + rate
-python ptcg_processor.py pipeline input.csv rated.csv --merged_file merged.csv
+python ptcg_processor.py pipeline cards_output_all_m2_1.csv rated.csv --merged_file merged.csv
 ```
 
 ### Web Application
