@@ -12,6 +12,7 @@ const testCard: PTCGCard = {
   CardType: "Trainer",
   HP: "",
   Type: "",
+  Attribute: "",
   Weakness: "",
   WeaknessType: "",
   Resistance: "",

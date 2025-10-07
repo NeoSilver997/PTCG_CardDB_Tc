@@ -8,16 +8,6 @@ cards/
 # Keep source/ for CSV data (needed for API)
 # source/  <-- Commented out so CSV files are included
 
-# Exclude local card images since we use official API images
-cards/
-*.png
-*.jpg
-*.jpeg
-*.gif
-
-# Keep source/ for CSV data (needed for API)
-# source/  <-- Commented out so CSV files are included
-
 # Exclude scripts and tools (be specific instead of *.js)
 scripts/
 batch-download.js
@@ -33,12 +23,6 @@ test-sorting.js
 transform-market-prices.js
 web_scraping_summary.txt
 
-# Keep these JS files (needed for build)
-!src/i18n/translations.js
-!next.config.js
-!jest.config.js
-!jest.setup.js
-
 # Exclude documentation and logs
 *.md
 *.txt
@@ -51,6 +35,8 @@ web_scraping_summary.txt
 !jest.setup.js
 !postcss.config.mjs
 !tailwind.config.js
+!src/i18n/translations.js
+!next.config.js
 
 # Exclude build artifacts
 .next/
@@ -66,6 +52,7 @@ __tests__/
 .env.local
 .gitignore
 .vercelignore
+.gitattributes
 
 # Exclude test files
 __tests__/

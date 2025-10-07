@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  ptcg-card-search:
+    build: .
+    container_name: ptcg-card-search
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=--max-old-space-size=512
+    volumes:
+      # Mount data directory for persistent storage
+      - ./data:/app/data
+      # Mount cards directory for card images
+      - ./cards:/app/cards
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/test-currency"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ptcg-network
+
+networks:
+  ptcg-network:
+    driver: bridge

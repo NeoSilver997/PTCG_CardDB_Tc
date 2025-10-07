@@ -57,7 +57,9 @@ export default function MainPage() {
                 noRetreat: false,
                 noResistance: false,
                 noWeakness: false,
-                specialPokemonType: ''
+                specialPokemonType: '',
+                owned: 'all',
+                priceRange: 'all'
               }} // your filters
               onFiltersChange={() => {}} // your handler
               abilities={[]} // your abilities
