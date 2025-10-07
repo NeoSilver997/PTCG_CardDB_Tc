@@ -1,0 +1,40 @@
+# Exclude local card images since we use official API images
+cards/
+
+# Exclude source data files
+source/
+
+# Exclude scripts and tools
+scripts/
+*.js
+!next.config.js
+!jest.config.js
+!jest.setup.js
+
+# Exclude documentation and logs
+*.md
+*.txt
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!next-env.d.ts
+!jest.config.js
+!jest.setup.js
+!postcss.config.mjs
+!tailwind.config.js
+
+# Exclude build artifacts
+.next/
+node_modules/
+*.tsbuildinfo
+
+# Exclude test files
+__tests__/
+*.test.*
+*.spec.*
+
+# Exclude development files
+.env.local
+.gitignore
+.vercelignore
