@@ -1,8 +1,12 @@
 # Exclude local card images since we use official API images
 cards/
+*.png
+*.jpg
+*.jpeg
+*.gif
 
-# Exclude source data files
-source/
+# Keep source/ for CSV data (needed for API)
+# source/  <-- Commented out so CSV files are included
 
 # Exclude scripts and tools
 scripts/
@@ -28,6 +32,16 @@ scripts/
 .next/
 node_modules/
 *.tsbuildinfo
+
+# Exclude test files
+__tests__/
+*.test.*
+*.spec.*
+
+# Exclude development files
+.env.local
+.gitignore
+.vercelignore
 
 # Exclude test files
 __tests__/
