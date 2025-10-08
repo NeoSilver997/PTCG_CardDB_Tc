@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-// Import pre-processed JSON data instead of reading CSV at runtime
-import megaCardData from '../../../data/mega_card.json';
-import detailedCardData from '../../../data/cards_output_all_mega.json';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,12 +7,25 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const isDetail = searchParams.get('detail') === 'true';
 
-    // Use pre-loaded JSON data instead of reading CSV files
-    const cards = isDetail ? detailedCardData : megaCardData;
+    // Fetch data from public folder URLs instead of static imports
+    const dataUrl = isDetail
+      ? `${request.nextUrl.origin}/cards_output_all_mega.json`
+      : `${request.nextUrl.origin}/mega_card.json`;
 
     console.log('API Request:', {
       isDetail,
       dataSource: isDetail ? 'detailed' : 'compact',
+      dataUrl
+    });
+
+    const response = await fetch(dataUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+    }
+
+    const cards = await response.json();
+
+    console.log('Data loaded successfully:', {
       cardCount: cards.length
     });
 

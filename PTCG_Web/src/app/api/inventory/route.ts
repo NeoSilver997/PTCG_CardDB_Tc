@@ -1,48 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 
-const INVENTORY_FILE = path.join(process.cwd(), 'data', 'inventory.json');
+// For Vercel deployment, use in-memory storage since file system writes don't persist
+// In production, this should use a database like Vercel KV, MongoDB, or Supabase
+let inventoryData: any[] = [];
 
-// Ensure data directory exists
-const ensureDataDirectory = () => {
-  const dataDir = path.dirname(INVENTORY_FILE);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-};
-
-// Load inventory from file
-const loadInventory = () => {
-  ensureDataDirectory();
+// Load initial inventory data (read-only for Vercel compatibility)
+const loadInitialInventory = () => {
   try {
-    if (fs.existsSync(INVENTORY_FILE)) {
-      const data = fs.readFileSync(INVENTORY_FILE, 'utf-8');
-      return JSON.parse(data);
-    }
+    // On Vercel, we can't read from file system reliably, so we'll start with empty array
+    // In development/local, you could load from a static import or API call
     return [];
   } catch (error) {
-    console.error('Error loading inventory:', error);
+    console.error('Error loading initial inventory:', error);
     return [];
   }
 };
 
-// Save inventory to file
-const saveInventory = (inventory: any[]) => {
-  ensureDataDirectory();
-  try {
-    fs.writeFileSync(INVENTORY_FILE, JSON.stringify(inventory, null, 2));
-    return true;
-  } catch (error) {
-    console.error('Error saving inventory:', error);
-    return false;
-  }
-};
+// Initialize inventory data
+if (inventoryData.length === 0) {
+  inventoryData = loadInitialInventory();
+}
 
 export async function GET() {
   try {
-    const inventory = loadInventory();
-    return NextResponse.json(inventory);
+    return NextResponse.json(inventoryData);
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to load inventory' },
@@ -78,24 +59,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const inventory = loadInventory();
     const now = new Date().toISOString();
-    
+
     // Check if card already exists in inventory
-    const existingIndex = inventory.findIndex((item: any) => 
+    const existingIndex = inventoryData.findIndex((item: any) =>
       item.CardID === CardID && item.condition === condition
     );
 
     if (existingIndex >= 0) {
       // Update existing entry
-      inventory[existingIndex].quantity = quantity;
-      inventory[existingIndex].notes = notes || inventory[existingIndex].notes;
-      inventory[existingIndex].purchaseCost = purchaseCost !== undefined ? purchaseCost : inventory[existingIndex].purchaseCost;
-      inventory[existingIndex].marketPrice = marketPrice !== undefined ? marketPrice : inventory[existingIndex].marketPrice;
-      inventory[existingIndex].lastUpdated = now;
+      inventoryData[existingIndex].quantity = quantity;
+      inventoryData[existingIndex].notes = notes || inventoryData[existingIndex].notes;
+      inventoryData[existingIndex].purchaseCost = purchaseCost !== undefined ? purchaseCost : inventoryData[existingIndex].purchaseCost;
+      inventoryData[existingIndex].marketPrice = marketPrice !== undefined ? marketPrice : inventoryData[existingIndex].marketPrice;
+      inventoryData[existingIndex].lastUpdated = now;
     } else {
       // Add new entry
-      inventory.push({
+      inventoryData.push({
         CardID,
         quantity,
         condition,
@@ -105,14 +85,6 @@ export async function POST(request: NextRequest) {
         dateAdded: now,
         lastUpdated: now
       });
-    }
-
-    const success = saveInventory(inventory);
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Failed to save inventory' },
-        { status: 500 }
-      );
     }
 
     return NextResponse.json({ success: true });
@@ -137,26 +109,15 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const inventory = loadInventory();
-    let newInventory;
-
     if (condition) {
       // Remove specific condition entry
-      newInventory = inventory.filter((item: any) => 
+      inventoryData = inventoryData.filter((item: any) =>
         !(item.CardID === parseInt(CardID) && item.condition === condition)
       );
     } else {
       // Remove all entries for this card
-      newInventory = inventory.filter((item: any) => 
+      inventoryData = inventoryData.filter((item: any) =>
         item.CardID !== parseInt(CardID)
-      );
-    }
-
-    const success = saveInventory(newInventory);
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Failed to save inventory' },
-        { status: 500 }
       );
     }
 
