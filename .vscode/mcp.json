@@ -1,8 +1,8 @@
 {
     "servers": {
-        "sqlite-query": {
-            "command": "mcp-sqlite-tool",
-            "type": "stdio"
+        "pokemon-cards": {
+        "command": "node",
+        "args": ["x:\\Document\\PokemonDBByjules\\PTCG_CardDB_Tc\\mcp-server\\server.js"]
         }
     }
 }

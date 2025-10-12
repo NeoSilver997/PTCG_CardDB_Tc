@@ -54,6 +54,8 @@ class PokemonCardsServer {
           return this.getIllustrators(args);
         case 'get_max_damage':
           return this.getMaxDamage(args);
+        case 'get_summary':
+          return this.getSummary(args);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
@@ -141,6 +143,14 @@ class PokemonCardsServer {
           {
             name: 'get_max_damage',
             description: 'Get the highest damage value and the card/skill that has it.',
+            inputSchema: {
+              type: 'object',
+              properties: {}
+            }
+          },
+          {
+            name: 'get_summary',
+            description: 'Get summary statistics of the Pokemon card database.',
             inputSchema: {
               type: 'object',
               properties: {}
@@ -287,6 +297,44 @@ class PokemonCardsServer {
       db.get(sql, [], (err, row) => {
         if (err) reject(err);
         else resolve({ content: [{ type: 'text', text: JSON.stringify(row, null, 2) }] });
+      });
+    });
+  }
+
+  async getSummary(args) {
+    const summary = {};
+
+    return new Promise((resolve, reject) => {
+      // Get total cards
+      db.get('SELECT COUNT(*) as total_cards FROM cards', [], (err, row) => {
+        if (err) return reject(err);
+        summary.total_cards = row.total_cards;
+
+        // Get total expansions
+        db.get('SELECT COUNT(*) as total_expansions FROM expansions', [], (err, row) => {
+          if (err) return reject(err);
+          summary.total_expansions = row.total_expansions;
+
+          // Get total illustrators
+          db.get('SELECT COUNT(*) as total_illustrators FROM illustrators', [], (err, row) => {
+            if (err) return reject(err);
+            summary.total_illustrators = row.total_illustrators;
+
+            // Get rarity distribution
+            db.all('SELECT rarity, COUNT(*) as count FROM cards GROUP BY rarity ORDER BY count DESC', [], (err, rows) => {
+              if (err) return reject(err);
+              summary.rarity_distribution = rows;
+
+              // Get card type distribution
+              db.all('SELECT card_type, COUNT(*) as count FROM cards GROUP BY card_type ORDER BY count DESC', [], (err, rows) => {
+                if (err) return reject(err);
+                summary.card_type_distribution = rows;
+
+                resolve({ content: [{ type: 'text', text: JSON.stringify(summary, null, 2) }] });
+              });
+            });
+          });
+        });
       });
     });
   }
