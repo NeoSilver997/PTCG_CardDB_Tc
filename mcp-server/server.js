@@ -52,6 +52,8 @@ class PokemonCardsServer {
           return this.getExpansions(args);
         case 'get_illustrators':
           return this.getIllustrators(args);
+        case 'get_max_damage':
+          return this.getMaxDamage(args);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
@@ -131,6 +133,14 @@ class PokemonCardsServer {
           {
             name: 'get_illustrators',
             description: 'List all illustrators.',
+            inputSchema: {
+              type: 'object',
+              properties: {}
+            }
+          },
+          {
+            name: 'get_max_damage',
+            description: 'Get the highest damage value and the card/skill that has it.',
             inputSchema: {
               type: 'object',
               properties: {}
@@ -259,6 +269,24 @@ class PokemonCardsServer {
       db.all(sql, [], (err, rows) => {
         if (err) reject(err);
         else resolve({ content: [{ type: 'text', text: JSON.stringify(rows, null, 2) }] });
+      });
+    });
+  }
+
+  async getMaxDamage(args) {
+    const sql = `
+      SELECT c.name, s.name as skill_name, s.damage, CAST(SUBSTR(s.damage, 1, INSTR(s.damage || ' ', ' ') - 1) AS INTEGER) as damage_num
+      FROM skills s
+      JOIN cards c ON s.card_id = c.id
+      WHERE s.damage != '' AND s.damage IS NOT NULL AND damage_num IS NOT NULL
+      ORDER BY damage_num DESC
+      LIMIT 1
+    `;
+
+    return new Promise((resolve, reject) => {
+      db.get(sql, [], (err, row) => {
+        if (err) reject(err);
+        else resolve({ content: [{ type: 'text', text: JSON.stringify(row, null, 2) }] });
       });
     });
   }

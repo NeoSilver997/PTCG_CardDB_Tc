@@ -62,9 +62,9 @@ setTimeout(() => {
 }, 3000);
 
 setTimeout(() => {
-  console.log('Sending tools/call for get_expansions...');
+  console.log('Sending tools/call for get_max_damage...');
   sendMessage('tools/call', {
-    name: 'get_expansions'
+    name: 'get_max_damage'
   });
 }, 4000);
 

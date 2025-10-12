@@ -5,12 +5,12 @@ import os
 # Paths
 csv_path = r'x:\Document\PokemonDBByjules\PTCG_CardDB_Tc\PTCG_Web\source\cards_output_all_mega.csv'
 db_path = r'x:\Document\PokemonDBByjules\PTCG_CardDB_Tc\pokemon_cards.db'
+print(f"DB path: {db_path}")
 
 # Create database
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
-# Create tables
 cursor.execute('DROP TABLE IF EXISTS expansions')
 cursor.execute('''
 CREATE TABLE expansions (
@@ -20,6 +20,7 @@ CREATE TABLE expansions (
     mark TEXT
 )
 ''')
+print("expansions created")
 
 cursor.execute('DROP TABLE IF EXISTS illustrators')
 cursor.execute('''
@@ -28,6 +29,7 @@ CREATE TABLE illustrators (
     name TEXT UNIQUE
 )
 ''')
+print("illustrators created")
 
 cursor.execute('DROP TABLE IF EXISTS cards')
 cursor.execute('''
@@ -59,6 +61,7 @@ CREATE TABLE cards (
     FOREIGN KEY(illustrator_id) REFERENCES illustrators(id)
 )
 ''')
+print("cards created")
 
 cursor.execute('DROP TABLE IF EXISTS abilities')
 cursor.execute('''
@@ -70,6 +73,7 @@ CREATE TABLE abilities (
     FOREIGN KEY(card_id) REFERENCES cards(id)
 )
 ''')
+print("abilities created")
 
 cursor.execute('DROP TABLE IF EXISTS skills')
 cursor.execute('''
@@ -84,6 +88,7 @@ CREATE TABLE skills (
     FOREIGN KEY(card_id) REFERENCES cards(id)
 )
 ''')
+print("skills created")
 
 cursor.execute('DROP TABLE IF EXISTS evolutions')
 cursor.execute('''
@@ -94,6 +99,7 @@ CREATE TABLE evolutions (
     FOREIGN KEY(card_id) REFERENCES cards(id)
 )
 ''')
+print("evolutions created")
 
 cursor.execute('DROP TABLE IF EXISTS subtypes')
 cursor.execute('''
@@ -104,11 +110,20 @@ CREATE TABLE subtypes (
     FOREIGN KEY(card_id) REFERENCES cards(id)
 )
 ''')
+print("subtypes created")
+
+print("Tables created.")
+conn.commit()
 
 # Read CSV and insert
 with open(csv_path, 'r', encoding='utf-8-sig') as f:
     reader = csv.DictReader(f)
+    count = 0
     for row in reader:
+        count += 1
+        if count % 1000 == 0:
+            print(f"Processed {count} rows")
+
         # Insert expansion
         expansion_name = row['Expansion']
         expansion_code = row['ExpansionCode']
@@ -158,6 +173,8 @@ with open(csv_path, 'r', encoding='utf-8-sig') as f:
             subtypes_list = [s.strip() for s in row['Subtypes'].split(',') if s.strip()]
             for sub in subtypes_list:
                 cursor.execute('INSERT INTO subtypes (card_id, subtype) VALUES (?, ?)', (card_id, sub))
+
+    print(f"Total rows processed: {count}")
 
 # Commit and close
 conn.commit()
