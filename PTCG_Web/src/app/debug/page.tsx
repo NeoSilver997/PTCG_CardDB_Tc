@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 // Dynamically import UIDraft component
-const UIDraft = dynamic(() => import('../../components/UIDraft'), { ssr: false });
+const UIDraft = dynamic(() => import('../../components/NewDeckStudio'), { ssr: false });
 
 interface Route {
   path: string;

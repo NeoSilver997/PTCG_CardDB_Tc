@@ -162,10 +162,13 @@ export default function InventoryPage() {
       const card = cards.find(c => c.CardID === item.CardID);
       if (!card) return false;
 
+      // Skip cards with empty names
+      if (!card.Name || card.Name.trim() === '') return false;
+
       const matchesSearch = !searchTerm || 
-        card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.CardType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.ExpansionName.toLowerCase().includes(searchTerm.toLowerCase());
+        (card.Name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (card.CardType || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (card.ExpansionName || '').toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCondition = !conditionFilter || item.condition === conditionFilter;
 
@@ -185,7 +188,7 @@ export default function InventoryPage() {
       
       switch (sortBy) {
         case 'name':
-          comparison = cardA.Name.localeCompare(cardB.Name);
+          comparison = (cardA.Name || '').localeCompare(cardB.Name || '');
           break;
         case 'id':
           comparison = cardA.CardID - cardB.CardID;

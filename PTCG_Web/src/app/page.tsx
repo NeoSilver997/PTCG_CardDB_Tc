@@ -52,7 +52,7 @@ export default function Home() {
   const [marketPrices, setMarketPrices] = useState<{[cardId: string]: MarketPrice[]}>({});
 
   const isPokemonCard = (card: PTCGCard) => {
-    return card.CardType.includes('寶可夢') || card.CardType.toLowerCase().includes('pokemon');
+    return card.CardType.includes('寶可夢') || (card.CardType || '').toLowerCase().includes('pokemon');
   };
 
   const loadMarketPrices = useCallback(async () => {
@@ -210,17 +210,20 @@ export default function Home() {
     let filtered = cards;
 
     // Exclude energy cards from display
-    filtered = filtered.filter(card => !card.CardType.includes('能量') && !card.CardType.toLowerCase().includes('energy'));
+    filtered = filtered.filter(card => !card.CardType.includes('能量') && !(card.CardType || '').toLowerCase().includes('energy'));
+
+    // Skip cards with empty names
+    filtered = filtered.filter(card => card.Name && card.Name.trim() !== '');
 
     // Apply search term
     if (searchTerm) {
       filtered = filtered.filter(card =>
         (
-          card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (card.Name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
           String(card.CardID).toLowerCase().includes(searchTerm.toLowerCase()) ||
-          card.Skill1Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          card.Skill2Effect.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          card.AbilityEffect.toLowerCase().includes(searchTerm.toLowerCase())
+          (card.Skill1Effect || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (card.Skill2Effect || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (card.AbilityEffect || '').toLowerCase().includes(searchTerm.toLowerCase())
         )
       );
     }
@@ -377,13 +380,13 @@ export default function Home() {
       
       switch (sortBy) {
         case 'name':
-          comparison = a.Name.localeCompare(b.Name);
+          comparison = (a.Name || '').localeCompare(b.Name || '');
           break;
         case 'id':
           comparison = parseInt(String(a.CardID)) - parseInt(String(b.CardID));
           break;
         case 'rarity':
-          comparison = a.Rarity.localeCompare(b.Rarity);
+          comparison = (a.Rarity || '').localeCompare(b.Rarity || '');
           break;
         case 'tier':
           comparison = (a.Tier || '').localeCompare(b.Tier || '');
@@ -555,7 +558,7 @@ export default function Home() {
     // Recalculate deck stats
     currentDeck.totalCards = currentDeck.cards.reduce((sum: number, c: any) => sum + c.quantity, 0);
     currentDeck.pokemonCount = currentDeck.cards
-      .filter((c: any) => c.CardType.includes('寶可夢') || c.CardType.toLowerCase().includes('pokemon'))
+      .filter((c: any) => c.CardType.includes('寶可夢') || (c.CardType || '').toLowerCase().includes('pokemon'))
       .reduce((sum: number, c: any) => sum + c.quantity, 0);
     currentDeck.trainerCount = currentDeck.cards
       .filter((c: any) => c.CardType.includes('物品') || c.CardType.includes('支援') || c.CardType.includes('場地'))

@@ -236,9 +236,9 @@ export default function MarketPage() {
 
     // Filter by search term
     const filteredCards = marketCards.filter(card =>
-      card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      card.ExpansionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      card.CardType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (card.Name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (card.ExpansionName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (card.CardType || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       card.CardID.toString().includes(searchTerm)
     );
 
