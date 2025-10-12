@@ -124,53 +124,95 @@ with open(csv_path, 'r', encoding='utf-8-sig') as f:
         if count % 1000 == 0:
             print(f"Processed {count} rows")
 
-        # Insert expansion
+        # Extract values using snake_case variable names (following Python conventions)
         expansion_name = row['Expansion']
         expansion_code = row['ExpansionCode']
         mark = row['Mark']
+        illustrator_name = row['Illustrator']
+
+        # Card data with proper Python naming
+        card_name = row['Name']
+        evolution_stage = row['EvolutionStage']
+        web_card_id = row['WebCardID']
+        image_url = row['ImageURL']
+        card_type = row['CardType']
+        hp_value = int(row['HP']) if row['HP'] else None
+        attribute = row['Attribute']
+        weakness = row['Weakness']
+        weakness_type = row['WeaknessType']
+        resistance = row['Resistance']
+        resistance_type = row['ResistanceType']
+        retreat_cost = int(row['RetreatCost']) if row['RetreatCost'] else None
+        collector_number = row['CollectorNumber']
+        rarity = row['Rarity']
+        pokemon_info = row['PokemonInfo']
+        tier = row['Tier']
+        score = float(row['Score']) if row['Score'] else None
+        score_breakdown = row['ScoreBreakdown']
+        primary_effect_type = row['PrimaryEffectType']
+        special_effect_type = row['SpecialEffectType']
+
+        # Ability data
+        ability_name = row['Ability']
+        ability_desc = row['AbilityDesc']
+
+        # Skill data
+        skill1_name = row['Skill1Name']
+        skill1_cost = row['Skill1Cost']
+        skill1_damage = row['Skill1Damage']
+        skill1_effect = row['Skill1Effect']
+        skill2_name = row['Skill2Name']
+        skill2_cost = row['Skill2Cost']
+        skill2_damage = row['Skill2Damage']
+        skill2_effect = row['Skill2Effect']
+
+        # Evolution data
+        evolution = row['Evolution']
+        subtypes = row['Subtypes']
+
+        # Insert expansion
         cursor.execute('INSERT OR IGNORE INTO expansions (name, code, mark) VALUES (?, ?, ?)', (expansion_name, expansion_code, mark))
         expansion_id = cursor.execute('SELECT id FROM expansions WHERE name = ?', (expansion_name,)).fetchone()[0]
 
         # Insert illustrator
-        illustrator_name = row['Illustrator']
         cursor.execute('INSERT OR IGNORE INTO illustrators (name) VALUES (?)', (illustrator_name,))
         illustrator_id = cursor.execute('SELECT id FROM illustrators WHERE name = ?', (illustrator_name,)).fetchone()[0]
 
         # Insert card
-        hp = int(row['HP']) if row['HP'] else None
-        retreat_cost = int(row['RetreatCost']) if row['RetreatCost'] else None
-        score = float(row['Score']) if row['Score'] else None
-
         cursor.execute('''
         INSERT INTO cards (name, evolution_stage, web_card_id, image_url, card_type, hp, attribute, weakness, weakness_type, resistance, resistance_type, retreat_cost, collector_number, rarity, expansion_id, illustrator_id, pokemon_info, tier, score, score_breakdown, primary_effect_type, special_effect_type)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            row['Name'], row['EvolutionStage'], row['WebCardID'], row['ImageURL'], row['CardType'], hp, row['Attribute'],
-            row['Weakness'], row['WeaknessType'], row['Resistance'], row['ResistanceType'], retreat_cost, row['CollectorNumber'],
-            row['Rarity'], expansion_id, illustrator_id, row['PokemonInfo'], row['Tier'], score, row['ScoreBreakdown'],
-            row['PrimaryEffectType'], row['SpecialEffectType']
+            card_name, evolution_stage, web_card_id, image_url, card_type, hp_value, attribute,
+            weakness, weakness_type, resistance, resistance_type, retreat_cost, collector_number,
+            rarity, expansion_id, illustrator_id, pokemon_info, tier, score, score_breakdown,
+            primary_effect_type, special_effect_type
         ))
         card_id = cursor.lastrowid
 
         # Insert ability if exists (only for Pokemon cards)
-        if row['CardType'] == '寶可夢' and row['Ability']:
-            cursor.execute('INSERT INTO abilities (card_id, name, description) VALUES (?, ?, ?)', (card_id, row['Ability'], row['AbilityDesc']))
+        if card_type == '寶可夢' and ability_name:
+            cursor.execute('INSERT INTO abilities (card_id, name, description) VALUES (?, ?, ?)', (card_id, ability_name, ability_desc))
 
         # Insert skills (only for Pokemon cards)
-        if row['CardType'] == '寶可夢':
-            if row['Skill1Name']:
-                cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, description) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 1, row['Skill1Name'], row['Skill1Cost'], row['Skill1Damage'], row['Skill1Effect']))
-            if row['Skill2Name']:
-                cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, description) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 2, row['Skill2Name'], row['Skill2Cost'], row['Skill2Damage'], row['Skill2Effect']))
+        if card_type == '寶可夢':
+            if skill1_name:
+                cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, description) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 1, skill1_name, skill1_cost, skill1_damage, skill1_effect))
+            if skill2_name:
+                cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, description) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 2, skill2_name, skill2_cost, skill2_damage, skill2_effect))
         else:
-            if row['Skill1Effect']:
-                cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, description) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 1, row['Skill1Name'], row['Skill1Cost'], row['Skill1Damage'], row['Skill1Effect']))      
-
+            cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, description) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 1, skill1_name, skill1_cost, skill1_damage, skill1_effect))
         # Insert evolutions
-        if row['Evolution']:
-            evolutions_list = [e.strip() for e in row['Evolution'].split('→') if e.strip()]
+        if evolution:
+            evolutions_list = [e.strip() for e in evolution.split('→') if e.strip()]
             for evo in evolutions_list:
                 cursor.execute('INSERT INTO evolutions (card_id, evolution) VALUES (?, ?)', (card_id, evo))
+
+        # Insert subtypes
+        if subtypes:
+            subtypes_list = [s.strip() for s in subtypes.split(',') if s.strip()]
+            for sub in subtypes_list:
+                cursor.execute('INSERT INTO subtypes (card_id, subtype) VALUES (?, ?)', (card_id, sub))
 
         # Insert subtypes
         if row['Subtypes']:
