@@ -12,7 +12,7 @@ This script converts the CSV file `cards_output_all_mega.csv` to a normalized SQ
 - illustrators: id, name
 - cards: id, name, evolution_stage, web_card_id, image_url, card_type, hp, attribute, weakness, weakness_type, resistance, resistance_type, retreat_cost, collector_number, rarity, expansion_id, illustrator_id, pokemon_info, tier, score, score_breakdown, primary_effect_type, special_effect_type
 - abilities: id, card_id, name, description
-- skills: id, card_id, skill_number, name, cost, damage, effect
+- skills: id, card_id, skill_number, name, cost, damage, description
 - evolutions: id, card_id, evolution
 - subtypes: id, card_id, subtype
 

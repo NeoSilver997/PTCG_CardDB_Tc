@@ -84,7 +84,7 @@ CREATE TABLE skills (
     name TEXT,
     cost TEXT,
     damage TEXT,
-    effect TEXT,
+    description TEXT,
     FOREIGN KEY(card_id) REFERENCES cards(id)
 )
 ''')
@@ -152,15 +152,19 @@ with open(csv_path, 'r', encoding='utf-8-sig') as f:
         ))
         card_id = cursor.lastrowid
 
-        # Insert ability if exists
-        if row['Ability']:
+        # Insert ability if exists (only for Pokemon cards)
+        if row['CardType'] == '寶可夢' and row['Ability']:
             cursor.execute('INSERT INTO abilities (card_id, name, description) VALUES (?, ?, ?)', (card_id, row['Ability'], row['AbilityDesc']))
 
-        # Insert skills
-        if row['Skill1Name']:
-            cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, effect) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 1, row['Skill1Name'], row['Skill1Cost'], row['Skill1Damage'], row['Skill1Effect']))
-        if row['Skill2Name']:
-            cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, effect) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 2, row['Skill2Name'], row['Skill2Cost'], row['Skill2Damage'], row['Skill2Effect']))
+        # Insert skills (only for Pokemon cards)
+        if row['CardType'] == '寶可夢':
+            if row['Skill1Name']:
+                cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, description) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 1, row['Skill1Name'], row['Skill1Cost'], row['Skill1Damage'], row['Skill1Effect']))
+            if row['Skill2Name']:
+                cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, description) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 2, row['Skill2Name'], row['Skill2Cost'], row['Skill2Damage'], row['Skill2Effect']))
+        else:
+            if row['Skill1Effect']:
+                cursor.execute('INSERT INTO skills (card_id, skill_number, name, cost, damage, description) VALUES (?, ?, ?, ?, ?, ?)', (card_id, 1, row['Skill1Name'], row['Skill1Cost'], row['Skill1Damage'], row['Skill1Effect']))      
 
         # Insert evolutions
         if row['Evolution']:
