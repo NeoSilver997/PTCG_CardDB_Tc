@@ -14,7 +14,8 @@ rarities = {
     "BWR": "19",
     "ACE": "18",
     "SSR": "17",
-    "UR": "10"
+    "UR": "10",
+    "SAR": "16"
 }
 
 base_url_template = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&rarity[]={rarity_id}"
