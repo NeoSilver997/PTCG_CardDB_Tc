@@ -60,6 +60,10 @@ This document contains the official Pokemon Trading Card Game advanced rules and
 - Cannot play if same name Stadium already in play
 - Both players affected by Stadium effects
 
+#### B-04 ACE SPEC Cards
+- Only 1 ACE SPEC card allowed per deck total (cannot mix different ACE SPEC cards)
+
+
 ### C. Energy Cards
 - Basic Energy: 9 types (no Colorless Basic Energy)
 - Special Energy: Have additional effects
@@ -354,7 +358,7 @@ This document contains the official Pokemon Trading Card Game advanced rules and
 - Special card rules (ex, Ancient/Future) must be flagged
 
 ### Data Validation
-- Deck construction rules (60 cards, evolution requirements, max 4 copies of same non-basic energy card by name, unlimited basic energy cards)
+- Deck construction rules (60 cards, evolution requirements, max 4 copies of same non-basic energy card by name, unlimited basic energy cards, only 1 ACE SPEC card total per deck)
 - Attack legality (energy costs, turn restrictions)
 - Effect interactions (status conditions, damage modifiers)
 
