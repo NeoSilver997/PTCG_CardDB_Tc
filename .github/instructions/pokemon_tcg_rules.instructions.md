@@ -354,7 +354,7 @@ This document contains the official Pokemon Trading Card Game advanced rules and
 - Special card rules (ex, Ancient/Future) must be flagged
 
 ### Data Validation
-- Deck construction rules (60 cards, evolution requirements)
+- Deck construction rules (60 cards, evolution requirements, max 4 copies of same non-basic energy card by name, unlimited basic energy cards)
 - Attack legality (energy costs, turn restrictions)
 - Effect interactions (status conditions, damage modifiers)
 
