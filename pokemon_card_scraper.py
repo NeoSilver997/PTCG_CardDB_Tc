@@ -8,9 +8,41 @@ import os
 import datetime
 import re
 import shutil
+import json
+
+# Load rarity options
+rarity_options_path = os.path.join(os.path.dirname(__file__), "rarity_options.json")
+rarity_options = {}
+if os.path.exists(rarity_options_path):
+    with open(rarity_options_path, 'r', encoding='utf-8') as f:
+        rarity_options = json.load(f)
+
+# Load rarity ID mappings
+rarity_dir = os.path.join(os.path.dirname(__file__), "temp", "debug")
+id_to_rarity = {}
+id_to_rarity_id = {}
+rarity_files = {
+    "sar_web_card_ids.json": ("SAR", "15"),
+    "ur_web_card_ids.json": ("UR", "10"),
+    "ar_web_card_ids.json": ("AR", "14"),
+    "sr_web_card_ids.json": ("SR", "8"),
+    "rr_web_card_ids.json": ("RR", "4"),
+    "mur_web_card_ids.json": ("MUR", "20"),
+    "bwr_web_card_ids.json": ("BWR", "19"),
+    "ace_web_card_ids.json": ("ACE", "18"),
+    "ssr_web_card_ids.json": ("SSR", "17"),
+}
+for filename, (name, rid) in rarity_files.items():
+    filepath = os.path.join(rarity_dir, filename)
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            ids = json.load(f)
+            for card_id in ids:
+                id_to_rarity[card_id] = name
+                id_to_rarity_id[card_id] = rid
 
 # Base URL for the card list
-base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=M2"
+base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=M1S"
 
 try:
     # Create folders if they don't exist
@@ -138,7 +170,9 @@ try:
                     'Artist': '',
                     'Evolve_Marker': '',
                     'Expansion_Symbol': '',
-                    'Subtypes': ''
+                    'Subtypes': '',
+                    'Rarity': id_to_rarity.get(web_card_id, ''),
+                    'Rarity_ID': id_to_rarity_id.get(web_card_id, '')
                 }
                 
                 # Visit the detail page to get more information
@@ -153,6 +187,40 @@ try:
                     # Add timeout to avoid hanging on slow responses
                     detail_response = requests.get(card_url, timeout=10)
                     detail_soup = BeautifulSoup(detail_response.text, 'html.parser')
+                    
+                    # Extract rarity ID from the detail page
+                    rarity_symbol = detail_soup.find('span', class_='raritySymbol')
+                    if rarity_symbol:
+                        rarity_img = rarity_symbol.find('img')
+                        if rarity_img and 'src' in rarity_img.attrs:
+                            src = rarity_img['src']
+                            rarity_match = re.search(r'rarity_(\d+)\.png', src)
+                            if rarity_match:
+                                card_data['Rarity_ID'] = rarity_match.group(1)
+                            else:
+                                if 'alt' in rarity_img.attrs and rarity_img['alt'].isdigit():
+                                    card_data['Rarity_ID'] = rarity_img['alt']
+                                elif 'title' in rarity_img.attrs and rarity_img['title'].isdigit():
+                                    card_data['Rarity_ID'] = rarity_img['title']
+                    
+                    if not card_data['Rarity_ID']:
+                        rarity_elem = detail_soup.find('span', class_=lambda x: x and 'rarity' in x.lower())
+                        if rarity_elem:
+                            rarity_text = rarity_elem.text.strip()
+                            rarity_map = {
+                                'Common': '1',
+                                'Uncommon': '2',
+                                'Rare': '3',
+                                'Super Rare': '4',
+                                'Ultra Rare': '5',
+                            }
+                            if rarity_text in rarity_map:
+                                card_data['Rarity_ID'] = rarity_map[rarity_text]
+                            elif rarity_text.isdigit():
+                                card_data['Rarity_ID'] = rarity_text
+                    
+                    if card_data['Rarity_ID']:
+                        card_data['Rarity'] = rarity_options.get(card_data['Rarity_ID'], '')
                     
                     # Save the detail page HTML for debugging if needed
                     if page == 1 and cards.index(card) == 0:  # Save only the first card's detail page
@@ -583,7 +651,7 @@ try:
                         'Skill1_Damage', 'Skill1_Effect', 'Skill2_Name', 'Skill2_Cost', 
                         'Skill2_Damage', 'Skill2_Effect', 'Weakness', 'Resistance', 
                         'Retreat_Cost', 'Evolution', 'Pokemon_Info', 'Artist', 
-                        'Evolve_Marker', 'Expansion_Symbol','Subtypes', 'Card URL', 'Image URL']
+                        'Evolve_Marker', 'Expansion_Symbol','Subtypes', 'Rarity', 'Rarity_ID', 'Card URL', 'Image URL']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             
