@@ -28,7 +28,7 @@ const testCard: PTCGCard = {
   Skill2Effect: "",
   AbilityName: "",
   AbilityEffect: "",
-  RetreatCost: "",
+  RetreatCost: 0,
   Illustrator: "",
   Rarity: "Uncommon",
   ExpansionCode: "TC001",

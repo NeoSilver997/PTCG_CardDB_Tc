@@ -317,7 +317,7 @@ const calculateDeckStats = async (deck: Deck) => {
   );
   
   const hasHighHP = pokemonCards.some(card => parseInt(card.HP || '0') > 200);
-  const hasLowRetreat = pokemonCards.some(card => parseInt(card.RetreatCost || '3') <= 1);
+  const hasLowRetreat = pokemonCards.some(card => (card.RetreatCost || 3) <= 1);
   const hasSpecialEffects = pokemonCards.some(card => 
     card.AbilityName && card.AbilityName !== '無'
   );
@@ -2587,11 +2587,7 @@ export default function NewDeckStudio() {
             <div className="pt-4 border-t border-gray-200">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Retreat Cost Distribution</h4>
               <div className="space-y-2">
-                {Array.from(new Set(selectedDeck.cards?.map(card => card.RetreatCost).filter(cost => cost !== undefined && cost !== null && cost !== '') || [])).sort((a, b) => {
-                  const aNum = parseInt(String(a)) || 0;
-                  const bNum = parseInt(String(b)) || 0;
-                  return aNum - bNum;
-                }).map((cost, index) => {
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.RetreatCost).filter(cost => cost !== undefined && cost !== null) || [])).sort((a, b) => a - b).map((cost, index) => {
                   const count = selectedDeck.cards?.filter(card => card.RetreatCost === cost).reduce((sum, card) => sum + card.quantity, 0) || 0;
                   
                   return (
@@ -2606,7 +2602,7 @@ export default function NewDeckStudio() {
                     </div>
                   );
                 })}
-                {Array.from(new Set(selectedDeck.cards?.map(card => card.RetreatCost).filter(cost => cost !== undefined && cost !== null && cost !== '') || [])).length === 0 && (
+                {Array.from(new Set(selectedDeck.cards?.map(card => card.RetreatCost).filter(cost => cost !== undefined && cost !== null) || [])).length === 0 && (
                   <div className="text-sm text-gray-500">No retreat costs found</div>
                 )}
               </div>

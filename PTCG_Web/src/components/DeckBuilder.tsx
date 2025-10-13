@@ -242,7 +242,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
   }, [initialCards]);
 
   const filteredCards = initialCards.filter(card => {
-    const matchesSearch = card.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = (card.Name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          card.AbilityName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          card.AbilityEffect?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -256,7 +256,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                           (!filters.expansion || card.ExpansionName === filters.expansion || card.ExpansionCode === filters.expansion) &&
                           (!filters.weaknessType || card.WeaknessType === filters.weaknessType) &&
                           (!filters.resistanceType || card.ResistanceType === filters.resistanceType) &&
-                          (!filters.noRetreat || card.RetreatCost === 'None' || card.RetreatCost === '' || card.RetreatCost === '0') &&
+                          (!filters.noRetreat || card.RetreatCost === 0) &&
                           (!filters.noResistance || !card.Resistance || card.Resistance === 'None' || card.Resistance === '') &&
                           (!filters.noWeakness || !card.Weakness || card.Weakness === 'None' || card.Weakness === '') &&
                           (!filters.specialPokemonType || card.SpecialTag === filters.specialPokemonType);
@@ -754,7 +754,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                         AbilityName: "", AbilityEffect: "", Rarity: "U", Evolution: "", EvolutionStage: "",
                         ImageURL: "", HP: "", Type: "", Attribute: "", Weakness: "", WeaknessType: "", Resistance: "",
                         ResistanceType: "", Skill1Name: "", Skill1Energy: "", Skill1Damage: "", Skill1Effect: "",
-                        Skill2Name: "", Skill2Energy: "", Skill2Damage: "", Skill2Effect: "", RetreatCost: "",
+                        Skill2Name: "", Skill2Energy: "", Skill2Damage: "", Skill2Effect: "", RetreatCost: 0,
                         Illustrator: "", ExpansionCode: "", ExpansionName: "", CollectorNumber: "", RegulationMark: "",
                         Artist: "", SpecialTag: "", PrimaryEffectType: "", SpecialEffectType: "", AbilityStats: "", Tier: ""
                       };
@@ -1151,7 +1151,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                 onFiltersChange={setFilters}
                 abilities={abilities}
                 effectTypes={effectTypes}
-                allOptions={{}}
+                cards={filteredCards}
               />
             </div>
 

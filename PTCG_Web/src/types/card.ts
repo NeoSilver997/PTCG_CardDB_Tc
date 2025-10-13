@@ -23,7 +23,7 @@ export interface PTCGCard {
   Skill2Effect: string;
   AbilityName: string;
   AbilityEffect: string;
-  RetreatCost: string;
+  RetreatCost: number;
   Illustrator: string;
   Rarity: string;
   ExpansionCode: string;

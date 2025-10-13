@@ -319,7 +319,7 @@ export default function Home() {
     // Apply no retreat filter (only for Pokemon cards)
     if (filters.noRetreat) {
       filtered = filtered.filter(card =>
-        isPokemonCard(card) && (!card.RetreatCost || card.RetreatCost.trim() === '' || card.RetreatCost === '0')
+        isPokemonCard(card) && (!card.RetreatCost || card.RetreatCost === 0)
       );
     }
 

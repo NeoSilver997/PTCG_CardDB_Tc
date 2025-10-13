@@ -58,7 +58,7 @@ export default function CardDetailModal({
   // Card-only view state
   const [cardOnlyView, setCardOnlyView] = useState(false);
   
-  const versionsPerPage = 8;
+  const versionsPerPage = 7; // 4 columns × 2 rows - 1 for current card = 7
 
   // Inventory functionality
   const { addToInventory, getTotalQuantity, isCardOwned, loading: inventoryLoading } = useInventory();
@@ -258,11 +258,11 @@ export default function CardDetailModal({
     );
   };
 
-  const renderColorlessEnergyCost = (energyCost: string) => {
-    if (!energyCost || energyCost.trim() === '') return null;
+  const renderColorlessEnergyCost = (energyCost: number) => {
+    if (!energyCost || energyCost <= 0) return null;
 
     // For retreat cost, it's a number representing how many colorless energy are needed
-    const energyCount = parseInt(energyCost.trim(), 10);
+    const energyCount = energyCost;
 
     if (isNaN(energyCount) || energyCount <= 0) return null;
 
@@ -1191,7 +1191,7 @@ export default function CardDetailModal({
                   </div>
 
                   {/* Other versions with pagination */}
-                  {otherVersions.slice(versionPage * (versionsPerPage - 1), (versionPage + 1) * (versionsPerPage - 1)).map((versionCard, index) => (
+                  {otherVersions.slice(versionPage * versionsPerPage, (versionPage + 1) * versionsPerPage).map((versionCard, index) => (
                     <div
                       key={versionCard.CardID}
                       className={`relative group cursor-pointer ${selectedVersion.CardID === versionCard.CardID ? 'ring-2 ring-blue-500' : ''}`}
@@ -1212,7 +1212,7 @@ export default function CardDetailModal({
                       <div className={`absolute bottom-0 left-0 right-0 text-white text-xs py-1 px-2 text-center font-medium ${
                         selectedVersion.CardID === versionCard.CardID ? 'bg-blue-500' : 'bg-gray-700'
                       }`}>
-                        {versionCard.ExpansionName + "(" + versionCard.ExpansionCode + ") - "+ versionCard.CollectorNumber || `V${versionPage * (versionsPerPage - 1) + index + 2}`}
+                        {versionCard.ExpansionName + "(" + versionCard.ExpansionCode + ") - "+ versionCard.CollectorNumber || `V${versionPage * versionsPerPage + index + 2}`}
                         {selectedVersion.CardID === versionCard.CardID && <span className="ml-1">✓</span>}
                       </div>
                     </div>
@@ -1220,7 +1220,7 @@ export default function CardDetailModal({
                 </div>
 
                 {/* Pagination Controls */}
-                {otherVersions.length >= versionsPerPage && (
+                {otherVersions.length > versionsPerPage && (
                   <div className="flex items-center justify-center space-x-2">
                     <button
                       onClick={() => setVersionPage(Math.max(0, versionPage - 1))}
@@ -1231,12 +1231,12 @@ export default function CardDetailModal({
                     </button>
 
                     <span className="text-sm text-gray-600 px-3">
-                      Page {versionPage + 1} of {Math.ceil((otherVersions.length + 1) / versionsPerPage)}
+                      Page {versionPage + 1} of {Math.ceil(otherVersions.length / versionsPerPage)}
                     </span>
 
                     <button
-                      onClick={() => setVersionPage(Math.min(Math.ceil((otherVersions.length + 1) / versionsPerPage) - 1, versionPage + 1))}
-                      disabled={versionPage >= Math.ceil((otherVersions.length + 1) / versionsPerPage) - 1}
+                      onClick={() => setVersionPage(Math.min(Math.ceil(otherVersions.length / versionsPerPage) - 1, versionPage + 1))}
+                      disabled={versionPage >= Math.ceil(otherVersions.length / versionsPerPage) - 1}
                       className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronRight className="h-4 w-4" />
