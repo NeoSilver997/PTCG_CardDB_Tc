@@ -1,54 +1,96 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+const sqlite3 = require('sqlite3');
+const path = require('path');
 
-const INVENTORY_FILE = path.join(process.cwd(), 'data', 'inventory.json');
+// Database path - use same as cards API
+const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), '..', 'pokemon_cards.db');
+console.log(`[INVENTORY API] Using database path: ${dbPath}`);
 
-// Ensure data directory exists
-const ensureDataDirectory = () => {
-  const dataDir = path.dirname(INVENTORY_FILE);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
+// Initialize database and create inventory table if it doesn't exist
+const initializeDatabase = () => {
+  return new Promise<void>((resolve, reject) => {
+    const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+      if (err) {
+        console.error('[INVENTORY API] Database connection error:', err);
+        reject(err);
+        return;
+      }
+
+      // Create inventory table if it doesn't exist
+      const createTableQuery = `
+        CREATE TABLE IF NOT EXISTS inventory (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          card_id INTEGER NOT NULL,
+          quantity INTEGER NOT NULL DEFAULT 0,
+          condition TEXT NOT NULL,
+          notes TEXT,
+          purchase_cost REAL,
+          market_price REAL,
+          date_added TEXT NOT NULL,
+          last_updated TEXT NOT NULL,
+          UNIQUE(card_id, condition)
+        )
+      `;
+
+      db.run(createTableQuery, (err) => {
+        if (err) {
+          console.error('[INVENTORY API] Error creating inventory table:', err);
+          reject(err);
+          return;
+        }
+        console.log('[INVENTORY API] Inventory table initialized');
+        db.close();
+        resolve();
+      });
+    });
+  });
 };
 
-// Load inventory from file
-const loadInventory = () => {
-  ensureDataDirectory();
-  try {
-    if (fs.existsSync(INVENTORY_FILE)) {
-      const data = fs.readFileSync(INVENTORY_FILE, 'utf-8');
-      return JSON.parse(data);
-    }
-    return [];
-  } catch (error) {
-    console.error('Error loading inventory:', error);
-    return [];
-  }
-};
+// Initialize database on module load
+initializeDatabase().catch(err => {
+  console.error('[INVENTORY API] Failed to initialize database:', err);
+});
 
-// Save inventory to file
-const saveInventory = (inventory: any[]) => {
-  ensureDataDirectory();
-  try {
-    fs.writeFileSync(INVENTORY_FILE, JSON.stringify(inventory, null, 2));
-    return true;
-  } catch (error) {
-    console.error('Error saving inventory:', error);
-    return false;
-  }
+// Get database connection
+const getDatabase = () => {
+  return new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY);
 };
 
 export async function GET() {
-  try {
-    const inventory = loadInventory();
-    return NextResponse.json(inventory);
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to load inventory' },
-      { status: 500 }
-    );
-  }
+  return new Promise((resolve) => {
+    const db = getDatabase();
+
+    const query = `
+      SELECT
+        card_id as CardID,
+        quantity,
+        condition,
+        notes,
+        purchase_cost as purchaseCost,
+        market_price as marketPrice,
+        date_added as dateAdded,
+        last_updated as lastUpdated
+      FROM inventory
+      ORDER BY card_id, condition
+    `;
+
+
+    db.all(query, [], (err, rows) => {
+      db.close();
+
+      if (err) {
+        console.error('[INVENTORY API] Error loading inventory:', err);
+        resolve(NextResponse.json(
+          { error: 'Failed to load inventory' },
+          { status: 500 }
+        ));
+        return;
+      }
+
+      console.log(`[INVENTORY API] Retrieved ${rows ? rows.length : 0} inventory items`);
+      resolve(NextResponse.json(rows || []));
+    });
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -78,45 +120,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const inventory = loadInventory();
-    const now = new Date().toISOString();
-    
-    // Check if card already exists in inventory
-    const existingIndex = inventory.findIndex((item: any) => 
-      item.CardID === CardID && item.condition === condition
-    );
+    return new Promise((resolve) => {
+      const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE);
 
-    if (existingIndex >= 0) {
-      // Update existing entry
-      inventory[existingIndex].quantity = quantity;
-      inventory[existingIndex].notes = notes || inventory[existingIndex].notes;
-      inventory[existingIndex].purchaseCost = purchaseCost !== undefined ? purchaseCost : inventory[existingIndex].purchaseCost;
-      inventory[existingIndex].marketPrice = marketPrice !== undefined ? marketPrice : inventory[existingIndex].marketPrice;
-      inventory[existingIndex].lastUpdated = now;
-    } else {
-      // Add new entry
-      inventory.push({
+      const now = new Date().toISOString();
+
+      // Use INSERT OR REPLACE to handle both insert and update
+      const query = `
+        INSERT OR REPLACE INTO inventory
+        (card_id, quantity, condition, notes, purchase_cost, market_price, date_added, last_updated)
+        VALUES (?, ?, ?, ?, ?, ?, COALESCE((SELECT date_added FROM inventory WHERE card_id = ? AND condition = ?), ?), ?)
+      `;
+
+      const params = [
         CardID,
         quantity,
         condition,
-        notes: notes || '',
-        purchaseCost: purchaseCost || undefined,
-        marketPrice: marketPrice || undefined,
-        dateAdded: now,
-        lastUpdated: now
+        notes || '',
+        purchaseCost !== undefined ? purchaseCost : null,
+        marketPrice !== undefined ? marketPrice : null,
+        CardID,
+        condition,
+        now,
+        now
+      ];
+
+      console.log(`[INVENTORY API] Executing POST query for CardID: ${CardID}, condition: ${condition}`);
+
+      db.run(query, params, function(err) {
+        db.close();
+
+        if (err) {
+          console.error('[INVENTORY API] Error saving inventory item:', err);
+          resolve(NextResponse.json(
+            { error: 'Failed to save inventory item' },
+            { status: 500 }
+          ));
+          return;
+        }
+
+        console.log(`[INVENTORY API] Successfully saved inventory item (ID: ${this.lastID})`);
+        resolve(NextResponse.json({ success: true }));
       });
-    }
-
-    const success = saveInventory(inventory);
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Failed to save inventory' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ success: true });
+    });
   } catch (error) {
+    console.error('[INVENTORY API] Error in POST:', error);
     return NextResponse.json(
       { error: 'Failed to update inventory' },
       { status: 500 }
@@ -127,7 +175,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const CardID = searchParams.get('cardId');
+    const CardID = searchParams.get('CardID');
     const condition = searchParams.get('condition');
 
     if (!CardID) {
@@ -137,31 +185,51 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const inventory = loadInventory();
-    let newInventory;
+    return new Promise((resolve) => {
+      const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE);
 
-    if (condition) {
-      // Remove specific condition entry
-      newInventory = inventory.filter((item: any) => 
-        !(item.CardID === parseInt(CardID) && item.condition === condition)
-      );
-    } else {
-      // Remove all entries for this card
-      newInventory = inventory.filter((item: any) => 
-        item.CardID !== parseInt(CardID)
-      );
-    }
+      let query;
+      let params;
 
-    const success = saveInventory(newInventory);
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Failed to save inventory' },
-        { status: 500 }
-      );
-    }
+      if (condition) {
+        // Remove specific condition entry
+        query = 'DELETE FROM inventory WHERE card_id = ? AND condition = ?';
+        params = [CardID, condition];
+        console.log(`[INVENTORY API] Executing DELETE query for CardID: ${CardID}, condition: ${condition}`);
+      } else {
+        // Remove all entries for this card
+        query = 'DELETE FROM inventory WHERE card_id = ?';
+        params = [CardID];
+        console.log(`[INVENTORY API] Executing DELETE query for all conditions of CardID: ${CardID}`);
+      }
 
-    return NextResponse.json({ success: true });
+      db.run(query, params, function(err) {
+        db.close();
+
+        if (err) {
+          console.error('[INVENTORY API] Error deleting inventory item:', err);
+          resolve(NextResponse.json(
+            { error: 'Failed to delete inventory item' },
+            { status: 500 }
+          ));
+          return;
+        }
+
+        if (this.changes === 0) {
+          console.log(`[INVENTORY API] No inventory items found to delete`);
+          resolve(NextResponse.json(
+            { error: 'Inventory item not found' },
+            { status: 404 }
+          ));
+          return;
+        }
+
+        console.log(`[INVENTORY API] Successfully deleted ${this.changes} inventory item(s)`);
+        resolve(NextResponse.json({ success: true }));
+      });
+    });
   } catch (error) {
+    console.error('[INVENTORY API] Error in DELETE:', error);
     return NextResponse.json(
       { error: 'Failed to delete from inventory' },
       { status: 500 }
