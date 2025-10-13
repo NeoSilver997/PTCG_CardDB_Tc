@@ -65,6 +65,19 @@ npm run dev
 
 6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Configuration
+
+### Environment Variables
+
+The application supports the following environment variables:
+
+- `DATABASE_PATH`: Path to the SQLite database file (default: `../pokemon_cards.db`)
+
+Example `.env` file:
+```
+DATABASE_PATH=/path/to/your/pokemon_cards.db
+```
+
 ## Local Images
 
 The application uses local card images for offline functionality:

@@ -4,8 +4,9 @@ const path = require('path');
 
 export const dynamic = 'force-dynamic';
 
-// Database path
-const dbPath = path.join(process.cwd(), '..', 'pokemon_cards.db');
+// Database path - configurable via environment variable
+const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), '..', 'pokemon_cards.db');
+console.log(`[CARDS API] Using database path: ${dbPath}`);
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
