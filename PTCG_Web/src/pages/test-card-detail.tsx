@@ -4,6 +4,7 @@ import CardDetailModal from '../components/CardDetailModal';
 
 // Test card with known data
 const testCard: PTCGCard = {
+  PrimaryID: 14396,
   CardID: 14396,
   Name: "頂尖捕捉器",
   Evolution: "",

@@ -747,6 +747,7 @@ const DeckBuilder: React.FC<DeckBuilderProps> = ({ initialCards, onClose, initia
                       // Add a test card with known ID from market prices
                       const testCardId = 14376; // One of the card IDs that should have price data
                       const testCard = {
+                        PrimaryID: testCardId,
                         CardID: testCardId,
                         Name: "測試卡片 (氣球)",
                         CardType: "Trainer",

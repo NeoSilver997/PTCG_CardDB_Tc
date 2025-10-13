@@ -4,6 +4,7 @@ import { PTCGCard } from '../types/card';
 export default function TestCurrency() {
   // Test data for currency detection
   const chineseCard: PTCGCard = {
+    PrimaryID: 1001,
     Name: "皮卡丘",
     CardID: 1001,
     ImageURL: "",
@@ -42,6 +43,7 @@ export default function TestCurrency() {
   };
 
   const japaneseCard: PTCGCard = {
+    PrimaryID: 1002,
     Name: "ピカチュウ",
     CardID: 1002,
     ImageURL: "",
@@ -80,6 +82,7 @@ export default function TestCurrency() {
   };
 
   const englishCard: PTCGCard = {
+    PrimaryID: 1003,
     Name: "Pikachu",
     CardID: 1003,
     ImageURL: "",

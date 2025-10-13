@@ -1,124 +1,249 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MarketPrice } from '../../../types/market';
-import fs from 'fs';
-import path from 'path';
+const sqlite3 = require('sqlite3');
+const path = require('path');
 
-const MARKET_PRICES_FILE = path.join(process.cwd(), 'data', 'market-prices.json');
+// Database path - use absolute path to ensure it works in all contexts
+const dbPath = path.resolve(process.cwd(), '..', 'pokemon_cards.db');
+console.log(`[MARKET PRICES API] Using database path: ${dbPath}`);
 
-interface MarketPriceData {
-  [cardId: string]: MarketPrice[];
-}
+// Initialize database and create market_prices table if it doesn't exist
+const initializeDatabase = () => {
+  return new Promise<void>((resolve, reject) => {
+    const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+      if (err) {
+        console.error('[MARKET PRICES API] Database connection error:', err);
+        reject(err);
+        return;
+      }
 
-// Helper function to ensure the data directory and file exist
-function ensureMarketPricesFile() {
-  const dataDir = path.dirname(MARKET_PRICES_FILE);
-  
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  
-  if (!fs.existsSync(MARKET_PRICES_FILE)) {
-    fs.writeFileSync(MARKET_PRICES_FILE, JSON.stringify({}));
-  }
-}
+      // Create market_prices table if it doesn't exist
+      const createTableQuery = `
+        CREATE TABLE IF NOT EXISTS market_prices (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          card_id INTEGER NOT NULL,
+          price REAL NOT NULL,
+          currency TEXT NOT NULL,
+          source TEXT NOT NULL,
+          condition TEXT NOT NULL,
+          date TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          metadata TEXT
+        )
+      `;
 
-// Helper function to load market prices
-function loadMarketPrices(): MarketPriceData {
-  try {
-    ensureMarketPricesFile();
-    const data = fs.readFileSync(MARKET_PRICES_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error loading market prices:', error);
-    return {};
-  }
-}
+      db.run(createTableQuery, (err) => {
+        if (err) {
+          console.error('[MARKET PRICES API] Error creating market_prices table:', err);
+          reject(err);
+          return;
+        }
+        db.close();
+        resolve();
+      });
+    });
+  });
+};
 
-// Helper function to save market prices
-function saveMarketPrices(data: MarketPriceData) {
-  try {
-    ensureMarketPricesFile();
-    fs.writeFileSync(MARKET_PRICES_FILE, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('Error saving market prices:', error);
-    throw error;
-  }
-}
+// Initialize database on module load
+initializeDatabase()
+  .then(() => {
+    console.log('[MARKET PRICES API] Database initialization completed successfully');
+  })
+  .catch(err => {
+    console.error('[MARKET PRICES API] Database initialization failed:', err);
+  });
+
+// Get database connection
+const getDatabase = () => {
+  return new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY);
+};
+
+const getDatabaseWrite = () => {
+  return new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE);
+};
 
 // GET - Get all market prices or prices for a specific card
 export async function GET(request: NextRequest) {
   try {
+    await initializeDatabase();
+
     const { searchParams } = new URL(request.url);
     const cardId = searchParams.get('cardId');
     const format = searchParams.get('format');
-    const marketPricesData = loadMarketPrices();
+
+    const db = getDatabase();
 
     // If cardId is provided, return prices for that specific card
     if (cardId) {
-      const cardIdStr = cardId.toString();
-      const cardPrices = marketPricesData[cardIdStr] || [];
-      return NextResponse.json({
-        cardId: parseInt(cardId),
-        prices: cardPrices,
-        totalPrices: cardPrices.length
+      const cardIdNum = parseInt(cardId);
+      if (isNaN(cardIdNum)) {
+        return NextResponse.json({ error: 'Invalid card ID' }, { status: 400 });
+      }
+
+      return new Promise<NextResponse>((resolve) => {
+        const query = `
+          SELECT * FROM market_prices
+          WHERE card_id = ?
+          ORDER BY date DESC
+        `;
+
+        db.all(query, [cardIdNum], (err, rows: any[]) => {
+          db.close();
+
+          if (err) {
+            console.error('Error fetching market prices for card:', err);
+            resolve(NextResponse.json({ error: 'Failed to fetch market prices' }, { status: 500 }));
+            return;
+          }
+
+          // Convert database rows to MarketPrice objects
+          const prices: MarketPrice[] = rows.map(row => ({
+            cardId: row.card_id,
+            price: row.price,
+            currency: row.currency,
+            source: row.source,
+            condition: row.condition,
+            date: row.date,
+            updatedAt: row.updated_at,
+            metadata: row.metadata ? JSON.parse(row.metadata) : undefined
+          }));
+
+          resolve(NextResponse.json({
+            cardId: cardIdNum,
+            prices: prices,
+            totalPrices: prices.length
+          }));
+        });
       });
     }
 
-    // If format=raw is requested, return the raw data structure
+    // If format=raw is requested, return all data grouped by card ID
     if (format === 'raw') {
-      return NextResponse.json(marketPricesData);
+      return new Promise<NextResponse>((resolve) => {
+        const query = `
+          SELECT * FROM market_prices
+          ORDER BY card_id, date DESC
+        `;
+
+        db.all(query, [], (err, rows: any[]) => {
+          db.close();
+
+          if (err) {
+            console.error('Error fetching all market prices:', err);
+            resolve(NextResponse.json({ error: 'Failed to fetch market prices' }, { status: 500 }));
+            return;
+          }
+
+          // Group by card ID
+          const groupedData: { [cardId: string]: MarketPrice[] } = {};
+          rows.forEach(row => {
+            const cardIdStr = row.card_id.toString();
+            if (!groupedData[cardIdStr]) {
+              groupedData[cardIdStr] = [];
+            }
+
+            groupedData[cardIdStr].push({
+              cardId: row.card_id,
+              price: row.price,
+              currency: row.currency,
+              source: row.source,
+              condition: row.condition,
+              date: row.date,
+              updatedAt: row.updated_at,
+              metadata: row.metadata ? JSON.parse(row.metadata) : undefined
+            });
+          });
+
+          resolve(NextResponse.json(groupedData));
+        });
+      });
     }
 
     // Otherwise return all market prices in transformed format
-    
-    // Transform the data to include card IDs and calculate averages
-    const marketCards = Object.entries(marketPricesData).map(([cardIdStr, prices]) => {
-      const cardId = parseInt(cardIdStr);
-      
-      // Sort prices by date (newest first)
-      const sortedPrices = prices.sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-      
-      // Calculate average price from recent prices (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const recentPrices = sortedPrices.filter(price => 
-        new Date(price.date) >= thirtyDaysAgo
-      );
-      
-      const averagePrice = recentPrices.length > 0
-        ? recentPrices.reduce((sum, price) => sum + price.price, 0) / recentPrices.length
-        : sortedPrices[0]?.price || 0;
-      
-      // Calculate price change
-      let priceChange: { amount: number; percentage: number; direction: 'up' | 'down' | 'stable' } | null = null;
-      if (sortedPrices.length >= 2) {
-        const currentPrice = sortedPrices[0].price;
-        const previousPrice = sortedPrices[1].price;
-        const change = currentPrice - previousPrice;
-        const percentage = (change / previousPrice) * 100;
-        
-        priceChange = {
-          amount: change,
-          percentage,
-          direction: change > 0 ? 'up' : change < 0 ? 'down' : 'stable'
-        };
-      }
-      
-      return {
-        CardID: cardId,
-        marketPrices: sortedPrices,
-        averagePrice,
-        priceChange,
-        priceUpdated: sortedPrices[0]?.updatedAt
-      };
+    return new Promise<NextResponse>((resolve) => {
+      const query = `
+        SELECT * FROM market_prices
+        ORDER BY card_id, date DESC
+      `;
+
+      db.all(query, [], (err, rows: any[]) => {
+        db.close();
+
+        if (err) {
+          console.error('Error fetching market prices:', err);
+          resolve(NextResponse.json({ error: 'Failed to fetch market prices' }, { status: 500 }));
+          return;
+        }
+
+        // Group by card ID and transform data
+        const cardGroups: { [cardId: number]: MarketPrice[] } = {};
+        rows.forEach(row => {
+          const cardId = row.card_id;
+          if (!cardGroups[cardId]) {
+            cardGroups[cardId] = [];
+          }
+
+          cardGroups[cardId].push({
+            cardId: row.card_id,
+            price: row.price,
+            currency: row.currency,
+            source: row.source,
+            condition: row.condition,
+            date: row.date,
+            updatedAt: row.updated_at,
+            metadata: row.metadata ? JSON.parse(row.metadata) : undefined
+          });
+        });
+
+        // Transform to market cards format
+        const marketCards = Object.entries(cardGroups).map(([cardIdStr, prices]) => {
+          const cardId = parseInt(cardIdStr);
+
+          // Sort prices by date (newest first) - already sorted by query
+          const sortedPrices = prices;
+
+          // Calculate average price from recent prices (last 30 days)
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+          const recentPrices = sortedPrices.filter(price =>
+            new Date(price.date) >= thirtyDaysAgo
+          );
+
+          const averagePrice = recentPrices.length > 0
+            ? recentPrices.reduce((sum, price) => sum + price.price, 0) / recentPrices.length
+            : sortedPrices[0]?.price || 0;
+
+          // Calculate price change
+          let priceChange: { amount: number; percentage: number; direction: 'up' | 'down' | 'stable' } | undefined;
+          if (sortedPrices.length >= 2) {
+            const currentPrice = sortedPrices[0].price;
+            const previousPrice = sortedPrices[1].price;
+            const change = currentPrice - previousPrice;
+            const percentage = previousPrice > 0 ? (change / previousPrice) * 100 : 0;
+
+            priceChange = {
+              amount: change,
+              percentage,
+              direction: (change > 0 ? 'up' : change < 0 ? 'down' : 'stable') as 'up' | 'down' | 'stable'
+            };
+          }
+
+          return {
+            cardId,
+            prices: sortedPrices,
+            averagePrice,
+            priceChange,
+            totalPrices: sortedPrices.length
+          };
+        });
+
+        resolve(NextResponse.json(marketCards));
+      });
     });
-    
-    return NextResponse.json(marketCards);
   } catch (error) {
-    console.error('Error fetching market prices:', error);
+    console.error('Error in GET market-prices:', error);
     return NextResponse.json(
       { error: 'Failed to fetch market prices' },
       { status: 500 }
@@ -127,10 +252,13 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Add a new market price
+// POST - Add a new market price
 export async function POST(request: NextRequest) {
   try {
+    await initializeDatabase();
+
     const newPrice: MarketPrice = await request.json();
-    
+
     // Validate required fields
     if (!newPrice.cardId || !newPrice.price || !newPrice.currency || !newPrice.condition) {
       return NextResponse.json(
@@ -138,7 +266,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     // Validate price is positive
     if (newPrice.price <= 0) {
       return NextResponse.json(
@@ -146,35 +274,51 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
-    const marketPricesData = loadMarketPrices();
-    const cardIdStr = newPrice.cardId.toString();
-    
-    // Initialize array for this card if it doesn't exist
-    if (!marketPricesData[cardIdStr]) {
-      marketPricesData[cardIdStr] = [];
-    }
-    
-    // Add timestamps
+
+    const db = getDatabaseWrite();
     const now = new Date().toISOString();
+
     const priceWithTimestamp = {
       ...newPrice,
       date: now,
       updatedAt: now
     };
-    
-    // Add the new price to the beginning of the array (most recent first)
-    marketPricesData[cardIdStr].unshift(priceWithTimestamp);
-    
-    // Keep only the last 50 prices per card to prevent excessive storage
-    marketPricesData[cardIdStr] = marketPricesData[cardIdStr].slice(0, 50);
-    
-    // Save the updated data
-    saveMarketPrices(marketPricesData);
-    
-    return NextResponse.json(priceWithTimestamp, { status: 201 });
+
+    return new Promise<NextResponse>((resolve) => {
+      const query = `
+        INSERT INTO market_prices (card_id, price, currency, source, condition, date, updated_at, metadata)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      const params = [
+        newPrice.cardId,
+        newPrice.price,
+        newPrice.currency,
+        newPrice.source || 'Manual',
+        newPrice.condition,
+        now,
+        now,
+        newPrice.metadata ? JSON.stringify(newPrice.metadata) : null
+      ];
+
+      db.run(query, params, function(err) {
+        db.close();
+
+        if (err) {
+          console.error('Error adding market price:', err);
+          resolve(NextResponse.json(
+            { error: 'Failed to add market price' },
+            { status: 500 }
+          ));
+          return;
+        }
+
+        console.log(`Added market price for card ${newPrice.cardId}: $${newPrice.price} ${newPrice.currency}`);
+        resolve(NextResponse.json(priceWithTimestamp, { status: 201 }));
+      });
+    });
   } catch (error) {
-    console.error('Error adding market price:', error);
+    console.error('Error in POST market-prices:', error);
     return NextResponse.json(
       { error: 'Failed to add market price' },
       { status: 500 }
@@ -182,50 +326,82 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE - Delete a specific market price
+// DELETE - Delete market prices
 export async function DELETE(request: NextRequest) {
   try {
+    await initializeDatabase();
+
     const { searchParams } = new URL(request.url);
     const cardId = searchParams.get('cardId');
     const priceDate = searchParams.get('date');
-    
-    if (!cardId) {
+    const id = searchParams.get('id');
+
+    const db = getDatabaseWrite();
+
+    let query: string;
+    let params: any[];
+
+    if (id) {
+      // Delete by record ID
+      const recordId = parseInt(id);
+      if (isNaN(recordId)) {
+        return NextResponse.json({ error: 'Invalid record ID' }, { status: 400 });
+      }
+
+      query = 'DELETE FROM market_prices WHERE id = ?';
+      params = [recordId];
+    } else if (cardId && priceDate) {
+      // Delete specific price entry by card ID and date
+      const cardIdNum = parseInt(cardId);
+      if (isNaN(cardIdNum)) {
+        return NextResponse.json({ error: 'Invalid card ID' }, { status: 400 });
+      }
+
+      query = 'DELETE FROM market_prices WHERE card_id = ? AND date = ?';
+      params = [cardIdNum, priceDate];
+    } else if (cardId) {
+      // Delete all prices for a card
+      const cardIdNum = parseInt(cardId);
+      if (isNaN(cardIdNum)) {
+        return NextResponse.json({ error: 'Invalid card ID' }, { status: 400 });
+      }
+
+      query = 'DELETE FROM market_prices WHERE card_id = ?';
+      params = [cardIdNum];
+    } else {
       return NextResponse.json(
-        { error: 'Missing cardId parameter' },
+        { error: 'Missing required parameters: id, or cardId (with optional date)' },
         { status: 400 }
       );
     }
-    
-    const marketPricesData = loadMarketPrices();
-    const cardIdStr = cardId.toString();
-    
-    if (!marketPricesData[cardIdStr]) {
-      return NextResponse.json(
-        { error: 'No prices found for this card' },
-        { status: 404 }
-      );
-    }
-    
-    if (priceDate) {
-      // Delete a specific price entry
-      marketPricesData[cardIdStr] = marketPricesData[cardIdStr].filter(
-        price => price.date !== priceDate
-      );
-      
-      // If no prices left for this card, remove the card entry entirely
-      if (marketPricesData[cardIdStr].length === 0) {
-        delete marketPricesData[cardIdStr];
-      }
-    } else {
-      // Delete all prices for this card
-      delete marketPricesData[cardIdStr];
-    }
-    
-    saveMarketPrices(marketPricesData);
-    
-    return NextResponse.json({ success: true });
+
+    return new Promise<NextResponse>((resolve) => {
+      db.run(query, params, function(err) {
+        db.close();
+
+        if (err) {
+          console.error('Error deleting market price:', err);
+          resolve(NextResponse.json(
+            { error: 'Failed to delete market price' },
+            { status: 500 }
+          ));
+          return;
+        }
+
+        if (this.changes === 0) {
+          resolve(NextResponse.json(
+            { error: 'Market price not found' },
+            { status: 404 }
+          ));
+          return;
+        }
+
+        console.log(`Deleted ${this.changes} market price record(s)`);
+        resolve(NextResponse.json({ success: true, deletedCount: this.changes }));
+      });
+    });
   } catch (error) {
-    console.error('Error deleting market price:', error);
+    console.error('Error in DELETE market-prices:', error);
     return NextResponse.json(
       { error: 'Failed to delete market price' },
       { status: 500 }

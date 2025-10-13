@@ -1,4 +1,5 @@
 export interface InventoryCard {
+  id?: number; // Primary key from database
   CardID: number;
   quantity: number;
   condition: 'mint' | 'near-mint' | 'lightly-played' | 'moderately-played' | 'heavily-played' | 'damaged';
