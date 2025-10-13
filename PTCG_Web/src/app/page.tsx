@@ -14,6 +14,7 @@ import { useInventory } from '../hooks/useInventory';
 export default function Home() {
   const { t } = useI18n();
   const [cards, setCards] = useState<PTCGCard[]>([]);
+  const [detailedCards, setDetailedCards] = useState<PTCGCard[]>([]);
   const [filteredCards, setFilteredCards] = useState<PTCGCard[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({
     ability: '',
@@ -77,6 +78,7 @@ export default function Home() {
 
   const loadCardData = useCallback(async () => {
     try {
+      // Load basic cards
       const response = await fetch('/api/cards');
       const data = await response.json();
 
@@ -89,6 +91,12 @@ export default function Home() {
 
       setCards(sortedData);
       extractFilterOptions(sortedData);
+
+      // Load detailed cards for version comparison
+      const detailedResponse = await fetch('/api/cards?detail=true');
+      const detailedData = await detailedResponse.json();
+      console.log('Loaded detailed cards:', detailedData.length);
+      setDetailedCards(detailedData);
 
       // Also load market prices
       await loadMarketPrices();
@@ -1099,7 +1107,7 @@ export default function Home() {
           relatedCards={getRelatedCards(selectedCard)}
           onClose={() => setSelectedCard(null)}
           onCardClick={handleCardClick}
-          allCards={cards}
+          allCards={detailedCards}
           onAddToDeck={handleAddToDeck}
         />
       )}

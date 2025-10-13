@@ -26,7 +26,7 @@ export default function CardDetailModal({
   onAddToDeck
 }: CardDetailModalProps) {
   const { t } = useI18n();
-  const [detailedCards, setDetailedCards] = useState<PTCGCard[]>([]);
+  console.log('CardDetailModal received allCards:', allCards?.length || 0, 'card:', card?.Name);
   const [versionPage, setVersionPage] = useState(0);
   const [selectedVersion, setSelectedVersion] = useState<PTCGCard>(card);
   const [addQuantity, setAddQuantity] = useState(1);
@@ -57,6 +57,10 @@ export default function CardDetailModal({
   
   // Card-only view state
   const [cardOnlyView, setCardOnlyView] = useState(false);
+
+  // Card versions state
+  const [cardVersions, setCardVersions] = useState<PTCGCard[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
   
   const versionsPerPage = 7; // 4 columns × 2 rows - 1 for current card = 7
 
@@ -121,21 +125,6 @@ export default function CardDetailModal({
            (basicEnergyNames.includes(card.Name) || card.Name.includes('基本') || card.Name.includes('Basic'));
   };
 
-  // Load detailed card data for version information
-  useEffect(() => {
-    const loadDetailedCards = async () => {
-      try {
-        const response = await fetch('/api/cards?detail=true');
-        const data = await response.json();
-        setDetailedCards(data);
-      } catch (error) {
-        console.error('Failed to load detailed card data:', error);
-      }
-    };
-
-    loadDetailedCards();
-  }, []);
-
   // Fetch market price and inventory data for header display
   useEffect(() => {
     const fetchPriceAndInventoryData = async () => {
@@ -193,6 +182,133 @@ export default function CardDetailModal({
     // Reset market price when card changes so it gets auto-populated with new card's price
     setMarketPrice(undefined);
   }, [card]);
+
+  // Fetch card versions using the new API
+  useEffect(() => {
+    const fetchCardVersions = async () => {
+      if (!card?.PrimaryID) return;
+
+      setVersionsLoading(true);
+      try {
+        const response = await fetch(`/api/cards?detail=true&primaryId=${card.PrimaryID}&versions=true`);
+        if (response.ok) {
+          const versionsData = await response.json();
+          // Map API response to PTCGCard format and exclude the current card
+          const mappedVersions = versionsData
+            .filter((version: any) => version.PrimaryID !== card.PrimaryID)
+            .map((version: any) => mapApiResponseToPTCGCard(version));
+          setCardVersions(mappedVersions);
+        } else {
+          console.error('Failed to fetch card versions:', response.status);
+          setCardVersions([]);
+        }
+      } catch (error) {
+        console.error('Error fetching card versions:', error);
+        setCardVersions([]);
+      } finally {
+        setVersionsLoading(false);
+      }
+    };
+
+    fetchCardVersions();
+  }, [card?.PrimaryID]);
+
+  // Helper function to map API response to PTCGCard interface
+  const mapApiResponseToPTCGCard = (apiCard: any): PTCGCard => {
+    // Parse skills from JSON-like strings
+    let skill1Name = '', skill1Energy = '', skill1Damage = '', skill1Effect = '';
+    let skill2Name = '', skill2Energy = '', skill2Damage = '', skill2Effect = '';
+
+    if (apiCard.Skill1) {
+      try {
+        const skill1 = JSON.parse(apiCard.Skill1);
+        skill1Name = skill1.name || '';
+        skill1Energy = skill1.cost || '';
+        skill1Damage = skill1.damage || '';
+        skill1Effect = skill1.description || '';
+      } catch (e) {
+        // If parsing fails, try to extract from string
+        const skillStr = apiCard.Skill1;
+        if (skillStr && skillStr.includes('name')) {
+          skill1Name = skillStr;
+        }
+      }
+    }
+
+    if (apiCard.Skill2) {
+      try {
+        const skill2 = JSON.parse(apiCard.Skill2);
+        skill2Name = skill2.name || '';
+        skill2Energy = skill2.cost || '';
+        skill2Damage = skill2.damage || '';
+        skill2Effect = skill2.description || '';
+      } catch (e) {
+        // If parsing fails, try to extract from string
+        const skillStr = apiCard.Skill2;
+        if (skillStr && skillStr.includes('name')) {
+          skill2Name = skillStr;
+        }
+      }
+    }
+
+    // Parse abilities
+    let abilityName = '', abilityEffect = '';
+    if (apiCard.Abilities) {
+      try {
+        const abilities = JSON.parse(apiCard.Abilities);
+        if (abilities && abilities.name) {
+          abilityName = abilities.name;
+          abilityEffect = abilities.description || '';
+        }
+      } catch (e) {
+        // If parsing fails, use as string
+        abilityName = apiCard.Abilities;
+      }
+    }
+
+    return {
+      PrimaryID: apiCard.PrimaryID || 0,
+      Name: apiCard.name || '',
+      Evolution: apiCard.Evolutions || '',
+      EvolutionStage: apiCard.EvolutionStage || '',
+      CardID: apiCard.CardID || apiCard.id,
+      ImageURL: apiCard.ImageURL || '',
+      OriginalImageURL: apiCard.ImageURL,
+      CardType: apiCard.CardType || '',
+      HP: apiCard.HP || '',
+      Type: apiCard.Type || '',
+      Attribute: apiCard.Type || '',
+      Weakness: apiCard.Weakness || '',
+      WeaknessType: apiCard.WeaknessType || '',
+      Resistance: apiCard.Resistance || '',
+      ResistanceType: apiCard.ResistanceType || '',
+      Skill1Name: skill1Name,
+      Skill1Energy: skill1Energy,
+      Skill1Damage: skill1Damage,
+      Skill1Effect: skill1Effect,
+      Skill2Name: skill2Name,
+      Skill2Energy: skill2Energy,
+      Skill2Damage: skill2Damage,
+      Skill2Effect: skill2Effect,
+      AbilityName: abilityName,
+      AbilityEffect: abilityEffect,
+      RetreatCost: parseInt(apiCard.RetreatCost) || 0,
+      Illustrator: apiCard.Illustrator || '',
+      Rarity: apiCard.Rarity || '',
+      ExpansionCode: apiCard.ExpansionCode || '',
+      ExpansionName: apiCard.ExpansionName || '',
+      CollectorNumber: apiCard.CollectorNumber || '',
+      RegulationMark: apiCard.RegulationMark || '',
+      Artist: apiCard.Illustrator || '',
+      SpecialTag: '',
+      PrimaryEffectType: apiCard.PrimaryEffectType || '',
+      SpecialEffectType: apiCard.SpecialEffectType || '',
+      AbilityStats: '',
+      Tier: apiCard.Tier,
+      Score: apiCard.Score,
+      ScoreBreakdown: apiCard.ScoreBreakdown
+    };
+  };
 
   const getTierColor = (tier?: string) => {
     switch (tier) {
@@ -386,22 +502,10 @@ export default function CardDetailModal({
   }, [card, allCards]);
 
   const otherVersions = useMemo(() => {
-    // Find all cards with the same name but different CardID (different versions)
-    // Use a Set to ensure unique WebCardIDs (CardID) and avoid duplicates
-    const seenCardIDs = new Set<string>();
-    seenCardIDs.add(String(card.CardID)); // Exclude the current card
-
-    return detailedCards.filter(c => {
-      if (c.Name === card.Name &&
-          c.CardID !== card.CardID &&
-          c.ImageURL &&
-          !seenCardIDs.has(String(c.CardID))) {
-        seenCardIDs.add(String(c.CardID));
-        return true;
-      }
-      return false;
-    });
-  }, [card, detailedCards]);
+    // Return the versions fetched from the API
+    console.log(`🎉 Using API-fetched versions: ${cardVersions.length} other versions for ${card?.Name || 'unknown card'}`);
+    return cardVersions;
+  }, [cardVersions, card?.Name]);
 
   const renderScoreBreakdownChart = (breakdown: string) => {
     if (!breakdown) return null;

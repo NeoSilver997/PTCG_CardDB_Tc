@@ -1,4 +1,5 @@
 export interface PTCGCard {
+  PrimaryID:number;
   Name: string;
   Evolution: string;
   EvolutionStage: string;
