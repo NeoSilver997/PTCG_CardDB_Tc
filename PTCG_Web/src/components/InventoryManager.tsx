@@ -71,8 +71,13 @@ export default function InventoryManager({ card, onClose }: InventoryManagerProp
   };
 
   const handleDelete = async (item: InventoryCard) => {
+    if (!item.id) {
+      console.error('Cannot delete item: missing record ID');
+      return;
+    }
+
     if (confirm('Are you sure you want to remove this card from your inventory?')) {
-      await removeFromInventory(card.CardID, item.condition);
+      await removeFromInventory(item.id);
     }
   };
 

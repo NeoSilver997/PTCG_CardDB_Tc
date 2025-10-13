@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 const sqlite3 = require('sqlite3');
 const path = require('path');
 
-// Database path - use same as cards API
-const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), '..', 'pokemon_cards.db');
+// Database path - use absolute path to ensure it works in all contexts
+const dbPath = path.resolve(process.cwd(), '..', 'pokemon_cards.db');
 console.log(`[INVENTORY API] Using database path: ${dbPath}`);
 
 // Initialize database and create inventory table if it doesn't exist
@@ -47,9 +47,14 @@ const initializeDatabase = () => {
 };
 
 // Initialize database on module load
-initializeDatabase().catch(err => {
-  console.error('[INVENTORY API] Failed to initialize database:', err);
-});
+// console.log('[INVENTORY API] Starting database initialization...');
+initializeDatabase()
+  .then(() => {
+    console.log('[INVENTORY API] Database initialization completed successfully');
+  })
+  .catch(err => {
+    console.error('[INVENTORY API] Database initialization failed:', err);
+  });
 
 // Get database connection
 const getDatabase = () => {
@@ -57,11 +62,19 @@ const getDatabase = () => {
 };
 
 export async function GET() {
-  return new Promise((resolve) => {
+  console.log('[INVENTORY API] GET request received');
+  try {
+    // Ensure database is initialized before querying
+    console.log('[INVENTORY API] Ensuring database initialization...');
+    await initializeDatabase();
+    console.log('[INVENTORY API] Database initialization confirmed');
+
+    console.log('[INVENTORY API] Opening database connection...');
     const db = getDatabase();
 
     const query = `
       SELECT
+        id,
         card_id as CardID,
         quantity,
         condition,
@@ -74,27 +87,43 @@ export async function GET() {
       ORDER BY card_id, condition
     `;
 
+    console.log('[INVENTORY API] Executing GET query');
 
-    db.all(query, [], (err, rows) => {
-      db.close();
+    return new Promise<NextResponse>((resolve) => {
+      db.all(query, [], (err, rows) => {
+        db.close();
 
-      if (err) {
-        console.error('[INVENTORY API] Error loading inventory:', err);
-        resolve(NextResponse.json(
-          { error: 'Failed to load inventory' },
-          { status: 500 }
-        ));
-        return;
-      }
+        if (err) {
+          console.error('[INVENTORY API] Error loading inventory:', err);
+          resolve(NextResponse.json(
+            { error: 'Failed to load inventory' },
+            { status: 500 }
+          ));
+          return;
+        }
 
-      console.log(`[INVENTORY API] Retrieved ${rows ? rows.length : 0} inventory items`);
-      resolve(NextResponse.json(rows || []));
+        console.log(`[INVENTORY API] Retrieved ${rows ? rows.length : 0} inventory items`);
+        if (rows && rows.length > 0) {
+          console.log('[INVENTORY API] First item sample:', JSON.stringify(rows[0]));
+        }
+        resolve(NextResponse.json(rows || []));
+      });
     });
-  });
+
+  } catch (error) {
+    console.error('[INVENTORY API] Error in GET:', error);
+    return NextResponse.json(
+      { error: 'Failed to load inventory' },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Ensure database is initialized
+    await initializeDatabase();
+
     const body = await request.json();
     const { CardID, quantity, condition, notes, purchaseCost, marketPrice } = body;
 
@@ -120,7 +149,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE);
 
       const now = new Date().toISOString();
@@ -174,18 +203,68 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Ensure database is initialized
+    await initializeDatabase();
+
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
     const CardID = searchParams.get('CardID');
     const condition = searchParams.get('condition');
 
+    // If record ID is provided, delete by primary key
+    if (id) {
+      const recordId = parseInt(id);
+      if (isNaN(recordId)) {
+        return NextResponse.json(
+          { error: 'Invalid record ID' },
+          { status: 400 }
+        );
+      }
+
+      return new Promise<NextResponse>((resolve) => {
+        const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE);
+
+        const query = 'DELETE FROM inventory WHERE id = ?';
+        const params = [recordId];
+
+        console.log(`[INVENTORY API] Executing DELETE query for record ID: ${recordId}`);
+
+        db.run(query, params, function(err) {
+          db.close();
+
+          if (err) {
+            console.error('[INVENTORY API] Error deleting inventory item by ID:', err);
+            resolve(NextResponse.json(
+              { error: 'Failed to delete inventory item' },
+              { status: 500 }
+            ));
+            return;
+          }
+
+          if (this.changes === 0) {
+            console.log(`[INVENTORY API] No inventory item found with ID: ${recordId}`);
+            resolve(NextResponse.json(
+              { error: 'Inventory item not found' },
+              { status: 404 }
+            ));
+            return;
+          }
+
+          console.log(`[INVENTORY API] Successfully deleted inventory item with ID: ${recordId}`);
+          resolve(NextResponse.json({ success: true }));
+        });
+      });
+    }
+
+    // Fallback to CardID-based deletion for backward compatibility
     if (!CardID) {
       return NextResponse.json(
-        { error: 'Card ID is required' },
+        { error: 'Either record ID or Card ID is required' },
         { status: 400 }
       );
     }
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE);
 
       let query;

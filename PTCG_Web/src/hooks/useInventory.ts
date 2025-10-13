@@ -62,14 +62,20 @@ export function useInventory() {
   }, [loadInventory]);
 
   const removeFromInventory = useCallback(async (
-    CardID: number,
-    condition?: string
+    identifier: number | { CardID: number; condition?: string }
   ) => {
     try {
       const url = new URL('/api/inventory', window.location.origin);
-      url.searchParams.append('cardId', CardID.toString());
-      if (condition) {
-        url.searchParams.append('condition', condition);
+
+      if (typeof identifier === 'number') {
+        // Delete by record ID
+        url.searchParams.append('id', identifier.toString());
+      } else {
+        // Delete by CardID and condition
+        url.searchParams.append('CardID', identifier.CardID.toString());
+        if (identifier.condition) {
+          url.searchParams.append('condition', identifier.condition);
+        }
       }
 
       const response = await fetch(url, {

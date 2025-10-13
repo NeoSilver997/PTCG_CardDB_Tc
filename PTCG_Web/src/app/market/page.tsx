@@ -184,6 +184,7 @@ export default function MarketPage() {
 
       // Create MarketCard entry
       const marketCard: MarketCard = {
+        PrimaryID: cardId,
         CardID: cardId,
         Name: cardName,
         EvolutionStage: cardData?.EvolutionStage || '',
@@ -309,6 +310,7 @@ export default function MarketPage() {
       const expansionName = cardData?.ExpansionName || sortedPrices[0]?.metadata?.expansionCode || 'Unknown';
 
       const marketCard: MarketCard = {
+        PrimaryID: cardId,
         CardID: cardId,
         Name: cardName,
         ExpansionName: expansionName,

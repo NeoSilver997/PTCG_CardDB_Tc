@@ -160,15 +160,16 @@ export default function InventoryPage() {
   const filteredInventory = useMemo(() => {
     return inventory.filter(item => {
       const card = cards.find(c => c.CardID === item.CardID);
-      if (!card) return false;
 
-      // Skip cards with empty names
-      if (!card.Name || card.Name.trim() === '') return false;
-
-      const matchesSearch = !searchTerm || 
-        (card.Name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (card.CardType || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (card.ExpansionName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      // Allow items even if card data isn't loaded yet
+      const matchesSearch = !searchTerm ||
+        (card && (
+          (card.Name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (card.CardType || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (card.ExpansionName || '').toLowerCase().includes(searchTerm.toLowerCase())
+        )) ||
+        // If no card data, still allow searching by CardID
+        (!card && item.CardID.toString().includes(searchTerm));
 
       const matchesCondition = !conditionFilter || item.condition === conditionFilter;
 
@@ -181,29 +182,27 @@ export default function InventoryPage() {
     const sorted = [...filteredInventory].sort((a, b) => {
       const cardA = cards.find(c => c.CardID === a.CardID);
       const cardB = cards.find(c => c.CardID === b.CardID);
-      
-      if (!cardA || !cardB) return 0;
-      
+
       let comparison = 0;
-      
+
       switch (sortBy) {
         case 'name':
-          comparison = (cardA.Name || '').localeCompare(cardB.Name || '');
+          comparison = (cardA?.Name || `Card #${a.CardID}`).localeCompare(cardB?.Name || `Card #${b.CardID}`);
           break;
         case 'id':
-          comparison = cardA.CardID - cardB.CardID;
+          comparison = a.CardID - b.CardID;
           break;
         case 'rarity':
-          comparison = getRarityOrder(cardA.Rarity) - getRarityOrder(cardB.Rarity);
+          comparison = getRarityOrder(cardA?.Rarity) - getRarityOrder(cardB?.Rarity);
           break;
         case 'tier':
-          comparison = (cardA.Tier || '').localeCompare(cardB.Tier || '');
+          comparison = (cardA?.Tier || '').localeCompare(cardB?.Tier || '');
           break;
         case 'expansion':
-          comparison = (cardA.ExpansionName || '').localeCompare(cardB.ExpansionName || '');
+          comparison = (cardA?.ExpansionName || '').localeCompare(cardB?.ExpansionName || '');
           break;
         case 'type':
-          comparison = (cardA.CardType || '').localeCompare(cardB.CardType || '');
+          comparison = (cardA?.CardType || '').localeCompare(cardB?.CardType || '');
           break;
         case 'quantity':
           comparison = a.quantity - b.quantity;
@@ -646,7 +645,8 @@ export default function InventoryPage() {
               }`}>
                 {sortedInventory.map((item) => {
                   const card = cards.find(c => c.CardID === item.CardID);
-                  if (!card) return null;
+                  // Don't skip items just because card data isn't available
+                  // if (!card) return null;
                   
                   return (
                     <div
@@ -654,16 +654,16 @@ export default function InventoryPage() {
                       className={`bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
                         cardOnlyView ? 'p-2' : 'p-4'
                       }`}
-                      onClick={() => setSelectedCard(card)}
+                      onClick={() => setSelectedCard(card || null)}
                     >
                       {!cardOnlyView && (
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1 min-w-0">
                             <h3 className="text-sm font-medium text-gray-900 truncate">
-                              {card.Name}
+                              {card?.Name || `Card #${item.CardID}`}
                             </h3>
                             <p className="text-xs text-gray-500 truncate">
-                              {card.CardID}
+                              {card?.CardID || item.CardID}
                             </p>
                           </div>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -681,8 +681,8 @@ export default function InventoryPage() {
                       
                       <div className={`relative ${cardOnlyView ? 'aspect-[2.5/3.5]' : 'aspect-[2.5/3.5] mb-3'}`}>
                         <img
-                          src={getCardImageSrc(card)}
-                          alt={card.Name}
+                          src={card ? getCardImageSrc(card) : PLACEHOLDER_IMAGE_PATH}
+                          alt={card?.Name || `Card #${item.CardID}`}
                           className="w-full h-full object-cover rounded"
                           onError={(e) => {
                             e.currentTarget.src = PLACEHOLDER_IMAGE_PATH;
