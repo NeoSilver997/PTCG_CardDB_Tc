@@ -25,6 +25,9 @@ export default function CardDetailModal({
   allCards,
   onAddToDeck
 }: CardDetailModalProps) {
+  if (!card) {
+    return null;
+  }
   const { t } = useI18n();
   console.log('CardDetailModal received allCards:', allCards?.length || 0, 'card:', card?.Name);
   const [versionPage, setVersionPage] = useState(0);
@@ -621,6 +624,7 @@ export default function CardDetailModal({
             <button
               onClick={onClose}
               className="p-2 sm:p-3 hover:bg-gray-100 rounded-full transition-colors ml-2"
+              title="Close modal"
             >
               <X className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
             </button>

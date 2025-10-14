@@ -12,6 +12,7 @@ import { useI18n } from '../i18n/context';
 import { useInventory } from '../hooks/useInventory';
 
 export default function Home() {
+  console.log('Home component rendered');
   const { t } = useI18n();
   const [cards, setCards] = useState<PTCGCard[]>([]);
   const [detailedCards, setDetailedCards] = useState<PTCGCard[]>([]);
