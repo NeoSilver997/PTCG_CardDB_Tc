@@ -186,6 +186,52 @@ export default function CardDetailModal({
     setMarketPrice(undefined);
   }, [card]);
 
+  const handleAddToCollection = async (cardId: number, quantity: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('You must be logged in to add cards to your collection.');
+      return;
+    }
+
+    const response = await fetch('/api/collection', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action: 'add', cardId, quantity }),
+    });
+
+    if (response.ok) {
+      alert('Card added to collection');
+    } else {
+      alert('Failed to add card to collection');
+    }
+  };
+
+  const handleRemoveFromCollection = async (cardId: number, quantity: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('You must be logged in to remove cards from your collection.');
+      return;
+    }
+
+    const response = await fetch('/api/collection', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action: 'remove', cardId, quantity }),
+    });
+
+    if (response.ok) {
+      alert('Card removed from collection');
+    } else {
+      alert('Failed to remove card from collection');
+    }
+  };
+
   // Fetch card versions using the new API
   useEffect(() => {
     const fetchCardVersions = async () => {
@@ -818,6 +864,22 @@ export default function CardDetailModal({
                         <span className="text-sm font-medium">Owned: {totalOwned}</span>
                       </div>
                     )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleAddToCollection(selectedVersion.CardID, 1)}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Add to Collection</span>
+                    </button>
+                    <button
+                      onClick={() => handleRemoveFromCollection(selectedVersion.CardID, 1)}
+                      className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <X className="h-4 w-4" />
+                      <span>Remove from Collection</span>
+                    </button>
                   </div>
                   
                   <div className="space-y-4">

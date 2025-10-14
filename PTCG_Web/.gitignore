@@ -2,6 +2,8 @@
 /node_modules
 /.pnp
 .pnp.js
+/coverage
+/public/users.db
 
 # Build outputs
 /.next/
