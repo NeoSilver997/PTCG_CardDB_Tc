@@ -28,15 +28,13 @@ import {
 
 export default function InventoryPage() {
   const { t } = useI18n();
-  const { 
-    inventory, 
-    loading, 
-    error, 
+  const {
+    inventory,
+    loading,
+    error,
     getInventoryStats,
-    reloadInventory
-  } = useInventory();
-
-  const [cards, setCards] = useState<PTCGCard[]>([]);
+    loadInventory
+  } = useInventory();  const [cards, setCards] = useState<PTCGCard[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,8 +74,8 @@ export default function InventoryPage() {
 
   // Load inventory data
   useEffect(() => {
-    reloadInventory();
-  }, [reloadInventory]);
+    loadInventory();
+  }, [loadInventory]);
 
   // Tier color helper function
   const getTierColor = (tier?: string) => {
@@ -283,7 +281,7 @@ export default function InventoryPage() {
           </div>
           <p className="text-gray-600 mb-4">Error loading inventory: {error}</p>
           <button
-            onClick={reloadInventory}
+            onClick={loadInventory}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
             Retry

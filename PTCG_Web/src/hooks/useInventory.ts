@@ -8,18 +8,39 @@ export function useInventory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadInventory = useCallback(async () => {
+  const loadInventoryFromCards = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/inventory');
+      const response = await fetch('/api/cards');
       if (!response.ok) {
-        throw new Error('Failed to load inventory');
+        throw new Error('Failed to load cards');
       }
-      const data = await response.json();
-      setInventory(data);
+      const cards = await response.json();
+
+      // Extract inventory data from cards
+      const inventoryData: InventoryCard[] = [];
+      cards.forEach((card: any) => {
+        if (card.Inventory && Array.isArray(card.Inventory)) {
+          card.Inventory.forEach((inv: any) => {
+            inventoryData.push({
+              id: inv.id,
+              CardID: card.CardID,
+              quantity: inv.quantity,
+              condition: inv.condition,
+              notes: inv.notes || '',
+              purchaseCost: inv.purchaseCost,
+              marketPrice: inv.marketPrice,
+              dateAdded: inv.dateAdded,
+              lastUpdated: inv.lastUpdated
+            });
+          });
+        }
+      });
+
+      setInventory(inventoryData);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load inventory');
+      setError(err instanceof Error ? err.message : 'Failed to load inventory from cards');
     } finally {
       setLoading(false);
     }
@@ -53,13 +74,13 @@ export function useInventory() {
         throw new Error('Failed to add to inventory');
       }
 
-      await loadInventory(); // Reload inventory
+      await loadInventoryFromCards(); // Reload inventory
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add to inventory');
       return false;
     }
-  }, [loadInventory]);
+  }, [loadInventoryFromCards]);
 
   const removeFromInventory = useCallback(async (
     identifier: number | { CardID: number; condition?: string }
@@ -86,13 +107,13 @@ export function useInventory() {
         throw new Error('Failed to remove from inventory');
       }
 
-      await loadInventory(); // Reload inventory
+      await loadInventoryFromCards(); // Reload inventory
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove from inventory');
       return false;
     }
-  }, [loadInventory]);
+  }, [loadInventoryFromCards]);
 
   const getCardInventory = useCallback((CardID: number) => {
     return inventory.filter(item => item.CardID === CardID);
@@ -161,8 +182,8 @@ export function useInventory() {
   }, [inventory]);
 
   useEffect(() => {
-    loadInventory();
-  }, [loadInventory]);
+    // Don't automatically load inventory - call loadInventoryFromCards() manually when needed
+  }, []);
 
   return {
     inventory,
@@ -174,6 +195,6 @@ export function useInventory() {
     getTotalQuantity,
     isCardOwned,
     getInventoryStats,
-    reloadInventory: loadInventory
+    loadInventory: loadInventoryFromCards
   };
 }

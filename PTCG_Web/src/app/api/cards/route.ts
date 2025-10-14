@@ -79,11 +79,27 @@ function getPrimaryCards(db: any, resolve: (response: NextResponse) => void, car
       c.score as Score,
       c.score_breakdown as ScoreBreakdown,
       c.primary_effect_type as PrimaryEffectType,
-      c.special_effect_type as SpecialEffectType
+      c.special_effect_type as SpecialEffectType,
+      -- Inventory
+      JSON_GROUP_ARRAY(
+        CASE WHEN inv.id IS NOT NULL THEN
+          JSON_OBJECT(
+            'id', inv.id,
+            'quantity', inv.quantity,
+            'condition', inv.condition,
+            'notes', inv.notes,
+            'purchaseCost', inv.purchase_cost,
+            'marketPrice', inv.market_price,
+            'dateAdded', inv.date_added,
+            'lastUpdated', inv.last_updated
+          )
+        END
+      ) as Inventory
     FROM primary_cards pc
     JOIN cards c ON pc.primary_card_id = c.id
     LEFT JOIN expansions e ON c.expansion_id = e.id
     LEFT JOIN illustrators i ON c.illustrator_id = i.id
+    LEFT JOIN inventory inv ON c.id = inv.card_id
   `;
 
   const params: any[] = [];
@@ -93,7 +109,13 @@ function getPrimaryCards(db: any, resolve: (response: NextResponse) => void, car
     params.push(cardId, parseInt(cardId) || 0);
   }
 
-  query += ` ORDER BY pc.name, pc.skill_name`;
+  query += `
+    GROUP BY pc.primary_card_id, pc.name, pc.skill_name, pc.primary_card_id, pc.count, pc.rarity_card_ids,
+             c.web_card_id, c.image_url, c.card_type, c.hp, c.attribute, c.attribute, c.weakness,
+             c.weakness_type, c.resistance, c.resistance_type, c.retreat_cost, c.rarity, c.expansion_id,
+             e.name, e.code, c.illustrator_id, i.name, c.evolution_stage, c.pokemon_info, c.collector_number,
+             c.tier, c.score, c.score_breakdown, c.primary_effect_type, c.special_effect_type
+    ORDER BY pc.name, pc.skill_name`;
 
   console.log(`[CARDS API] Executing primary cards query${cardId ? ` for cardId: ${cardId}` : ' (all cards)'}`);
   console.log(`[CARDS API] Primary cards query: ${query.trim().substring(0, 100)}...`);
@@ -115,7 +137,20 @@ function getPrimaryCards(db: any, resolve: (response: NextResponse) => void, car
     const cleanedCards = rows.map((card: any) => {
       const cleanedCard: any = {};
       Object.keys(card).forEach(key => {
-        cleanedCard[key] = card[key] || '';
+        if (key === 'Inventory') {
+          // Parse JSON array for inventory data
+          if (card[key] && card[key] !== 'null' && card[key] !== '[]') {
+            try {
+              cleanedCard[key] = JSON.parse(card[key]).filter(item => item && Object.keys(item).length > 0);
+            } catch (e) {
+              cleanedCard[key] = [];
+            }
+          } else {
+            cleanedCard[key] = [];
+          }
+        } else {
+          cleanedCard[key] = card[key] || '';
+        }
       });
 
       // Convert CardID to number if it's numeric
@@ -210,7 +245,22 @@ function getDetailedCards(db: any, resolve: (response: NextResponse) => void, pr
       -- Evolutions
       GROUP_CONCAT(ev.evolution) as Evolutions,
       -- Subtypes
-      GROUP_CONCAT(sub.subtype) as Subtypes
+      GROUP_CONCAT(sub.subtype) as Subtypes,
+      -- Inventory
+      JSON_GROUP_ARRAY(
+        CASE WHEN inv.id IS NOT NULL THEN
+          JSON_OBJECT(
+            'id', inv.id,
+            'quantity', inv.quantity,
+            'condition', inv.condition,
+            'notes', inv.notes,
+            'purchaseCost', inv.purchase_cost,
+            'marketPrice', inv.market_price,
+            'dateAdded', inv.date_added,
+            'lastUpdated', inv.last_updated
+          )
+        END
+      ) as Inventory
     FROM cards c
     LEFT JOIN expansions e ON c.expansion_id = e.id
     LEFT JOIN illustrators i ON c.illustrator_id = i.id
@@ -218,6 +268,7 @@ function getDetailedCards(db: any, resolve: (response: NextResponse) => void, pr
     LEFT JOIN abilities a ON c.id = a.card_id
     LEFT JOIN evolutions ev ON c.id = ev.card_id
     LEFT JOIN subtypes sub ON c.id = sub.card_id
+    LEFT JOIN inventory inv ON c.id = inv.card_id
   `;
 
   const params: any[] = [];
@@ -272,6 +323,17 @@ function getDetailedCards(db: any, resolve: (response: NextResponse) => void, pr
         } else if (key === 'Evolutions' || key === 'Subtypes') {
           // Split comma-separated strings
           cleanedCard[key] = card[key] ? card[key].split(',').filter(item => item.trim()) : [];
+        } else if (key === 'Inventory') {
+          // Parse JSON array for inventory data
+          if (card[key] && card[key] !== 'null' && card[key] !== '[]') {
+            try {
+              cleanedCard[key] = JSON.parse(card[key]).filter(item => item && Object.keys(item).length > 0);
+            } catch (e) {
+              cleanedCard[key] = [];
+            }
+          } else {
+            cleanedCard[key] = [];
+          }
         } else {
           cleanedCard[key] = card[key] || '';
         }
@@ -382,12 +444,33 @@ function getPrimaryCardsByName(db: any, resolve: (response: NextResponse) => voi
       c.score as Score,
       c.score_breakdown as ScoreBreakdown,
       c.primary_effect_type as PrimaryEffectType,
-      c.special_effect_type as SpecialEffectType
+      c.special_effect_type as SpecialEffectType,
+      -- Inventory
+      JSON_GROUP_ARRAY(
+        CASE WHEN inv.id IS NOT NULL THEN
+          JSON_OBJECT(
+            'id', inv.id,
+            'quantity', inv.quantity,
+            'condition', inv.condition,
+            'notes', inv.notes,
+            'purchaseCost', inv.purchase_cost,
+            'marketPrice', inv.market_price,
+            'dateAdded', inv.date_added,
+            'lastUpdated', inv.last_updated
+          )
+        END
+      ) as Inventory
     FROM primary_cards pc
     JOIN cards c ON pc.primary_card_id = c.id
     LEFT JOIN expansions e ON c.expansion_id = e.id
     LEFT JOIN illustrators i ON c.illustrator_id = i.id
+    LEFT JOIN inventory inv ON c.id = inv.card_id
     WHERE pc.name = ?
+    GROUP BY pc.primary_card_id, pc.name, pc.skill_name, pc.primary_card_id, pc.count, pc.rarity_card_ids,
+             c.web_card_id, c.image_url, c.card_type, c.hp, c.attribute, c.attribute, c.weakness,
+             c.weakness_type, c.resistance, c.resistance_type, c.retreat_cost, c.rarity, c.expansion_id,
+             e.name, e.code, c.illustrator_id, i.name, c.evolution_stage, c.pokemon_info, c.collector_number,
+             c.tier, c.score, c.score_breakdown, c.primary_effect_type, c.special_effect_type
     ORDER BY pc.name, pc.skill_name
   `;
 
@@ -410,7 +493,20 @@ function getPrimaryCardsByName(db: any, resolve: (response: NextResponse) => voi
     const cleanedCards = rows.map((card: any) => {
       const cleanedCard: any = {};
       Object.keys(card).forEach(key => {
-        cleanedCard[key] = card[key] || '';
+        if (key === 'Inventory') {
+          // Parse JSON array for inventory data
+          if (card[key] && card[key] !== 'null' && card[key] !== '[]') {
+            try {
+              cleanedCard[key] = JSON.parse(card[key]).filter(item => item && Object.keys(item).length > 0);
+            } catch (e) {
+              cleanedCard[key] = [];
+            }
+          } else {
+            cleanedCard[key] = [];
+          }
+        } else {
+          cleanedCard[key] = card[key] || '';
+        }
       });
 
       // Convert CardID to number if it's numeric
@@ -500,7 +596,22 @@ function getDetailedCardsByName(db: any, resolve: (response: NextResponse) => vo
       -- Evolutions
       GROUP_CONCAT(ev.evolution) as Evolutions,
       -- Subtypes
-      GROUP_CONCAT(sub.subtype) as Subtypes
+      GROUP_CONCAT(sub.subtype) as Subtypes,
+      -- Inventory
+      JSON_GROUP_ARRAY(
+        CASE WHEN inv.id IS NOT NULL THEN
+          JSON_OBJECT(
+            'id', inv.id,
+            'quantity', inv.quantity,
+            'condition', inv.condition,
+            'notes', inv.notes,
+            'purchaseCost', inv.purchase_cost,
+            'marketPrice', inv.market_price,
+            'dateAdded', inv.date_added,
+            'lastUpdated', inv.last_updated
+          )
+        END
+      ) as Inventory
     FROM cards c
     LEFT JOIN expansions e ON c.expansion_id = e.id
     LEFT JOIN illustrators i ON c.illustrator_id = i.id
@@ -508,6 +619,7 @@ function getDetailedCardsByName(db: any, resolve: (response: NextResponse) => vo
     LEFT JOIN abilities a ON c.id = a.card_id
     LEFT JOIN evolutions ev ON c.id = ev.card_id
     LEFT JOIN subtypes sub ON c.id = sub.card_id
+    LEFT JOIN inventory inv ON c.id = inv.card_id
     WHERE c.name = ?
     GROUP BY c.id, c.name, c.evolution_stage, c.web_card_id, c.image_url, c.card_type,
              c.hp, c.attribute, c.weakness, c.weakness_type, c.resistance, c.resistance_type,
@@ -560,6 +672,17 @@ function getDetailedCardsByName(db: any, resolve: (response: NextResponse) => vo
           // Handle comma-separated simple strings
           if (card[key] && card[key] !== 'null') {
             cleanedCard[key] = card[key].split(',').map((item: string) => item.trim()).filter(item => item);
+          } else {
+            cleanedCard[key] = [];
+          }
+        } else if (key === 'Inventory') {
+          // Parse JSON array for inventory data
+          if (card[key] && card[key] !== 'null' && card[key] !== '[]') {
+            try {
+              cleanedCard[key] = JSON.parse(card[key]).filter(item => item && Object.keys(item).length > 0);
+            } catch (e) {
+              cleanedCard[key] = [];
+            }
           } else {
             cleanedCard[key] = [];
           }
