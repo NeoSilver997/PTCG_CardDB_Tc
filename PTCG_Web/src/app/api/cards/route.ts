@@ -85,6 +85,7 @@ function getPrimaryCards(db: any, resolve: (response: NextResponse) => void, car
         CASE WHEN inv.id IS NOT NULL THEN
           JSON_OBJECT(
             'id', inv.id,
+            'CardID', c.web_card_id,
             'quantity', inv.quantity,
             'condition', inv.condition,
             'notes', inv.notes,
@@ -251,6 +252,7 @@ function getDetailedCards(db: any, resolve: (response: NextResponse) => void, pr
         CASE WHEN inv.id IS NOT NULL THEN
           JSON_OBJECT(
             'id', inv.id,
+            'CardID', c.web_card_id,
             'quantity', inv.quantity,
             'condition', inv.condition,
             'notes', inv.notes,
@@ -450,6 +452,7 @@ function getPrimaryCardsByName(db: any, resolve: (response: NextResponse) => voi
         CASE WHEN inv.id IS NOT NULL THEN
           JSON_OBJECT(
             'id', inv.id,
+            'CardID', c.web_card_id,
             'quantity', inv.quantity,
             'condition', inv.condition,
             'notes', inv.notes,
@@ -602,6 +605,7 @@ function getDetailedCardsByName(db: any, resolve: (response: NextResponse) => vo
         CASE WHEN inv.id IS NOT NULL THEN
           JSON_OBJECT(
             'id', inv.id,
+            'CardID', c.web_card_id,
             'quantity', inv.quantity,
             'condition', inv.condition,
             'notes', inv.notes,

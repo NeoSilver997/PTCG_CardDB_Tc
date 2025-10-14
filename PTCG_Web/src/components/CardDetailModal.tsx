@@ -4,7 +4,7 @@ import { X, ExternalLink, ChevronLeft, ChevronRight, Package, Plus, DollarSign }
 import { PTCGCard } from '../types/card';
 import { useState, useMemo, useEffect } from 'react';
 import { useI18n } from '../i18n/context';
-import { useInventory } from '../hooks/useInventory';
+import { useInventory } from '../contexts/InventoryContext';
 import { CARD_CONDITIONS } from '../types/inventory';
 import { getDefaultCurrencyForCard, getCurrencySymbol } from '../utils/currency';
 

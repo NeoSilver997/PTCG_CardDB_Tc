@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useInventory } from '../hooks/useInventory';
+import { useInventory } from '../contexts/InventoryContext';
 import { Package, Plus } from 'lucide-react';
 
 interface InventoryButtonProps {
@@ -22,6 +22,11 @@ export default function InventoryButton({
   
   const totalQuantity = getTotalQuantity(cardId);
   const isOwned = isCardOwned(cardId);
+
+  // Temporary debug display
+  if (loading) {
+    return <div className="text-xs text-gray-500">Loading...</div>;
+  }
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();

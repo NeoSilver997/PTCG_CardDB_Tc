@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { PTCGCard } from '../types/card';
 import { InventoryCard, CARD_CONDITIONS } from '../types/inventory';
-import { useInventory } from '../hooks/useInventory';
+import { useInventory } from '../contexts/InventoryContext';
 import { useI18n } from '../i18n/context';
 import { Package, Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 

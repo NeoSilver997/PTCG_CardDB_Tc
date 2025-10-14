@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useInventory } from '../../hooks/useInventory';
+import { useInventory } from '../../contexts/InventoryContext';
 import { getCurrencySymbol } from '../../utils/currency';
 
 interface TestResult {

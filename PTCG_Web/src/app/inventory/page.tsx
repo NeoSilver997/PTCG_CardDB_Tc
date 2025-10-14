@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PTCGCard } from '../../types/card';
 import { InventoryCard, CARD_CONDITIONS } from '../../types/inventory';
-import { useInventory } from '../../hooks/useInventory';
+import { useInventory } from '../../contexts/InventoryContext';
 import { useI18n } from '../../i18n/context';
 import { getCardImageSrc, PLACEHOLDER_IMAGE_PATH } from '../../utils/imageUtils';
 import InventoryManager from '../../components/InventoryManager';
@@ -34,7 +34,9 @@ export default function InventoryPage() {
     error,
     getInventoryStats,
     loadInventory
-  } = useInventory();  const [cards, setCards] = useState<PTCGCard[]>([]);
+  } = useInventory();
+  
+  const [cards, setCards] = useState<PTCGCard[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
   const [selectedCard, setSelectedCard] = useState<PTCGCard | null>(null);
   const [searchTerm, setSearchTerm] = useState('');

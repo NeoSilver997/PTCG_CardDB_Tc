@@ -9,7 +9,7 @@ import SearchFiltersComponent from '../components/SearchFilters';
 import CardDetailModal from '../components/CardDetailModal';
 import LanguageSelector from '../components/LanguageSelector';
 import { useI18n } from '../i18n/context';
-import { useInventory } from '../hooks/useInventory';
+import { useInventory } from '../contexts/InventoryContext';
 
 export default function Home() {
   const { t } = useI18n();
@@ -91,6 +91,21 @@ export default function Home() {
 
       setCards(sortedData);
       extractFilterOptions(sortedData);
+
+      // Set default expansion to the most recent expansion (from the latest card)
+      if (sortedData.length > 0) {
+        const latestCard = sortedData[0];
+        if (latestCard.ExpansionName && latestCard.ExpansionCode) {
+          const defaultExpansionKey = `${latestCard.ExpansionName}|${latestCard.ExpansionCode}`;
+          setFilters(prev => ({ ...prev, expansion: defaultExpansionKey }));
+        } else if (latestCard.ExpansionName) {
+          const defaultExpansionKey = `${latestCard.ExpansionName}|`;
+          setFilters(prev => ({ ...prev, expansion: defaultExpansionKey }));
+        } else if (latestCard.ExpansionCode) {
+          const defaultExpansionKey = `|${latestCard.ExpansionCode}`;
+          setFilters(prev => ({ ...prev, expansion: defaultExpansionKey }));
+        }
+      }
 
       // Load detailed cards for version comparison
       const detailedResponse = await fetch('/api/cards?detail=true');
@@ -225,6 +240,7 @@ export default function Home() {
 
     // Apply search term
     if (searchTerm) {
+      const beforeSearch = filtered.length;
       filtered = filtered.filter(card =>
         (
           (card.Name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -234,6 +250,7 @@ export default function Home() {
           (card.AbilityEffect || '').toLowerCase().includes(searchTerm.toLowerCase())
         )
       );
+      console.log(`🔍 Search filter applied: "${searchTerm}" - ${beforeSearch} → ${filtered.length} cards`);
     }
 
     // Apply ability filter
@@ -354,10 +371,13 @@ export default function Home() {
 
     // Apply owned filter
     if (filters.owned && filters.owned !== 'all') {
+      const beforeOwnedFilter = filtered.length;
       if (filters.owned === 'owned') {
         filtered = filtered.filter(card => getTotalQuantity(card.CardID) > 0);
+        console.log(`📊 Owned filter applied: ${beforeOwnedFilter} → ${filtered.length} cards`);
       } else if (filters.owned === 'unowned') {
         filtered = filtered.filter(card => getTotalQuantity(card.CardID) === 0);
+        console.log(`📊 Unowned filter applied: ${beforeOwnedFilter} → ${filtered.length} cards`);
       }
     }
 
@@ -409,6 +429,28 @@ export default function Home() {
       }
 
       return sortDirection === 'desc' ? -comparison : comparison;
+    });
+
+    // Console logging for inventory counts
+    const totalCards = sorted.length;
+    const ownedCards = sorted.filter(card => getTotalQuantity(card.CardID) > 0).length;
+    const unownedCards = totalCards - ownedCards;
+    const totalInventoryQuantity = sorted.reduce((sum, card) => sum + getTotalQuantity(card.CardID), 0);
+
+    console.log('🔍 Search Results Inventory Stats:', {
+      totalCards,
+      ownedCards,
+      unownedCards,
+      totalInventoryQuantity,
+      searchTerm,
+      filters: {
+        owned: filters.owned,
+        cardType: filters.cardType,
+        rarity: filters.rarity,
+        tier: filters.tier,
+        expansion: filters.expansion,
+        attribute: filters.attribute
+      }
     });
 
     setFilteredCards(sorted);
