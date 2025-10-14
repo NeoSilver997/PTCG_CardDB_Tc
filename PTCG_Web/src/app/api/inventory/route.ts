@@ -38,7 +38,7 @@ const initializeDatabase = () => {
           reject(err);
           return;
         }
-        console.log('[INVENTORY API] Inventory table initialized');
+        //console.log('[INVENTORY API] Inventory table initialized');
         db.close();
         resolve();
       });
@@ -50,7 +50,7 @@ const initializeDatabase = () => {
 // console.log('[INVENTORY API] Starting database initialization...');
 initializeDatabase()
   .then(() => {
-    console.log('[INVENTORY API] Database initialization completed successfully');
+    //console.log('[INVENTORY API] Database initialization completed successfully');
   })
   .catch(err => {
     console.error('[INVENTORY API] Database initialization failed:', err);
@@ -62,14 +62,14 @@ const getDatabase = () => {
 };
 
 export async function GET() {
-  console.log('[INVENTORY API] GET request received');
+  //console.log('[INVENTORY API] GET request received');
   try {
     // Ensure database is initialized before querying
-    console.log('[INVENTORY API] Ensuring database initialization...');
+    //console.log('[INVENTORY API] Ensuring database initialization...');
     await initializeDatabase();
-    console.log('[INVENTORY API] Database initialization confirmed');
+    //console.log('[INVENTORY API] Database initialization confirmed');
 
-    console.log('[INVENTORY API] Opening database connection...');
+    //console.log('[INVENTORY API] Opening database connection...');
     const db = getDatabase();
 
     const query = `
