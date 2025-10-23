@@ -4781,7 +4781,7 @@
     "condition": "Near Mint",
     "notes": "",
     "dateAdded": "2025-09-28T13:08:12.129Z",
-    "lastUpdated": "2025-09-28T13:08:12.129Z"
+    "lastUpdated": "2025-10-13T14:56:47.576Z"
   },
   {
     "CardID": 12566,
@@ -6523,5 +6523,125 @@
     "notes": "",
     "dateAdded": "2025-10-02T15:19:31.431Z",
     "lastUpdated": "2025-10-02T15:19:31.431Z"
+  },
+  {
+    "CardID": 14477,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-12T14:26:14.976Z",
+    "lastUpdated": "2025-10-12T14:26:14.976Z"
+  },
+  {
+    "CardID": 10930,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:54:49.820Z",
+    "lastUpdated": "2025-10-13T14:54:49.820Z"
+  },
+  {
+    "CardID": 11885,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:54:52.996Z",
+    "lastUpdated": "2025-10-13T14:56:45.502Z"
+  },
+  {
+    "CardID": 11978,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:54:56.659Z",
+    "lastUpdated": "2025-10-13T14:56:56.498Z"
+  },
+  {
+    "CardID": 11376,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:54:57.376Z",
+    "lastUpdated": "2025-10-13T14:56:55.132Z"
+  },
+  {
+    "CardID": 10931,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:54:59.312Z",
+    "lastUpdated": "2025-10-13T14:56:53.104Z"
+  },
+  {
+    "CardID": 11176,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:55:00.358Z",
+    "lastUpdated": "2025-10-13T14:56:54.055Z"
+  },
+  {
+    "CardID": 12174,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:55:03.105Z",
+    "lastUpdated": "2025-10-13T14:55:03.105Z"
+  },
+  {
+    "CardID": 12171,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:55:04.502Z",
+    "lastUpdated": "2025-10-13T14:55:04.502Z"
+  },
+  {
+    "CardID": 11892,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:55:10.162Z",
+    "lastUpdated": "2025-10-13T14:55:10.162Z"
+  },
+  {
+    "CardID": 11982,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:55:11.327Z",
+    "lastUpdated": "2025-10-13T14:55:11.327Z"
+  },
+  {
+    "CardID": 11505,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:55:12.223Z",
+    "lastUpdated": "2025-10-13T14:55:12.223Z"
+  },
+  {
+    "CardID": 11170,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:55:16.643Z",
+    "lastUpdated": "2025-10-13T14:55:16.643Z"
+  },
+  {
+    "CardID": 11377,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:55:22.995Z",
+    "lastUpdated": "2025-10-13T14:56:49.536Z"
+  },
+  {
+    "CardID": 10859,
+    "quantity": 1,
+    "condition": "Near Mint",
+    "notes": "",
+    "dateAdded": "2025-10-13T14:55:56.930Z",
+    "lastUpdated": "2025-10-13T14:56:50.886Z"
   }
 ]
