@@ -277,13 +277,20 @@ try:
                         # Find all skill divs
                         skillno = 0
                         skills = skill_info.find_all('div', class_='skill')
-                        for i, skill in enumerate(skills[:2]):  # Only process first 2 skills
-                            skill_prefix = f'Skill{i+1}_'
-                            
-                            # Extract skill name
+                        attack_names = []
+                        attack_damages = []
+                        for i, skill in enumerate(skills[:3]):  # Only process first 3 skills
+                            # Extract skill name first to check for 太晶
                             name_elem = skill.find('span', class_='skillName')
                             if name_elem:
                                 skill_name = name_elem.text.strip()
+                                if '太晶' in skill_name:
+                                    subtypes.append('太晶')
+                                
+                                # If this is skill1 and contains 太晶, skip this entire div
+                                if i == 0 and '太晶' in skill_name:
+                                    continue
+                                
                                 if '特性' in skill_name:
                                     card_data['[特性]'] = skill_name
                                     effect_elem = skill.find('p', class_='skillEffect')
@@ -326,10 +333,20 @@ try:
                             effect_elem = skill.find('span', class_='skillEffect')
                             if effect_elem:
                                 card_data[skill_prefix + 'Effect'] = effect_elem.text.strip()
+                            
+                            # Collect attack names and damages for summary
+                            if skill_name and skill_name != 'N/A':
+                                attack_names.append(skill_name)
+                            if card_data[skill_prefix + 'Damage'] and card_data[skill_prefix + 'Damage'] != 'N/A':
+                                attack_damages.append(card_data[skill_prefix + 'Damage'])
                                 
                             
                         
                         
+                        
+                        # Set attack summary after processing all skills
+                        card_data['Attacks'] = ', '.join(attack_names) if attack_names else 'N/A'
+                        card_data['Attack_Damage'] = ', '.join(attack_damages) if attack_damages else 'N/A'
                         
                         # Extract Weakness, Resistance and Retreat Cost from subInformation section
                         sub_info = detail_soup.find('div', class_='subInformation')
@@ -397,20 +414,6 @@ try:
                                 artist_link = artist_div.find('a')
                                 if artist_link:
                                     card_data['Artist'] = artist_link.text.strip()
-                                damage_elem = skill.find('span', class_='skillDamage')
-                            if damage_elem:
-                                damage_text = damage_elem.text.strip()
-                                if damage_text:
-                                    attack_damages.append(damage_text)
-                            
-                            # If we found attack names but no damages, try to extract damages from text
-                            if attack_names and not attack_damages:
-                                for text in skill_info.stripped_strings:
-                                    if text.isdigit() and text not in attack_names:
-                                        attack_damages.append(text)
-                            
-                            card_data['Attacks'] = ', '.join(attack_names)
-                            card_data['Attack_Damage'] = ', '.join(attack_damages)
                     
                     # Extract Weakness, Resistance, Retreat Cost
                     # Try to find the section containing these attributes
