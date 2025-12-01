@@ -7,10 +7,11 @@ import time
 import os
 import datetime
 import re
+import json
 import shutil
 
 # Base URL for the card list
-base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes="
+base_url = "https://asia.pokemon-card.com/hk/card-search/list/?pageNo=1&sortCondition=&keyword=&cardType=all&regulation=1&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&illustratorName=&expansionCodes=M2a"
 
 try:
     # Create folders if they don't exist
@@ -25,6 +26,96 @@ try:
     html_pages_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "html_pages")
     os.makedirs(html_pages_folder, exist_ok=True)
     
+    # Build a small index of already-downloaded detail pages so we can
+    # reuse saved HTML rather than fetching again and — importantly —
+    # detect the card "Type" (寶可夢 / 物品卡 / 支援者卡 / 競技場卡 / 特殊能量卡)
+    def scan_downloaded_html_for_types(root_dir):
+        mapping_by_id = {}
+        mapping_by_name_lc = {}
+
+        # load overrides mapping of names -> types
+        overrides = {}
+        cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts', 'type_overrides.json')
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path, 'r', encoding='utf-8') as fh:
+                    overrides = {k.lower(): v for k, v in json.load(fh).get('name_overrides', {}).items()}
+            except Exception:
+                overrides = {}
+
+        for dirpath, dirs, files in os.walk(root_dir):
+            for fname in files:
+                if not fname.endswith('.html'):
+                    continue
+                fpath = os.path.join(dirpath, fname)
+                try:
+                    with open(fpath, 'r', encoding='utf-8') as fh:
+                        raw = fh.read()
+                except Exception:
+                    # skip unreadable files
+                    continue
+
+                # Try to extract the card id from meta og:url if present (detail/12345)
+                id_match = re.search(r'/detail/(\d+)/', raw)
+                card_id = id_match.group(1) if id_match else None
+
+                # parse header to find the skill information header label
+                try:
+                    soup_local = BeautifulSoup(raw, 'html.parser')
+                    header = None
+                    skill_info_local = soup_local.find('div', class_='skillInformation')
+                    if skill_info_local:
+                        h3 = skill_info_local.find('h3', class_='commonHeader')
+                        if h3:
+                            header = h3.get_text(strip=True)
+
+                    # If still no header try other heuristics
+                    if not header:
+                        # look for first h3 in the page header area
+                        h3_any = soup_local.find('h3')
+                        header = h3_any.get_text(strip=True) if h3_any else ''
+
+                    # map header content to our internal Type values
+                    card_type = None
+                    if header:
+                        # Map '學習裝置' and similar header variants to '寶可夢道具'
+                        if '學習裝置' in header or '寶可夢道具' in header or ('道具' in header and '寶可夢' in header):
+                            card_type = '寶可夢道具'
+                        elif '物品' in header:
+                            card_type = '物品卡'
+                        elif '支援者' in header:
+                            card_type = '支援者卡'
+                        elif '競技場' in header:
+                            card_type = '競技場卡'
+                        elif '特殊能量' in header or '特殊 能量' in header or '特殊能量卡' in header:
+                            card_type = '特殊能量卡'
+                        elif '能量' in header:
+                            card_type = '能量卡'  
+                        else:
+                            card_type = '寶可夢'
+
+                    # name fallback: get the h1 text (card name)
+                    name = None
+                    ph = soup_local.find('h1', class_='pageHeader')
+                    if ph:
+                        name = ' '.join(ph.stripped_strings)
+
+                    # apply name-based override (overrides file takes precedence)
+                    if name and name.lower() in overrides:
+                        card_type = overrides[name.lower()]
+
+                    if card_id and card_type:
+                        mapping_by_id[card_id] = card_type
+                    if name and card_type:
+                        mapping_by_name_lc[name.lower()] = card_type
+                except Exception:
+                    continue
+
+        return mapping_by_id, mapping_by_name_lc
+
+    # gather downloaded page indexes
+    downloaded_id_map, downloaded_name_map = scan_downloaded_html_for_types(html_pages_folder)
+
     # Get the total number of pages
     response = requests.get(base_url)
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -65,7 +156,8 @@ try:
     last_page_html = None
     
     # Add page limit option for testing (default to total_pages if not specified)
-    max_pages = min(total_pages, 300)  # Default test limit of 10 pages
+    # Add page limit option for testing (default to total_pages if not specified)
+    max_pages = min(total_pages, 300)  # Default test limit of 300 pages
     
     # Iterate through each page
     for page in range(1, max_pages + 1):
@@ -141,9 +233,62 @@ try:
                     'Subtypes': ''
                 }
                 
-                # Visit the detail page to get more information
+                # Visit the detail page to get more information (but prefer a previously
+                # downloaded HTML file if available in html_pages)
                 try:
                     print(f"Fetching details for {name} from {card_url}")
+                    # If we already saved this page earlier use it to avoid a network
+                    # request and to set the card Type reliably.
+                    html_source = None
+                    if web_card_id and web_card_id in downloaded_id_map:
+                        # find the saved file by scanning the folder tree for the id string
+                        for dirpath, dirs, files in os.walk(html_pages_folder):
+                            for fname in files:
+                                if fname.endswith('.html'):
+                                    path = os.path.join(dirpath, fname)
+                                    try:
+                                        with open(path, 'r', encoding='utf-8') as fcheck:
+                                            if f"/detail/{web_card_id}/" in fcheck.read():
+                                                with open(path, 'r', encoding='utf-8') as f2:
+                                                    html_source = f2.read()
+                                                break
+                                    except Exception:
+                                        continue
+                            if html_source:
+                                break
+
+                    # fallback to matching by name if the id wasn't found
+                    if not html_source and card_data['Name'] and card_data['Name'].lower() in downloaded_name_map:
+                        # try to find a saved file whose h1 matches the name
+                        for dirpath, dirs, files in os.walk(html_pages_folder):
+                            for fname in files:
+                                if not fname.endswith('.html'):
+                                    continue
+                                path = os.path.join(dirpath, fname)
+                                try:
+                                    with open(path, 'r', encoding='utf-8') as fcheck:
+                                        raw = fcheck.read()
+                                        if card_data['Name'] in raw:
+                                            html_source = raw
+                                            break
+                                except Exception:
+                                    continue
+                            if html_source:
+                                break
+
+                    if html_source:
+                        detail_soup = BeautifulSoup(html_source, 'html.parser')
+                        # set Type from downloaded index if available
+                        if web_card_id and web_card_id in downloaded_id_map:
+                            card_data['Type'] = downloaded_id_map[web_card_id]
+                        else:
+                            # name-based mapping
+                            nm = card_data['Name'].lower() if card_data['Name'] else ''
+                            if nm in downloaded_name_map:
+                                card_data['Type'] = downloaded_name_map[nm]
+                    else:
+                        detail_response = requests.get(card_url, timeout=10)
+                        detail_soup = BeautifulSoup(detail_response.text, 'html.parser')
                     # Skip if URL is empty
                     if not card_url:
                         print(f"Skipping detail fetch for {name} - no URL available")
@@ -347,6 +492,51 @@ try:
                         # Set attack summary after processing all skills
                         card_data['Attacks'] = ', '.join(attack_names) if attack_names else 'N/A'
                         card_data['Attack_Damage'] = ', '.join(attack_damages) if attack_damages else 'N/A'
+
+                        # Detect card type from the skillInformation header when present
+                        try:
+                            header = ''
+                            if skill_info:
+                                h3 = skill_info.find('h3', class_='commonHeader')
+                                if h3:
+                                    header = h3.get_text(strip=True)
+
+                            # allow name-based overrides from config
+                            try:
+                                cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts', 'type_overrides.json')
+                                overrides = {}
+                                if os.path.exists(cfg_path):
+                                    try:
+                                        with open(cfg_path, 'r', encoding='utf-8') as fh:
+                                            overrides = {k.lower(): v for k, v in json.load(fh).get('name_overrides', {}).items()}
+                                    except Exception:
+                                        overrides = {}
+                            except Exception:
+                                overrides = {}
+
+                            if header:
+                                # If the card name matches an override, use it before header matching
+                                nm = card_data['Name'].lower().strip() if card_data['Name'] else ''
+                                if nm and nm in overrides:
+                                    card_data['Type'] = overrides[nm]
+                                else:
+                                    # Map learning device/title or header variants to Pokemon Tool (寶可夢道具)
+                                    if  '寶可夢道具' in header or ('道具' in header and '寶可夢' in header):
+                                        card_data['Type'] = '寶可夢道具'
+                                    elif '物品' in header:
+                                        card_data['Type'] = '物品卡'
+                                    elif '支援者' in header:
+                                        card_data['Type'] = '支援者卡'
+                                    elif '競技場' in header:
+                                        card_data['Type'] = '競技場卡'
+                                    elif '特殊能量' in header or '特殊 能量' in header:
+                                        card_data['Type'] = '特殊能量卡'
+                                    elif '能量' in header:
+                                        card_data['Type'] = '能量卡'
+                                    else:
+                                        card_data['Type'] = '寶可夢'
+                        except Exception:
+                            pass
                         
                         # Extract Weakness, Resistance and Retreat Cost from subInformation section
                         sub_info = detail_soup.find('div', class_='subInformation')
