@@ -9,3 +9,4 @@ PTCG_Web/.next/*
 PTCG_Web/node_modules/*
 PTCG_Web/.github/*
 scripts/__pycache__/*
+__pycache__/*
